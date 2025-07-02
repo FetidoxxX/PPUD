@@ -6,9 +6,9 @@ header('Content-Type: application/json');
 // --- INICIO ROBUSTA INCLUSIÓN DE ARCHIVOS Y MANEJO DE SESIÓN/AUTENTICACIÓN ---
 try {
   // Las clases ahora manejan la conexión internamente, no es necesario class_conec.php aquí
-  require_once './class/class_estudiante.php';
-  require_once './class/class_oferta.php'; // Para obtener las carreras
-  require_once './class/class_empresa.php'; // Para obtener ciudades y tipos de documento, sectores y estados
+  require_once '../MODELO/class_estudiante.php';
+  require_once '../MODELO/class_oferta.php'; // Para obtener las carreras
+  require_once '../MODELO/class_empresa.php'; // Para obtener ciudades y tipos de documento, sectores y estados
 
   // Verificar si la sesión de usuario está activa y es un estudiante
   $inn = 500; // Tiempo de inactividad
@@ -17,7 +17,7 @@ try {
     if ($_session_life > $inn) {
       session_destroy();
       error_log("DEBUG (ajax_perfilE): Sesión expirada para usuario ID: " . ($_SESSION['usuario_id'] ?? 'N/A'));
-      echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => 'index.php']);
+      echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => '../index.php']);
       exit();
     }
   }
@@ -25,7 +25,7 @@ try {
 
   if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
     error_log("DEBUG (ajax_perfilE): Acceso denegado para rol: " . ($_SESSION['rol'] ?? 'N/A') . " usuario ID: " . ($_SESSION['usuario_id'] ?? 'N/A'));
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Estudiante en el Sistema.', 'redirect' => 'index.php']);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Estudiante en el Sistema.', 'redirect' => '../index.php']);
     exit();
   }
 

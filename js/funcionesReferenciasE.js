@@ -137,7 +137,7 @@ function saveReference() {
   }
 
   $.ajax({
-    url: 'ajax_referenciasE.php', // Nuevo archivo AJAX para referencias
+    url: '../CONTROLADOR/ajax_referenciasE.php', // Nuevo archivo AJAX para referencias
     type: 'POST',
     data: formData,
     processData: false,
@@ -182,7 +182,7 @@ function loadAndDisplayReferences(studentId) {
   ); // Mensaje de carga
 
   $.ajax({
-    url: 'ajax_referenciasE.php', // Nuevo archivo AJAX para referencias
+    url: '../CONTROLADOR/ajax_referenciasE.php', // Nuevo archivo AJAX para referencias
     type: 'GET',
     data: {
       action: 'obtener_referencias_estudiante',

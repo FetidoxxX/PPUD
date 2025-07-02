@@ -6,8 +6,8 @@ ini_set('display_errors', 1);
 header('Content-Type: application/json');
 
 try {
-  require_once './class/class_referencia.php'; // Incluir la clase Referencia
-  require_once './class/class_estudiante.php'; // Necesario para obtener el nombre del estudiante si se desea en el modal de referencia
+  require_once '../MODELO/class_referencia.php'; // Incluir la clase Referencia
+  require_once '../MODELO/class_estudiante.php'; // Necesario para obtener el nombre del estudiante si se desea en el modal de referencia
   // Opcional: incluir otras clases si las acciones lo requieren
 } catch (Throwable $e) {
   error_log("FATAL ERROR in ajax_referenciasE.php initial setup: " . $e->getMessage() . " on line " . $e->getLine());
@@ -21,7 +21,7 @@ if (isset($_SESSION['timeout'])) {
   $_session_life = time() - $_SESSION['timeout'];
   if ($_session_life > $inn) {
     session_destroy();
-    echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => 'index.php']);
+    echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => '../index.php']);
     exit();
   }
 }
@@ -29,7 +29,7 @@ $_SESSION['timeout'] = time();
 
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   error_log("DEBUG AUTH FAIL (ajax_referenciasE): usuario_id is set? " . (isset($_SESSION['usuario_id']) ? 'Yes' : 'No') . " | rol is empresa? " . (($_SESSION['rol'] ?? 'none') === 'empresa' ? 'Yes' : 'No'));
-  echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Empresa en el Sistema.', 'redirect' => 'index.php']);
+  echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Empresa en el Sistema.', 'redirect' => '../index.php']);
   exit();
 }
 

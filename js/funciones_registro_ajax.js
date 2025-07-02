@@ -411,7 +411,7 @@ $(document).ready(function () {
       preConfirm: () => {
         return $.ajax({
           type: 'POST',
-          url: 'ajax_registro.php',
+          url: '../CONTROLADOR/ajax_registro.php',
           data: formData,
           processData: false, // Necesario para FormData
           contentType: false, // Necesario para FormData

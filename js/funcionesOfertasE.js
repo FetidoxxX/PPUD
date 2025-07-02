@@ -17,7 +17,7 @@ function cargarOfertas(append = false) {
   }
 
   $.ajax({
-    url: 'ajax_ofertaE.php', // Nuevo archivo AJAX para estudiante
+    url: '../CONTROLADOR/ajax_ofertaE.php', // Nuevo archivo AJAX para estudiante
     type: 'GET',
     data: {
       action: 'obtener_ofertas_activas',
@@ -149,7 +149,7 @@ function renderOfertasAsCards(ofertas) {
  */
 function viewOfferDetail(idOferta) {
   $.ajax({
-    url: 'ajax_ofertaE.php',
+    url: '../CONTROLADOR/ajax_ofertaE.php',
     type: 'GET',
     data: {
       action: 'obtener_oferta_detalle',
@@ -236,7 +236,7 @@ function viewCompanyProfile(idEmpresa) {
   }
 
   $.ajax({
-    url: 'ajax_ofertaE.php', // Usar el mismo AJAX para evitar problemas de sesión
+    url: '../CONTROLADOR/ajax_ofertaE.php', // Usar el mismo AJAX para evitar problemas de sesión
     type: 'GET',
     data: {
       action: 'obtener_perfil_empresa',
@@ -273,7 +273,7 @@ function toggleInteres(buttonElement) {
   const action = interesMostrado ? 'eliminar_interes' : 'mostrar_interes';
 
   $.ajax({
-    url: 'ajax_ofertaE.php',
+    url: '../CONTROLADOR/ajax_ofertaE.php',
     type: 'POST',
     data: {
       action: action,

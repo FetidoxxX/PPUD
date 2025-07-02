@@ -11,8 +11,8 @@ if (isset($_SESSION['timeout'])) {
     <html>
     <head>
       <meta charset='utf-8'>
-      <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-      <script src='./sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
     </head>
     <body>
       <script type='text/javascript'>
@@ -22,7 +22,7 @@ if (isset($_SESSION['timeout'])) {
           text: 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.'
         }).then((result) => {
           if (result.isConfirmed) {
-            window.location = './index.php';
+            window.location = '../index.php';
           }
         });
       </script>
@@ -53,7 +53,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
         text: ' Debe iniciar Sesión como Estudiante en el Sistema'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -71,8 +71,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Perfil de Estudiante - PPUD</title>
-  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -108,7 +108,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
               <li>
                 <hr class="dropdown-divider">
               </li>
-              <li><a class="dropdown-item text-danger" href="salir.php">Cerrar Sesión</a></li>
+              <li><a class="dropdown-item text-danger" href="../salir.php">Cerrar Sesión</a></li>
             </ul>
           </li>
         </ul>
@@ -378,10 +378,10 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
     </div>
   </footer>
 
-  <script src="./js/jquery-3.6.1.min.js"></script>
-  <script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="./sw/dist/sweetalert2.min.js"></script>
-  <script src="./js/perfilE.js"></script> <!-- Script JS para la lógica del perfil -->
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/perfilE.js"></script> <!-- Script JS para la lógica del perfil -->
 </body>
 
 </html>

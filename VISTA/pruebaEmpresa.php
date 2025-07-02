@@ -11,8 +11,8 @@ if (isset($_SESSION['timeout'])) {
     <html>
     <head>
       <meta charset='utf-8'>
-      <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-      <script src='./sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
     </head>
     <body>
       <script type='text/javascript'>
@@ -22,7 +22,7 @@ if (isset($_SESSION['timeout'])) {
           text: 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.'
         }).then((result) => {
           if (result.isConfirmed) {
-            window.location = './index.php';
+            window.location = '../index.php';
           }
         });
       </script>
@@ -43,8 +43,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   <html>
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
   <body>
     <script type='text/javascript'>
@@ -54,7 +54,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
         text: 'Debe iniciar sesión como Empresa en el Sistema.'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -73,8 +73,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <title>Módulo Empresa - PPUD</title>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <link rel='stylesheet' type='text/css' media='screen' href='./bootstrap/css/bootstrap.min.css'>
-  <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
+  <link rel='stylesheet' type='text/css' media='screen' href='../bootstrap/css/bootstrap.min.css'>
+  <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
@@ -127,7 +127,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -139,7 +139,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   </nav>
 
   <!-- Welcome Jumbotron -->
-  <div class="bg-success text-white py-5 mb-4"> <!-- Changed to bg-success -->
+  <div class="bg-success text-white py-5 mb-4">
+    <!-- Changed to bg-success -->
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto text-center">
@@ -234,10 +235,10 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
     </div>
   </footer>
 
-  <script src="./js/jquery-3.6.1.min.js"></script>
-  <script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="./sw/dist/sweetalert2.min.js"></script>
-  <script src="./js/funciones.js"></script>
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/funciones.js"></script>
   <!-- La función mostrarPerfilEmpresa() ya no es necesaria aquí, el enlace es directo a perfil_empresa.php -->
 </body>
 

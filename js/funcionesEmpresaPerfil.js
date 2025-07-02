@@ -22,7 +22,7 @@ function renderSelectOptions(data, selectId, valueKey, textKey) {
 function loadCompanyProfile() {
   const idEmpresa = $('#idEmpresa').val();
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'GET',
     data: {
       action: 'obtener_empresa_perfil',
@@ -99,7 +99,7 @@ function saveCompanyProfile() {
   formData.append('action', 'actualizar_empresa_perfil');
 
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'POST',
     data: formData,
     processData: false, // Necesario para FormData

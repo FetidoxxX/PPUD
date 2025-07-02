@@ -1,7 +1,7 @@
 <?php
 
-include_once './class/class_oferta.php'; // Para obtener carreras (estudiante)
-include_once './class/class_empresa.php'; // Para obtener tipos de documento, ciudades y sectores (empresa/admin)
+include_once '../MODELO/class_oferta.php'; // Para obtener carreras (estudiante)
+include_once '../MODELO/class_empresa.php'; // Para obtener tipos de documento, ciudades y sectores (empresa/admin)
 
 $ofertaObj = new Oferta();
 $empresaObj = new Empresa(); // Usamos Empresa para obtener datos generales como tipos de documento, ciudades, sectores
@@ -17,7 +17,7 @@ if (isset($_POST['rol'])) {
 // Si no hay rol o no es válido, redirigir a index.php
 $roles_validos = ['estudiante', 'empresa', 'administrador'];
 if (!$rol || !in_array($rol, $roles_validos)) {
-  header('Location: index.php');
+  header('Location: ../index.php');
   exit();
 }
 
@@ -57,8 +57,8 @@ $sectores = ($rol === 'empresa') ? $empresaObj->obtenerSectores() : [];
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <title><?php echo $config['titulo']; ?> - PPUD</title>
 </head>
@@ -189,18 +189,15 @@ $sectores = ($rol === 'empresa') ? $empresaObj->obtenerSectores() : [];
                   </label>
                   <select name="tipo_documento" id="tipo_documento" class="form-select">
                     <option value="">Seleccione...</option>
-                    <?php if ($tiposDoc && is_array($tiposDoc) && count($tiposDoc) > 0) {
+                    <?php
+                    // Se simplifica la lógica. 'obtenerTiposDocumento()' siempre devuelve un array.
+                    if (!empty($tiposDoc)) { // Verifica si el array no está vacío
                       foreach ($tiposDoc as $tipo): ?>
                         <option value="<?= htmlspecialchars($tipo['id_tipo']) ?>"><?= htmlspecialchars($tipo['nombre']) ?>
                         </option>
                       <?php endforeach;
-                    } else if ($tiposDoc && method_exists($tiposDoc, 'num_rows') && $tiposDoc->num_rows > 0) { // Para resultados de mysqli_query
-                      mysqli_data_seek($tiposDoc, 0); // Asegura que el puntero esté al inicio
-                      while ($tipo = mysqli_fetch_assoc($tiposDoc)): ?>
-                          <option value="<?= htmlspecialchars($tipo['id_tipo']) ?>"><?= htmlspecialchars($tipo['nombre']) ?>
-                          </option>
-                      <?php endwhile;
-                    } ?>
+                    }
+                    ?>
                   </select>
                 </div>
                 <div class="col-md-6 mb-3">
@@ -346,10 +343,10 @@ $sectores = ($rol === 'empresa') ? $empresaObj->obtenerSectores() : [];
     </div>
   </div>
 
-  <script src="./js/jquery-3.6.1.min.js"></script>
-  <script src="./bootstrap/js/bootstrap.min.js"></script>
-  <script src="./sw/dist/sweetalert2.min.js"></script>
-  <script src="./js/funciones_registro_ajax.js"></script> <!-- Nuevo archivo JS para la lógica AJAX -->
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/funciones_registro_ajax.js"></script> <!-- Nuevo archivo JS para la lógica AJAX -->
 </body>
 
 </html>

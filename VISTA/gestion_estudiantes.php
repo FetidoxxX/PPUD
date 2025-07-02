@@ -19,8 +19,8 @@ if (!$_SESSION['usuario']) {
 
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
 
   <body>
@@ -31,7 +31,7 @@ if (!$_SESSION['usuario']) {
         text: ' Debe iniciar Session en el Sistema'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -43,8 +43,8 @@ if (!$_SESSION['usuario']) {
 }
 
 // Incluir archivos necesarios
-include_once './class/class_estudiante.php';
-include_once './class/class_empresa.php'; // Incluir la clase Empresa para obtener tipos de documento
+include_once '../MODELO/class_estudiante.php';
+include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa para obtener tipos de documento
 
 // Crear instancias de las clases
 $estudiante = new Estudiante();
@@ -61,8 +61,8 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestión de Estudiantes</title>
-  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <script type="text/javascript" language="Javascript" src="./js/funciones.js"></script>
 </head>
 
@@ -106,7 +106,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -302,9 +302,9 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
       </div>
     </footer>
 
-    <script src="./bootstrap/js/bootstrap.min.js"></script>
-    <script src="./sw/dist/sweetalert2.min.js"></script>
-    <script src="./js/jquery-3.6.1.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script src="../sw/dist/sweetalert2.min.js"></script>
+    <script src="../js/jquery-3.6.1.min.js"></script>
 
     <script>
       // Variables globales
@@ -318,7 +318,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
 
       // Función principal para cargar estudiantes vía AJAX
       function cargarEstudiantes(busqueda = '') {
-        fetch(`ajax_estudiante.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
+        fetch(`../CONTROLADOR/ajax_estudiante.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
@@ -373,7 +373,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
 
       // Ver detalle del estudiante
       function verDetalle(id) {
-        fetch(`ajax_estudiante.php?action=detalle&id=${id}`)
+        fetch(`../CONTROLADOR/ajax_estudiante.php?action=detalle&id=${id}`)
           .then(response => response.text())
           .then(data => {
             document.getElementById('contenidoDetalle').innerHTML = data;
@@ -386,7 +386,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
 
       // Editar estudiante
       function editarEstudiante(id) {
-        fetch(`ajax_estudiante.php?action=obtener&id=${id}`)
+        fetch(`../CONTROLADOR/ajax_estudiante.php?action=obtener&id=${id}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
@@ -425,7 +425,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
         formData.append('tipo_documento', document.getElementById('editTipoDoc').value);
         formData.append('direccion', document.getElementById('editDireccion').value);
 
-        fetch('ajax_estudiante.php', {
+        fetch('../CONTROLADOR/ajax_estudiante.php', {
           method: 'POST',
           body: formData
         })
@@ -461,7 +461,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
             formData.append('action', 'eliminar');
             formData.append('id', id);
 
-            fetch('ajax_estudiante.php', {
+            fetch('../CONTROLADOR/ajax_estudiante.php', {
               method: 'POST',
               body: formData
             })

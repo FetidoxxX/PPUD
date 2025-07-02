@@ -1,11 +1,13 @@
 <?php
-session_start();
+if (session_status() == PHP_SESSION_NONE) {
+  session_start();
+}
 $inn = 500;
 if (isset($_SESSION['timeout'])) {
   $_session_life = time() - $_SESSION['timeout'];
   if ($_session_life > $inn) {
     session_destroy();
-    header("location:./index.php");
+    header("location:../index.php");
     exit();
   }
 }
@@ -19,8 +21,8 @@ if (!$_SESSION['usuario']) {
 
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
 
   <body>
@@ -31,7 +33,7 @@ if (!$_SESSION['usuario']) {
         text: ' Debe iniciar Session en el Sistema'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -43,8 +45,7 @@ if (!$_SESSION['usuario']) {
 }
 
 // Incluir archivos necesarios
-include_once './class/class_empresa.php';
-include_once './CONTROLADOR/ajax_empresa.php';
+include_once '../MODELO/class_empresa.php';
 
 // Crear conexión y instancia de empresa
 
@@ -61,9 +62,9 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestión de Empresas</title>
-  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
-  <script type="text/javascript" language="Javascript" src="./js/funciones.js"></script>
+  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
+  <script type="text/javascript" language="Javascript" src="../js/funciones.js"></script>
 </head>
 
 <body>
@@ -106,7 +107,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -286,9 +287,9 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
       </div>
     </footer>
 
-    <script src="./bootstrap/js/bootstrap.min.js"></script>
-    <script src="./sw/dist/sweetalert2.min.js"></script>
-    <script src="./js/jquery-3.6.1.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script src="../sw/dist/sweetalert2.min.js"></script>
+    <script src="../js/jquery-3.6.1.min.js"></script>
 
     <script>
       // Variables globales
@@ -302,7 +303,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 
       // Función principal para cargar empresas vía AJAX
       function cargarEmpresas(busqueda = '') {
-        fetch(`./CONTROLADOR/ajax_empresa.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
+        fetch(`../CONTROLADOR/ajax_empresa.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
@@ -357,7 +358,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 
       // Ver detalle de la empresa
       function verDetalle(id) {
-        fetch(`./CONTROLADOR/ajax_empresa.php?action=detalle&id=${id}`)
+        fetch(`../CONTROLADOR/ajax_empresa.php?action=detalle&id=${id}`)
           .then(response => response.text())
           .then(data => {
             document.getElementById('contenidoDetalle').innerHTML = data;
@@ -370,7 +371,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 
       // Editar empresa
       function editarEmpresa(id) {
-        fetch(`./CONTROLADOR/ajax_empresa.php?action=obtener&id=${id}`)
+        fetch(`../CONTROLADOR/ajax_empresa.php?action=obtener&id=${id}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
@@ -405,7 +406,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
         formData.append('tipo_documento', document.getElementById('editTipoDoc').value);
         formData.append('direccion', document.getElementById('editDireccion').value);
 
-        fetch('./CONTROLADOR/ajax_empresa.php', {
+        fetch('../CONTROLADOR/ajax_empresa.php', {
           method: 'POST',
           body: formData
         })

@@ -48,14 +48,14 @@ $config = $config_rol[$rol];
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?php echo $config['titulo']; ?> - PPUD</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
 </head>
 
 <body class="bg-light d-flex flex-column min-vh-100">
   <!-- Barra de navegación -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container flex-grow-1">
-      <a class="navbar-brand fw-bold" href="index.php">
+      <a class="navbar-brand fw-bold" href="../index.php">
         <span class="text-warning">PPUD</span> - Plataforma de Prácticas Profesionales
       </a>
     </div>
@@ -112,7 +112,7 @@ $config = $config_rol[$rol];
             </div>
           </div>
           <div class="card-footer text-center py-3">
-            <div class="small"><a href="login.php">Volver al Login</a></div>
+            <div class="small"><a href="./login.php">Volver al Login</a></div>
           </div>
         </div>
       </div>
@@ -145,7 +145,7 @@ $config = $config_rol[$rol];
 
         $.ajax({
           type: 'POST',
-          url: 'ajax_recuperacion.php', // URL del script PHP que manejará la solicitud
+          url: '../CONTROLADOR/ajax_recuperacion.php', // URL del script PHP que manejará la solicitud
           data: {
             accion: 'solicitar_codigo',
             email: email
@@ -202,7 +202,7 @@ $config = $config_rol[$rol];
 
         $.ajax({
           type: 'POST',
-          url: 'ajax_recuperacion.php', // URL del script PHP que manejará la solicitud
+          url: '../CONTROLADOR/ajax_recuperacion.php', // URL del script PHP que manejará la solicitud
           data: {
             accion: 'cambiar_contrasena',
             email: email,

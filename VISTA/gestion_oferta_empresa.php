@@ -10,8 +10,8 @@ if (isset($_SESSION['timeout'])) {
     <html>
     <head>
       <meta charset='utf-8'>
-      <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-      <script src='./sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
     </head>
     <body>
       <script type='text/javascript'>
@@ -21,7 +21,7 @@ if (isset($_SESSION['timeout'])) {
           text: 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.'
         }).then((result) => {
           if (result.isConfirmed) {
-            window.location = './index.php';
+            window.location = '../index.php';
           }
         });
       </script>
@@ -40,8 +40,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   <html>
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
   <body>
     <script type='text/javascript'>
@@ -51,7 +51,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
         text: 'Debe iniciar sesión como Empresa en el Sistema.'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -62,9 +62,9 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
 }
 
 // Incluir archivos necesarios para el manejo de ofertas, estudiantes y referencias
-require_once './class/class_oferta.php';
-require_once './class/class_estudiante.php'; // Incluir la clase Estudiante para el perfil
-require_once './class/class_referencia.php'; // Incluir la clase Referencia para la nueva funcionalidad
+require_once '../MODELO/class_oferta.php';
+require_once '../MODELO/class_estudiante.php'; // Incluir la clase Estudiante para el perfil
+require_once '../MODELO/class_referencia.php'; // Incluir la clase Referencia para la nueva funcionalidad
 
 $ofertaObj = null;
 $referenciaObj = null; // Declarar la variable para la instancia de Referencia
@@ -106,8 +106,8 @@ try {
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <title>Gestión de Ofertas - Empresa</title>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <link rel='stylesheet' type='text/css' media='screen' href='./bootstrap/css/bootstrap.min.css'>
-  <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
+  <link rel='stylesheet' type='text/css' media='screen' href='../bootstrap/css/bootstrap.min.css'>
+  <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <!-- Font Awesome para iconos (asegúrate de tenerlo en tu proyecto si usas íconos) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -144,7 +144,7 @@ try {
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -226,13 +226,13 @@ try {
     </div>
   </footer>
 
-  <script src="./js/jquery-3.6.1.min.js"></script>
-  <script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="./sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
   <!-- Incluye el archivo de JavaScript para las funciones de oferta -->
-  <script src="./js/funcionesOfertas.js"></script>
+  <script src="../js/funcionesOfertas.js"></script>
   <!-- Incluye el nuevo archivo de JavaScript para las funciones de referencias -->
-  <script src="./js/funcionesReferenciasE.js"></script>
+  <script src="../js/funcionesReferenciasE.js"></script>
   <script>
     // Pasar las variables PHP a la función de inicialización de JavaScript de ofertas
     $(document).ready(function () {

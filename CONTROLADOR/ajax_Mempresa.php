@@ -5,10 +5,10 @@ ob_start(); // Iniciar el almacenamiento en búfer de salida para capturar cualq
 header('Content-Type: application/json'); // Establecer el tipo de contenido como JSON
 
 try {
-  require_once './class/class_oferta.php';
-  require_once './class/class_empresa.php'; // Incluir la clase Empresa
-  require_once './class/class_estudiante.php'; // Incluir la clase Estudiante
-  require_once './class/class_referencia.php'; // Incluir la clase Referencia
+  require_once '../MODELO/class_oferta.php';
+  require_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa
+  require_once '../MODELO/class_estudiante.php'; // Incluir la clase Estudiante
+  require_once '../MODELO/class_referencia.php'; // Incluir la clase Referencia
 
   // Verificar si la sesión de usuario está activa y es una empresa
   $inn = 500;
@@ -17,7 +17,7 @@ try {
     if ($_session_life > $inn) {
       session_destroy();
       ob_end_clean(); // Limpiar el búfer antes de enviar la respuesta JSON
-      echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => 'index.php']);
+      echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => '../index.php']);
       exit();
     }
   }
@@ -26,7 +26,7 @@ try {
   if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
     error_log("DEBUG AUTH FAIL: usuario_id is set? " . (isset($_SESSION['usuario_id']) ? 'Yes' : 'No') . " | rol is empresa? " . (($_SESSION['rol'] ?? 'none') === 'empresa' ? 'Yes' : 'No'));
     ob_end_clean(); // Limpiar el búfer antes de enviar la respuesta JSON
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Empresa en el Sistema.', 'redirect' => 'index.php']);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Empresa en el Sistema.', 'redirect' => '../index.php']);
     exit();
   }
 

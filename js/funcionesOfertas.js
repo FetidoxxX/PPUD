@@ -156,7 +156,7 @@ function cargarOfertas(append = false) {
   }
 
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'GET',
     data: {
       action: 'obtener_ofertas_empresa',
@@ -355,7 +355,7 @@ function viewOffer(idOferta) {
   lastFocusedElement = document.activeElement;
 
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'GET',
     data: {
       action: 'obtener_oferta_por_id',
@@ -422,7 +422,7 @@ function editarOferta(idOferta) {
   lastFocusedElement = document.activeElement;
 
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'GET',
     data: {
       action: 'obtener_oferta_por_id',
@@ -592,7 +592,7 @@ function guardarOferta() {
   }
 
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'POST',
     data: formData,
     processData: false, // Necesario para FormData
@@ -648,7 +648,7 @@ function confirmarDesactivarOferta(idOferta) {
  */
 function desactivarOferta(idOferta) {
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'POST',
     data: {
       action: 'desactivar_oferta',
@@ -735,7 +735,7 @@ function showInterestedStudentsModal(idOferta) {
   $('#interesadosOfertaId').text(idOferta); // Mostrar el ID de la oferta
 
   $.ajax({
-    url: 'ajax_Mempresa.php',
+    url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'GET',
     data: {
       action: 'render_interesados_list_html',
@@ -823,7 +823,7 @@ function showStudentProfileModal(idEstudiante) {
   );
 
   $.ajax({
-    url: 'ajax_Mempresa.php', // Se sigue usando ajax_Mempresa.php para obtener el HTML completo del perfil
+    url: '../CONTROLADOR/ajax_Mempresa.php', // Se sigue usando ./CONTROLADOR/ajax_Mempresa.php para obtener el HTML completo del perfil
     type: 'GET',
     data: {
       action: 'render_perfil_estudiante_html',

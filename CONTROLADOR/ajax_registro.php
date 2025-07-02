@@ -2,9 +2,9 @@
 header('Content-Type: application/json'); // Indicar que la respuesta será JSON
 
 // Cada una de estas clases contiene internamente la inclusión de 'class_conec.php'.
-include_once './class/class_estudiante.php';
-include_once './class/class_empresa.php';
-include_once './class/class_administrador.php';
+include_once '../MODELO/class_estudiante.php';
+include_once '../MODELO/class_empresa.php';
+include_once '../MODELO/class_administrador.php';
 
 
 // Función de utilidad para validar formatos de correo
