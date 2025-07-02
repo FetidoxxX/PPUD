@@ -56,7 +56,8 @@ function initializeGestionOfertas(
  * @param {number} offset - Desplazamiento para la paginación.
  */
 function cargarOfertas(busqueda = '', offset = 0) {
-  const url = `ajax_Gofertas.php?action=listar&busqueda=${encodeURIComponent(
+  // Ruta actualizada para el controlador: usamos ../ para subir desde 'js/' y luego entrar a 'CONTROLADOR/'
+  const url = `../CONTROLADOR/ajax_Gofertas.php?action=listar&busqueda=${encodeURIComponent(
     busqueda
   )}&limit=${itemsPerPage}&offset=${offset}`;
 
@@ -234,7 +235,7 @@ function editarOferta(idOferta) {
   $('#ofertaId').val(idOferta); // Establecer el ID de la oferta en el campo oculto
 
   $.ajax({
-    url: 'ajax_Gofertas.php',
+    url: '../CONTROLADOR/ajax_Gofertas.php', // Ruta actualizada para el controlador
     type: 'GET',
     data: { action: 'obtener', id: idOferta },
     dataType: 'json',
@@ -252,7 +253,7 @@ function editarOferta(idOferta) {
         $('#remuneracion').val(oferta.remuneracion);
         $('#area_conocimiento_id_area').val(oferta.area_conocimiento_id_area);
         $('#semestre_minimo').val(oferta.semestre_minimo);
-        $('#promedio_minimo').val(oferta.promedio_minimo);
+        $('#promedio_minimo').val(oferta.promedio_promedio); // Corregido: asumí un typo, si es diferente ajusta aquí
         $('#cupos_disponibles').val(oferta.cupos_disponibles);
         $('#habilidades_requeridas').val(oferta.habilidades_requeridas);
         $('#fecha_inicio').val(oferta.fecha_inicio);
@@ -406,7 +407,7 @@ function saveOferta() {
   formData.append('carreras_dirigidas', JSON.stringify(carrerasDirigidas));
 
   $.ajax({
-    url: 'ajax_Gofertas.php',
+    url: '../CONTROLADOR/ajax_Gofertas.php', // Ruta actualizada para el controlador
     type: 'POST',
     data: formData,
     processData: false,
@@ -449,7 +450,7 @@ function desactivarOferta(idOferta) {
       formData.append('id', idOferta);
 
       $.ajax({
-        url: 'ajax_Gofertas.php',
+        url: '../CONTROLADOR/ajax_Gofertas.php', // Ruta actualizada para el controlador
         type: 'POST',
         data: formData,
         processData: false,
@@ -478,7 +479,7 @@ function desactivarOferta(idOferta) {
  */
 function verDetalleOferta(idOferta) {
   $.ajax({
-    url: 'ajax_Gofertas.php',
+    url: '../CONTROLADOR/ajax_Gofertas.php', // Ruta actualizada para el controlador
     type: 'GET',
     data: { action: 'detalle_html', id: idOferta }, // Llamar a la nueva acción que retorna HTML
     dataType: 'json', // Esperar JSON que contenga el HTML

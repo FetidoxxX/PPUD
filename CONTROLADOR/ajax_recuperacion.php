@@ -3,43 +3,43 @@
 header('Content-Type: application/json');
 
 // Incluir los archivos de clases necesarios
-require_once './class/class_log.php';
+require_once '../MODELO/class_log.php';
 
 // Asegurarse de que la solicitud sea POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  // Obtener la acción solicitada (solicitar_codigo o cambiar_contrasena)
-  $accion = $_POST['accion'] ?? '';
+    // Obtener la acción solicitada (solicitar_codigo o cambiar_contrasena)
+    $accion = $_POST['accion'] ?? '';
 
-  // Instanciar la clase Login
-  $login = new Login();
+    // Instanciar la clase Login
+    $login = new Login();
 
-  // Inicializar la respuesta
-  $response = ['success' => false, 'message' => ''];
+    // Inicializar la respuesta
+    $response = ['success' => false, 'message' => ''];
 
-  // Manejar las diferentes acciones
-  switch ($accion) {
-    case 'solicitar_codigo':
-      $email = $_POST['email'] ?? '';
+    // Manejar las diferentes acciones
+    switch ($accion) {
+        case 'solicitar_codigo':
+            $email = $_POST['email'] ?? '';
 
-      // Validar que el correo no esté vacío
-      if (empty($email)) {
-        $response['message'] = 'Por favor, ingrese su correo electrónico.';
-        echo json_encode($response);
-        exit();
-      }
+            // Validar que el correo no esté vacío
+            if (empty($email)) {
+                $response['message'] = 'Por favor, ingrese su correo electrónico.';
+                echo json_encode($response);
+                exit();
+            }
 
-      // Intentar generar y guardar el código de recuperación
-      $resultado_codigo = $login->generarYGuardarCodigoRecuperacion($email);
+            // Intentar generar y guardar el código de recuperación
+            $resultado_codigo = $login->generarYGuardarCodigoRecuperacion($email);
 
-      if ($resultado_codigo['success']) {
-        $codigo = $resultado_codigo['codigo'];
+            if ($resultado_codigo['success']) {
+                $codigo = $resultado_codigo['codigo'];
 
-        // --- PLANTILLA DE CORREO MODERNA Y SIMPLE ---
-        $para = $email;
-        $asunto = '🔐 Código de Recuperación - PPUD';
+                // --- PLANTILLA DE CORREO MODERNA Y SIMPLE ---
+                $para = $email;
+                $asunto = '🔐 Código de Recuperación - PPUD';
 
-        // Contenido HTML moderno del mensaje
-        $mensaje = '
+                // Contenido HTML moderno del mensaje
+                $mensaje = '
         <!DOCTYPE html>
         <html lang="es">
         <head>
@@ -226,61 +226,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </body>
         </html>';
 
-        // Encabezados del correo
-        $headers = "MIME-Version: 1.0" . "\r\n";
-        $headers .= "Content-type: text/html; charset=UTF-8" . "\r\n";
-        $headers .= "From: Soporte PPUD <soporte@ppud.com>" . "\r\n";
-        $headers .= "Reply-To: soporte@ppud.com" . "\r\n";
-        $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+                // Encabezados del correo
+                $headers = "MIME-Version: 1.0" . "\r\n";
+                $headers .= "Content-type: text/html; charset=UTF-8" . "\r\n";
+                $headers .= "From: Soporte PPUD <soporte@ppud.com>" . "\r\n";
+                $headers .= "Reply-To: soporte@ppud.com" . "\r\n";
+                $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 
-        // Enviar el correo usando la función mail()
-        if (mail($para, $asunto, $mensaje, $headers)) {
-          $response['success'] = true;
-          $response['message'] = 'Se ha enviado un código de recuperación a su correo electrónico. Verifique su bandeja de entrada y spam.';
-        } else {
-          $response['message'] = 'Error al enviar el correo. Por favor, revise la configuración de su servidor SMTP (Mercury).';
-        }
+                // Enviar el correo usando la función mail()
+                if (mail($para, $asunto, $mensaje, $headers)) {
+                    $response['success'] = true;
+                    $response['message'] = 'Se ha enviado un código de recuperación a su correo electrónico. Verifique su bandeja de entrada y spam.';
+                } else {
+                    $response['message'] = 'Error al enviar el correo. Por favor, revise la configuración de su servidor SMTP (Mercury).';
+                }
 
-      } else {
-        $response['message'] = $resultado_codigo['message'];
-      }
-      break;
+            } else {
+                $response['message'] = $resultado_codigo['message'];
+            }
+            break;
 
-    case 'cambiar_contrasena':
-      $email = $_POST['email'] ?? '';
-      $codigo = $_POST['codigo'] ?? '';
-      $nueva_contrasena = $_POST['nueva_contrasena'] ?? '';
+        case 'cambiar_contrasena':
+            $email = $_POST['email'] ?? '';
+            $codigo = $_POST['codigo'] ?? '';
+            $nueva_contrasena = $_POST['nueva_contrasena'] ?? '';
 
-      // Validar que todos los campos estén completos
-      if (empty($email) || empty($codigo) || empty($nueva_contrasena)) {
-        $response['message'] = 'Por favor, complete todos los campos.';
-        echo json_encode($response);
-        exit();
-      }
+            // Validar que todos los campos estén completos
+            if (empty($email) || empty($codigo) || empty($nueva_contrasena)) {
+                $response['message'] = 'Por favor, complete todos los campos.';
+                echo json_encode($response);
+                exit();
+            }
 
-      // Intentar verificar el código y actualizar la contraseña
-      $resultado_actualizacion = $login->restablecerContrasena($email, $codigo, $nueva_contrasena);
+            // Intentar verificar el código y actualizar la contraseña
+            $resultado_actualizacion = $login->restablecerContrasena($email, $codigo, $nueva_contrasena);
 
-      if ($resultado_actualizacion['success']) {
-        $response['success'] = true;
-        $response['message'] = 'Su contraseña ha sido restablecida exitosamente. Ahora puede iniciar sesión.';
-      } else {
-        $response['message'] = $resultado_actualizacion['message'];
-      }
-      break;
+            if ($resultado_actualizacion['success']) {
+                $response['success'] = true;
+                $response['message'] = 'Su contraseña ha sido restablecida exitosamente. Ahora puede iniciar sesión.';
+            } else {
+                $response['message'] = $resultado_actualizacion['message'];
+            }
+            break;
 
-    default:
-      $response['message'] = 'Acción no válida.';
-      break;
-  }
+        default:
+            $response['message'] = 'Acción no válida.';
+            break;
+    }
 
-  // Devolver la respuesta en formato JSON
-  echo json_encode($response);
-  exit();
+    // Devolver la respuesta en formato JSON
+    echo json_encode($response);
+    exit();
 } else {
-  // Si la solicitud no es POST, devolver un error
-  http_response_code(405);
-  echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
-  exit();
+    // Si la solicitud no es POST, devolver un error
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método no permitido.']);
+    exit();
 }
 ?>

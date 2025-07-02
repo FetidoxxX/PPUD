@@ -6,8 +6,8 @@ ini_set('display_errors', 1);
 header('Content-Type: application/json');
 
 try {
-  require_once './class/class_oferta.php';
-  require_once './class/class_empresa.php'; // Necesario para obtener el nombre de la empresa si es necesario
+  require_once '../MODELO/class_oferta.php';
+  require_once '../MODELO/class_empresa.php'; // Necesario para obtener el nombre de la empresa si es necesario
 } catch (Throwable $e) {
   error_log("FATAL ERROR in ajax_Gofertas.php initial setup: " . $e->getMessage() . " on line " . $e->getLine());
   echo json_encode(['success' => false, 'message' => 'Error crítico del servidor al cargar módulos: ' . $e->getMessage() . ' (Línea: ' . $e->getLine() . ')']);
@@ -20,7 +20,7 @@ if (isset($_SESSION['timeout'])) {
   $_session_life = time() - $_SESSION['timeout'];
   if ($_session_life > $inn) {
     session_destroy();
-    echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => 'index.php']);
+    echo json_encode(['success' => false, 'message' => 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.', 'redirect' => '../index.php']);
     exit();
   }
 }
@@ -28,7 +28,7 @@ $_SESSION['timeout'] = time();
 
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'administrador') {
   error_log("DEBUG AUTH FAIL (ajax_Gofertas): usuario_id is set? " . (isset($_SESSION['usuario_id']) ? 'Yes' : 'No') . " | rol is administrador? " . (($_SESSION['rol'] ?? 'none') === 'administrador' ? 'Yes' : 'No'));
-  echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Administrador en el Sistema.', 'redirect' => 'index.php']);
+  echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Administrador en el Sistema.', 'redirect' => '../index.php']);
   exit();
 }
 

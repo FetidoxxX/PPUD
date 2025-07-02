@@ -9,7 +9,7 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 // Incluir archivos necesarios
-include_once './class/class_empresa.php';
+include_once '../MODELO/class_empresa.php';
 
 // Crear conexión y instancia de empresa
 $empresa = new Empresa();
@@ -195,4 +195,6 @@ switch ($action) {
     echo json_encode(['success' => false, 'message' => 'Acción no válida']);
     break;
 }
+
+//prueba 
 ?>

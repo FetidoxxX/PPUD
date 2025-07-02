@@ -106,7 +106,7 @@ function loadStudentProfile() {
   }
 
   $.ajax({
-    url: 'ajax_perfilE.php',
+    url: '../CONTROLADOR/ajax_perfilE.php',
     type: 'GET',
     data: {
       action: 'obtener_perfil',
@@ -259,19 +259,19 @@ function loadStudentProfile() {
 function loadMasterData() {
   const requests = [
     $.ajax({
-      url: 'ajax_perfilE.php',
+      url: '../CONTROLADOR/ajax_perfilE.php',
       type: 'GET',
       data: { action: 'obtener_tipos_documento' },
       dataType: 'json',
     }),
     $.ajax({
-      url: 'ajax_perfilE.php',
+      url: '../CONTROLADOR/ajax_perfilE.php',
       type: 'GET',
       data: { action: 'obtener_ciudades' },
       dataType: 'json',
     }),
     $.ajax({
-      url: 'ajax_perfilE.php',
+      url: '../CONTROLADOR/ajax_perfilE.php',
       type: 'GET',
       data: { action: 'obtener_carreras' },
       dataType: 'json',
@@ -358,7 +358,7 @@ $('#studentProfileForm').submit(function (event) {
   });
 
   $.ajax({
-    url: 'ajax_perfilE.php',
+    url: '../CONTROLADOR/ajax_perfilE.php',
     type: 'POST',
     data: formData,
     processData: false, // Importante para FormData
@@ -407,7 +407,7 @@ $('#changePasswordForm').submit(function (event) {
   formData.append('idEstudiante', $('#idEstudiante').val()); // Asegurar que el ID se envía explícitamente
 
   $.ajax({
-    url: 'ajax_perfilE.php',
+    url: '../CONTROLADOR/ajax_perfilE.php',
     type: 'POST',
     data: formData,
     processData: false,

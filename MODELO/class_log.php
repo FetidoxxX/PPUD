@@ -1,8 +1,8 @@
 <?php
-include('./class/class_conec.php');
-include('./class/class_estudiante.php');
-include('./class/class_empresa.php');
-include('./class/class_administrador.php');
+include('../MODELO/class_conec.php');
+include('../MODELO/class_estudiante.php');
+include('../MODELO/class_empresa.php');
+include('../MODELO/class_administrador.php');
 
 class Login
 {
@@ -23,8 +23,8 @@ class Login
         <html>
 
         <head>
-          <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-          <script src='./sw/dist/sweetalert2.min.js'></script>
+          <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+          <script src='../sw/dist/sweetalert2.min.js'></script>
         </head>
 
         <body>
@@ -35,7 +35,7 @@ class Login
               text: 'Por favor complete todos los campos'
             }).then((result) => {
               if (result.isConfirmed) {
-                window.location = './index.php';
+                window.location = '../index.php';
               }
             });
           </script>
@@ -70,8 +70,8 @@ class Login
           <html>
 
           <head>
-            <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-            <script src='./sw/dist/sweetalert2.min.js'></script>
+            <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+            <script src='../sw/dist/sweetalert2.min.js'></script>
           </head>
 
           <body>
@@ -82,7 +82,7 @@ class Login
                 text: 'Rol no válido'
               }).then((result) => {
                 if (result.isConfirmed) {
-                  window.location = './index.php';
+                  window.location = '../index.php';
                 }
               });
             </script>
@@ -101,8 +101,8 @@ class Login
         <html>
 
         <head>
-          <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-          <script src='./sw/dist/sweetalert2.min.js'></script>
+          <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+          <script src='../sw/dist/sweetalert2.min.js'></script>
         </head>
 
         <body>
@@ -113,7 +113,7 @@ class Login
               text: 'el usuario <?php echo $user; ?> o password no son correctos'
             }).then((result) => {
               if (result.isConfirmed) {
-                window.location = './index.php';
+                window.location = '../index.php';
               }
             });
           </script>
@@ -129,8 +129,8 @@ class Login
       <html>
 
       <head>
-        <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-        <script src='./sw/dist/sweetalert2.min.js'></script>
+        <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+        <script src='../sw/dist/sweetalert2.min.js'></script>
       </head>
 
       <body>
@@ -141,7 +141,7 @@ class Login
             text: 'Error en el sistema'
           }).then((result) => {
             if (result.isConfirmed) {
-              window.location = './index.php';
+              window.location = '../index.php';
             }
           });
         </script>
@@ -170,7 +170,7 @@ class Login
         $_SESSION['nombre'] = $datosUsuario['nombre'];
         $_SESSION['apellidos'] = $datosUsuario['apellidos'];
         $_SESSION['correo'] = $datosUsuario['correo'];
-        $destino = "pruebaEstudiante.php";
+        $destino = "../VISTA/pruebaEstudiante.php";
         break;
 
       case 'empresa':
@@ -179,7 +179,7 @@ class Login
         $_SESSION['idEmpresa'] = $datosUsuario['idEmpresa']; // Mantener si otras partes del código lo usan
         $_SESSION['nombre'] = $datosUsuario['nombre'];
         $_SESSION['correo'] = $datosUsuario['correo'];
-        $destino = "pruebaEmpresa.php";
+        $destino = "../VISTA/pruebaEmpresa.php";
         break;
 
       case 'administrador':
@@ -188,7 +188,7 @@ class Login
         $_SESSION['idAdministrador'] = $datosUsuario['idAdministrador']; // Mantener si otras partes del código lo usan
         $_SESSION['nombres'] = $datosUsuario['nombres'];
         $_SESSION['apellidos'] = $datosUsuario['apellidos'];
-        $destino = "pruebaAdmin.php";
+        $destino = "../VISTA/pruebaAdmin.php";
         break;
     }
 
@@ -198,8 +198,8 @@ class Login
     <html>
 
     <head>
-      <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-      <script src='./sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
     </head>
 
     <body>

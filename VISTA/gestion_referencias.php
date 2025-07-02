@@ -5,7 +5,7 @@ if (isset($_SESSION['timeout'])) {
   $_session_life = time() - $_SESSION['timeout'];
   if ($_session_life > $inn) {
     session_destroy();
-    header("location:./index.php");
+    header("location:../index.php");
     exit();
   }
 }
@@ -19,8 +19,8 @@ if (!$_SESSION['usuario']) {
 
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
 
   <body>
@@ -31,7 +31,7 @@ if (!$_SESSION['usuario']) {
         text: ' Debe iniciar Session en el Sistema'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -43,7 +43,7 @@ if (!$_SESSION['usuario']) {
 }
 
 // Incluir archivos necesarios
-include_once './class/class_referencia.php';
+include_once '../MODELO/class_referencia.php';
 
 // Crear instancias de las clases
 $referenciaObj = new Referencia();
@@ -60,8 +60,8 @@ $estados_referencia = $referenciaObj->obtenerEstados();
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gestión de Referencias</title>
-  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
@@ -105,7 +105,7 @@ $estados_referencia = $referenciaObj->obtenerEstados();
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -310,10 +310,10 @@ $estados_referencia = $referenciaObj->obtenerEstados();
       </div>
     </footer>
 
-    <script src="./js/jquery-3.6.1.min.js"></script>
-    <script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="./sw/dist/sweetalert2.min.js"></script>
-    <script src="./js/funcionesGreferencias.js"></script>
+    <script src="../js/jquery-3.6.1.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../sw/dist/sweetalert2.min.js"></script>
+    <script src="../js/funcionesGreferencias.js"></script>
     <script>
       // Pasar las variables PHP a la función de inicialización de JavaScript
       $(document).ready(function () {

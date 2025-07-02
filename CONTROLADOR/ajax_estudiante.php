@@ -9,8 +9,8 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 // Incluir archivos necesarios
-include_once './class/class_estudiante.php';
-include_once './class/class_empresa.php'; // Incluir la clase Empresa para obtener tipos de documento si fuera necesario
+include_once '../MODELO/class_estudiante.php';
+include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa para obtener tipos de documento si fuera necesario
 
 // Crear instancias de las clases
 $estudiante = new Estudiante();

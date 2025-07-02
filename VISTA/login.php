@@ -9,14 +9,14 @@ if (isset($_POST['rol'])) {
 
 // Si no hay rol, redirigir a index.php
 if (!$rol) {
-  header('Location: index.php');
+  header('Location: ../index.php');
   exit();
 }
 
 // Validar que el rol sea válido
 $roles_validos = ['estudiante', 'empresa', 'administrador'];
 if (!in_array($rol, $roles_validos)) {
-  header('Location: index.php');
+  header('Location: ../index.php');
   exit();
 }
 
@@ -50,9 +50,9 @@ $config = $config_rol[$rol];
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
-  <script src="./js/funciones.js" defer></script>
+  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
+  <script src="../js/funciones.js" defer></script>
   <title>Iniciar Sesión - PPUD</title>
 </head>
 
@@ -60,12 +60,12 @@ $config = $config_rol[$rol];
   <!-- Barra de navegación -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container">
-      <a class="navbar-brand fw-bold" href="index.php">
+      <a class="navbar-brand fw-bold" href="../index.php">
         <span class="text-warning">PPUD</span> - Plataforma de Prácticas
       </a>
       <ul class="navbar-nav">
         <li class="nav-item">
-          <a class="nav-link" href="index.php">
+          <a class="nav-link" href="../index.php">
             <span class="me-1">←</span> Cambiar Rol
           </a>
         </li>
@@ -101,7 +101,7 @@ $config = $config_rol[$rol];
           </div>
 
           <div class="card-body p-4">
-            <form name="form" action="verifica.php" method="post">
+            <form name="form" action="../CONTROLADOR/verifica.php" method="post">
               <!-- Campo oculto para enviar el rol -->
               <input type="hidden" name="rol" value="<?php echo htmlspecialchars($rol); ?>">
 
@@ -152,7 +152,7 @@ $config = $config_rol[$rol];
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mt-4">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="index.php">Inicio</a></li>
+        <li class="breadcrumb-item"><a href="../index.php">Inicio</a></li>
         <li class="breadcrumb-item active" aria-current="page">Login <?php echo ucfirst($rol); ?></li>
       </ol>
     </nav>
@@ -170,9 +170,9 @@ $config = $config_rol[$rol];
     </div>
   </footer>
 
-  <script src="./js/jquery-3.6.1.min.js"></script>
-  <script src="./bootstrap/js/bootstrap.min.js"></script>
-  <script src="./sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
 </body>
 
 </html>

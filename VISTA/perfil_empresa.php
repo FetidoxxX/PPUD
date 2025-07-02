@@ -10,8 +10,8 @@ if (isset($_SESSION['timeout'])) {
     <html>
     <head>
       <meta charset='utf-8'>
-      <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-      <script src='./sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
     </head>
     <body>
       <script type='text/javascript'>
@@ -21,7 +21,7 @@ if (isset($_SESSION['timeout'])) {
           text: 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.'
         }).then((result) => {
           if (result.isConfirmed) {
-            window.location = './index.php';
+            window.location = '../index.php';
           }
         });
       </script>
@@ -41,7 +41,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   <head>
     <meta charset='utf-8'>
     <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
   <body>
     <script type='text/javascript'>
@@ -51,7 +51,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
         text: 'Debe iniciar sesión como Empresa en el Sistema.'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -62,7 +62,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
 }
 
 // Incluir archivos necesarios para el manejo de la empresa
-require_once './class/class_empresa.php';
+require_once '../MODELO/class_empresa.php';
 
 // Crear instancia de la clase Empresa. La conexión se maneja internamente.
 $empresaObj = new Empresa();
@@ -85,8 +85,8 @@ $estados = $empresaObj->obtenerEstados();
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <title>Mi Perfil - Empresa</title>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <link rel='stylesheet' type='text/css' media='screen' href='./bootstrap/css/bootstrap.min.css'>
-  <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
+  <link rel='stylesheet' type='text/css' media='screen' href='../bootstrap/css/bootstrap.min.css'>
+  <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     .profile-section {
@@ -196,7 +196,7 @@ $estados = $empresaObj->obtenerEstados();
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -515,10 +515,10 @@ $estados = $empresaObj->obtenerEstados();
     </div>
   </footer>
 
-  <script src="./js/jquery-3.6.1.min.js"></script>
-  <script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="./sw/dist/sweetalert2.min.js"></script>
-  <script src="./js/funcionesEmpresaPerfil.js"></script>
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/funcionesEmpresaPerfil.js"></script>
   <script>
     // Variables PHP pasadas al JavaScript
     const tiposDocumentoData = <?php echo json_encode($tipos_documento); ?>;

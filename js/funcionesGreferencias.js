@@ -67,7 +67,7 @@ function initializeGestionReferencias(tiposReferencia, estadosReferencia) {
  * @param {number} offset - Desplazamiento para la paginación.
  */
 function cargarReferencias(busqueda = '', tipoReferenciaId = '', offset = 0) {
-  const url = `ajax_Greferencias.php?action=listar&busqueda=${encodeURIComponent(
+  const url = `../CONTROLADOR/ajax_Greferencias.php?action=listar&busqueda=${encodeURIComponent(
     busqueda
   )}&tipo_referencia_id=${encodeURIComponent(
     tipoReferenciaId
@@ -201,7 +201,7 @@ function limpiarBusqueda() {
  */
 function verDetalleReferencia(idReferencia) {
   $.ajax({
-    url: 'ajax_Greferencias.php',
+    url: '../CONTROLADOR/ajax_Greferencias.php',
     type: 'GET',
     data: { action: 'detalle_html', id: idReferencia }, // Llamar a la acción que retorna HTML
     dataType: 'json', // Esperar JSON que contenga el HTML
@@ -234,7 +234,7 @@ function editarReferencia(idReferencia) {
   $('#editReferenciaId').val(idReferencia); // Establecer el ID de la referencia en el campo oculto
 
   $.ajax({
-    url: 'ajax_Greferencias.php',
+    url: '../CONTROLADOR/ajax_Greferencias.php',
     type: 'GET',
     data: { action: 'obtener', id: idReferencia },
     dataType: 'json',
@@ -329,7 +329,7 @@ function guardarCambiosReferencia() {
   formData.append('estado_id_estado', estadoId);
 
   $.ajax({
-    url: 'ajax_Greferencias.php',
+    url: '../CONTROLADOR/ajax_Greferencias.php',
     type: 'POST',
     data: formData,
     processData: false,
@@ -376,7 +376,7 @@ function eliminarReferencia(idReferencia) {
       formData.append('id', idReferencia);
 
       $.ajax({
-        url: 'ajax_Greferencias.php',
+        url: '../CONTROLADOR/ajax_Greferencias.php',
         type: 'POST',
         data: formData,
         processData: false,

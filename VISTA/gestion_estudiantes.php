@@ -19,8 +19,8 @@ if (!$_SESSION['usuario']) {
 
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
 
   <body>
@@ -31,7 +31,7 @@ if (!$_SESSION['usuario']) {
         text: ' Debe iniciar Session en el Sistema'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -43,14 +43,15 @@ if (!$_SESSION['usuario']) {
 }
 
 // Incluir archivos necesarios
-include_once './class/class_empresa.php';
+include_once '../MODELO/class_estudiante.php';
+include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa para obtener tipos de documento
 
-// Crear conexión y instancia de empresa
-
-$empresa = new Empresa();
+// Crear instancias de las clases
+$estudiante = new Estudiante();
+$empresaObj = new Empresa(); // Instancia de Empresa
 
 // Solo obtener tipos de documento para el modal de edición
-$tipos_documento = $empresa->obtenerTiposDocumento();
+$tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de Empresa
 ?>
 
 <!DOCTYPE html>
@@ -59,9 +60,9 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gestión de Empresas</title>
-  <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="./sw/dist/sweetalert2.min.css">
+  <title>Gestión de Estudiantes</title>
+  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <script type="text/javascript" language="Javascript" src="./js/funciones.js"></script>
 </head>
 
@@ -81,10 +82,10 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
             <a class="nav-link" href="pruebaAdmin.php">Inicio</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="gestion_estudiantes.php">Gestión Estudiantes</a>
+            <a class="nav-link active" href="gestion_estudiantes.php">Gestión Estudiantes</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" href="gestion_empresas.php">Gestión Empresas</a>
+            <a class="nav-link" href="gestion_empresas.php">Gestión Empresas</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="gestion_ofertas.php">Gestión Ofertas</a>
@@ -105,7 +106,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -117,12 +118,12 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
   </nav>
 
   <!-- Jumbotron de bienvenida -->
-  <div class="bg-success text-white py-4 mb-4">
+  <div class="bg-primary text-white py-4 mb-4">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto text-center">
-          <h1 class="display-5 fw-bold">🏢 Gestión de Empresas</h1>
-          <p class="lead">Administra y gestiona todas las empresas registradas en el sistema</p>
+          <h1 class="display-5 fw-bold">📚 Gestión de Estudiantes</h1>
+          <p class="lead">Administra y gestiona todos los estudiantes registrados en el sistema</p>
         </div>
       </div>
     </div>
@@ -134,7 +135,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
     <nav aria-label="breadcrumb" class="mb-4">
       <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="pruebaAdmin.php">Panel de Administración</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Gestión de Empresas</li>
+        <li class="breadcrumb-item active" aria-current="page">Gestión de Estudiantes</li>
       </ol>
     </nav>
 
@@ -142,33 +143,33 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
     <div class="row mb-4">
       <div class="col-md-8">
         <div class="card shadow-sm">
-          <div class="card-header bg-success text-white">
-            <h5 class="card-title mb-0">🔍 Búsqueda de Empresas</h5>
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">🔍 Búsqueda de Estudiantes</h5>
           </div>
           <div class="card-body">
             <div class="input-group">
               <input type="text" class="form-control" id="busquedaInput"
-                placeholder="Buscar por nombre, correo, teléfono, documento o ID...">
+                placeholder="Buscar por nombre, apellidos, correo, documento o ID...">
               <button class="btn btn-outline-secondary" type="button" onclick="limpiarBusqueda()">Limpiar</button>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card shadow-sm text-white bg-warning">
+        <div class="card shadow-sm text-white bg-info">
           <div class="card-header">📊 Estadísticas</div>
           <div class="card-body">
-            <h4 class="card-title text-center" id="totalEmpresas">0</h4>
-            <p class="card-text text-center mb-0" id="textoEstadistica">Total de empresas</p>
+            <h4 class="card-title text-center" id="totalEstudiantes">0</h4>
+            <p class="card-text text-center mb-0" id="textoEstadistica">Total de estudiantes</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Tabla de empresas -->
+    <!-- Tabla de estudiantes -->
     <div class="card shadow-sm">
       <div class="card-header bg-dark text-white">
-        <h5 class="card-title mb-0">🏢 Lista de Empresas</h5>
+        <h5 class="card-title mb-0">👥 Lista de Estudiantes</h5>
       </div>
       <div class="card-body">
         <div class="table-responsive">
@@ -176,15 +177,15 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
             <thead class="table-dark">
               <tr>
                 <th>ID</th>
-                <th>Nombre</th>
+                <th>Nombre Completo</th>
                 <th>Correo</th>
                 <th>Teléfono</th>
-                <th>Tipo Documento</th>
                 <th>Documento</th>
+                <th>Edad</th>
                 <th>Acciones</th>
               </tr>
             </thead>
-            <tbody id="tablaEmpresas">
+            <tbody id="tablaEstudiantes">
               <!-- Contenido cargado dinámicamente -->
             </tbody>
           </table>
@@ -196,8 +197,8 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
     <div class="modal fade" id="modalDetalle" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
-          <div class="modal-header bg-success text-white">
-            <h5 class="modal-title">🏢 Detalle de la Empresa</h5>
+          <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title">👤 Detalle del Estudiante</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body" id="contenidoDetalle">
@@ -215,7 +216,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header bg-warning text-white">
-            <h5 class="modal-title">✏️ Editar Empresa</h5>
+            <h5 class="modal-title">✏️ Editar Estudiante</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <form id="formEditar">
@@ -225,14 +226,14 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
               <div class="row">
                 <div class="col-md-6">
                   <div class="mb-3">
-                    <label class="form-label fw-bold">Nombre de la Empresa</label>
+                    <label class="form-label fw-bold">Nombre</label>
                     <input type="text" class="form-control" id="editNombre" required>
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="mb-3">
-                    <label class="form-label fw-bold">Correo</label>
-                    <input type="email" class="form-control" id="editCorreo" required>
+                    <label class="form-label fw-bold">Apellidos</label>
+                    <input type="text" class="form-control" id="editApellidos" required>
                   </div>
                 </div>
               </div>
@@ -240,8 +241,23 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
               <div class="row">
                 <div class="col-md-6">
                   <div class="mb-3">
+                    <label class="form-label fw-bold">Correo</label>
+                    <input type="email" class="form-control" id="editCorreo" required>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
                     <label class="form-label fw-bold">Teléfono</label>
                     <input type="text" class="form-control" id="editTelefono" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">Fecha de Nacimiento</label>
+                    <input type="date" class="form-control" id="editFechaNac" required>
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -279,39 +295,40 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
           <div class="col-12">
             <p class="mb-0">&copy; <?php echo date('Y'); ?> Sistema de Gestión Administrativa. Todos los derechos
               reservados.</p>
-            <small class="text-muted">Gestión de Empresas - Desarrollado con Bootstrap <?php echo date('Y'); ?></small>
+            <small class="text-muted">Gestión de Estudiantes - Desarrollado con Bootstrap
+              <?php echo date('Y'); ?></small>
           </div>
         </div>
       </div>
     </footer>
 
-    <script src="./bootstrap/js/bootstrap.min.js"></script>
-    <script src="./sw/dist/sweetalert2.min.js"></script>
-    <script src="./js/jquery-3.6.1.min.js"></script>
+    <script src="../bootstrap/js/bootstrap.min.js"></script>
+    <script src="../sw/dist/sweetalert2.min.js"></script>
+    <script src="../js/jquery-3.6.1.min.js"></script>
 
     <script>
       // Variables globales
       let timeoutBusqueda;
       let busquedaActual = '';
 
-      // Cargar empresas al iniciar la página
+      // Cargar estudiantes al iniciar la página
       document.addEventListener('DOMContentLoaded', function () {
-        cargarEmpresas();
+        cargarEstudiantes();
       });
 
-      // Función principal para cargar empresas vía AJAX
-      function cargarEmpresas(busqueda = '') {
-        fetch(`ajax_empresa.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
+      // Función principal para cargar estudiantes vía AJAX
+      function cargarEstudiantes(busqueda = '') {
+        fetch(`../CONTROLADOR/ajax_estudiante.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
-              document.getElementById('tablaEmpresas').innerHTML = data.html;
-              document.getElementById('totalEmpresas').textContent = data.total;
+              document.getElementById('tablaEstudiantes').innerHTML = data.html;
+              document.getElementById('totalEstudiantes').textContent = data.total;
               document.getElementById('textoEstadistica').textContent =
-                busqueda ? 'Resultados encontrados' : 'Total de empresas';
+                busqueda ? 'Resultados encontrados' : 'Total de estudiantes';
               busquedaActual = busqueda;
             } else {
-              mostrarError('Error al cargar empresas');
+              mostrarError('Error al cargar estudiantes');
             }
           })
           .catch(error => {
@@ -326,14 +343,14 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 
         clearTimeout(timeoutBusqueda);
         timeoutBusqueda = setTimeout(() => {
-          cargarEmpresas(valor);
+          cargarEstudiantes(valor);
         }, 300); // Esperar 300ms después de que el usuario deje de escribir
       });
 
       // Limpiar búsqueda
       function limpiarBusqueda() {
         document.getElementById('busquedaInput').value = '';
-        cargarEmpresas();
+        cargarEstudiantes();
       }
 
       // Función para mostrar perfil
@@ -354,9 +371,9 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
         });
       }
 
-      // Ver detalle de la empresa
+      // Ver detalle del estudiante
       function verDetalle(id) {
-        fetch(`ajax_empresa.php?action=detalle&id=${id}`)
+        fetch(`../CONTROLADOR/ajax_estudiante.php?action=detalle&id=${id}`)
           .then(response => response.text())
           .then(data => {
             document.getElementById('contenidoDetalle').innerHTML = data;
@@ -367,19 +384,21 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
           });
       }
 
-      // Editar empresa
-      function editarEmpresa(id) {
-        fetch(`ajax_empresa.php?action=obtener&id=${id}`)
+      // Editar estudiante
+      function editarEstudiante(id) {
+        fetch(`../CONTROLADOR/ajax_estudiante.php?action=obtener&id=${id}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
-              const emp = data.empresa;
-              document.getElementById('editId').value = emp.idEmpresa;
-              document.getElementById('editNombre').value = emp.nombre;
-              document.getElementById('editCorreo').value = emp.correo;
-              document.getElementById('editTelefono').value = emp.telefono;
-              document.getElementById('editTipoDoc').value = emp.tipo_documento_id_tipo;
-              document.getElementById('editDireccion').value = emp.direccion;
+              const est = data.estudiante;
+              document.getElementById('editId').value = est.idEstudiante;
+              document.getElementById('editNombre').value = est.nombre;
+              document.getElementById('editApellidos').value = est.apellidos;
+              document.getElementById('editCorreo').value = est.correo;
+              document.getElementById('editTelefono').value = est.telefono;
+              document.getElementById('editFechaNac').value = est.fechaNac;
+              document.getElementById('editTipoDoc').value = est.tipo_documento_id_tipo;
+              document.getElementById('editDireccion').value = est.direccion;
 
               new bootstrap.Modal(document.getElementById('modalEditar')).show();
             } else {
@@ -399,12 +418,14 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
         formData.append('action', 'actualizar');
         formData.append('id', document.getElementById('editId').value);
         formData.append('nombre', document.getElementById('editNombre').value);
+        formData.append('apellidos', document.getElementById('editApellidos').value);
         formData.append('correo', document.getElementById('editCorreo').value);
         formData.append('telefono', document.getElementById('editTelefono').value);
+        formData.append('fechaNac', document.getElementById('editFechaNac').value);
         formData.append('tipo_documento', document.getElementById('editTipoDoc').value);
         formData.append('direccion', document.getElementById('editDireccion').value);
 
-        fetch('ajax_empresa.php', {
+        fetch('../CONTROLADOR/ajax_estudiante.php', {
           method: 'POST',
           body: formData
         })
@@ -413,18 +434,18 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
             if (data.success) {
               bootstrap.Modal.getInstance(document.getElementById('modalEditar')).hide();
               mostrarExito(data.message);
-              cargarEmpresas(busquedaActual); // Recargar con la búsqueda actual
+              cargarEstudiantes(busquedaActual); // Recargar con la búsqueda actual
             } else {
               mostrarError(data.message);
             }
           })
           .catch(error => {
-            mostrarError('Error al actualizar empresa');
+            mostrarError('Error al actualizar estudiante');
           });
       });
 
-      // Eliminar empresa
-      function eliminarEmpresa(id) {
+      // Eliminar estudiante
+      function eliminarEstudiante(id) {
         Swal.fire({
           title: '¿Está seguro?',
           text: 'Esta acción no se puede deshacer',
@@ -440,7 +461,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
             formData.append('action', 'eliminar');
             formData.append('id', id);
 
-            fetch('ajax_empresa.php', {
+            fetch('../CONTROLADOR/ajax_estudiante.php', {
               method: 'POST',
               body: formData
             })
@@ -448,13 +469,13 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
               .then(data => {
                 if (data.success) {
                   mostrarExito(data.message);
-                  cargarEmpresas(busquedaActual); // Recargar con la búsqueda actual
+                  cargarEstudiantes(busquedaActual); // Recargar con la búsqueda actual
                 } else {
                   mostrarError(data.message);
                 }
               })
               .catch(error => {
-                mostrarError('Error al eliminar empresa');
+                mostrarError('Error al eliminar estudiante');
               });
           }
         });

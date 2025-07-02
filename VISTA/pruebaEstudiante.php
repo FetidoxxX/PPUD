@@ -11,8 +11,8 @@ if (isset($_SESSION['timeout'])) {
     <html>
     <head>
       <meta charset='utf-8'>
-      <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-      <script src='./sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
     </head>
     <body>
       <script type='text/javascript'>
@@ -22,7 +22,7 @@ if (isset($_SESSION['timeout'])) {
           text: 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.'
         }).then((result) => {
           if (result.isConfirmed) {
-            window.location = './index.php';
+            window.location = '../index.php';
           }
         });
       </script>
@@ -42,8 +42,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <html>
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+    <script src='../sw/dist/sweetalert2.min.js'></script>
   </head>
   <body>
     <script type='text/javascript'>
@@ -53,7 +53,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
         text: 'Acceso denegado. Debe iniciar sesión como Estudiante en el Sistema.'
       }).then((result) => {
         if (result.isConfirmed) {
-          window.location = './index.php';
+          window.location = '../index.php';
         }
       });
     </script>
@@ -64,9 +64,9 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
 }
 
 // Incluir archivos necesarios para el manejo de ofertas
-require_once './class/class_oferta.php';
-require_once './class/class_empresa.php'; // Para obtener el perfil de la empresa
-require_once './class/class_estudiante.php'; // Necesario para manejar el interés del estudiante
+require_once '../MODELO/class_oferta.php';
+require_once '../MODELO/class_empresa.php'; // Para obtener el perfil de la empresa
+require_once '../MODELO/class_estudiante.php'; // Necesario para manejar el interés del estudiante
 
 // Crear instancias de las clases. Cada clase ahora maneja su propia conexión internamente.
 $ofertaObj = new Oferta();
@@ -82,8 +82,8 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
   <title>Módulo Estudiante - PPUD</title>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
-  <link rel='stylesheet' type='text/css' media='screen' href='./bootstrap/css/bootstrap.min.css'>
-  <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
+  <link rel='stylesheet' type='text/css' media='screen' href='../bootstrap/css/bootstrap.min.css'>
+  <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     /* Estilos adicionales si son necesarios, siguiendo la estética de los otros módulos */
@@ -183,7 +183,7 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
                 <hr class="dropdown-divider">
               </li>
               <li>
-                <form action="salir.php" method="post" class="d-inline">
+                <form action="../salir.php" method="post" class="d-inline">
                   <button type="submit" class="dropdown-item text-danger">Cerrar Sesión</button>
                 </form>
               </li>
@@ -344,11 +344,11 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
   <input type="hidden" id="idEstudiante" value="<?php echo htmlspecialchars($_SESSION['usuario_id']); ?>">
 
 
-  <script src="./js/jquery-3.6.1.min.js"></script>
-  <script src="./bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="./sw/dist/sweetalert2.min.js"></script>
-  <script src="./js/funcionesOfertasE.js"></script>
-  <script src="./js/perfilE.js"></script>
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/funcionesOfertasE.js"></script>
+  <script src="../js/perfilE.js"></script>
   <script>
     $(document).ready(function () {
       cargarOfertas(); // Cargar ofertas al inicio

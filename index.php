@@ -38,7 +38,7 @@
     <div class="row g-4 justify-content-center mb-5">
       <!-- Estudiante -->
       <div class="col-lg-4 col-md-6">
-        <form method="POST" action="login.php">
+        <form method="POST" action="./VISTA/login.php">
           <input type="hidden" name="rol" value="estudiante">
           <div class="card h-100 shadow-sm border-0">
             <div class="card-body text-center p-4">
@@ -59,7 +59,7 @@
 
       <!-- Empresa -->
       <div class="col-lg-4 col-md-6">
-        <form method="POST" action="login.php">
+        <form method="POST" action="./VISTA/login.php">
           <input type="hidden" name="rol" value="empresa">
           <div class="card h-100 shadow-sm border-0">
             <div class="card-body text-center p-4">
@@ -80,7 +80,7 @@
 
       <!-- Administrador -->
       <div class="col-lg-4 col-md-6">
-        <form method="POST" action="login.php">
+        <form method="POST" action="./VISTA/login.php">
           <input type="hidden" name="rol" value="administrador">
           <div class="card h-100 shadow-sm border-0">
             <div class="card-body text-center p-4">
