@@ -195,4 +195,6 @@ switch ($action) {
     echo json_encode(['success' => false, 'message' => 'Acción no válida']);
     break;
 }
+
+//prueba 
 ?>

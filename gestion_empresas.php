@@ -44,6 +44,7 @@ if (!$_SESSION['usuario']) {
 
 // Incluir archivos necesarios
 include_once './class/class_empresa.php';
+include_once './CONTROLADOR/ajax_empresa.php';
 
 // Crear conexión y instancia de empresa
 
@@ -301,7 +302,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 
       // Función principal para cargar empresas vía AJAX
       function cargarEmpresas(busqueda = '') {
-        fetch(`ajax_empresa.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
+        fetch(`./CONTROLADOR/ajax_empresa.php?action=listar&busqueda=${encodeURIComponent(busqueda)}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
@@ -356,7 +357,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 
       // Ver detalle de la empresa
       function verDetalle(id) {
-        fetch(`ajax_empresa.php?action=detalle&id=${id}`)
+        fetch(`./CONTROLADOR/ajax_empresa.php?action=detalle&id=${id}`)
           .then(response => response.text())
           .then(data => {
             document.getElementById('contenidoDetalle').innerHTML = data;
@@ -369,7 +370,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
 
       // Editar empresa
       function editarEmpresa(id) {
-        fetch(`ajax_empresa.php?action=obtener&id=${id}`)
+        fetch(`./CONTROLADOR/ajax_empresa.php?action=obtener&id=${id}`)
           .then(response => response.json())
           .then(data => {
             if (data.success) {
@@ -404,7 +405,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
         formData.append('tipo_documento', document.getElementById('editTipoDoc').value);
         formData.append('direccion', document.getElementById('editDireccion').value);
 
-        fetch('ajax_empresa.php', {
+        fetch('./CONTROLADOR/ajax_empresa.php', {
           method: 'POST',
           body: formData
         })
@@ -440,7 +441,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
             formData.append('action', 'eliminar');
             formData.append('id', id);
 
-            fetch('ajax_empresa.php', {
+            fetch('./CONTROLADOR/ajax_empresa.php', {
               method: 'POST',
               body: formData
             })
