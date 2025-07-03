@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-06-2025 a las 01:40:13
+-- Tiempo de generación: 03-07-2025 a las 11:55:25
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.0.30
 
@@ -181,8 +181,8 @@ CREATE TABLE `empresa` (
 --
 
 INSERT INTO `empresa` (`idEmpresa`, `correo`, `contrasena`, `nombre`, `telefono`, `direccion`, `n_doc`, `tipo_documento_id_tipo`, `ciudad_id_ciudad`, `descripcion`, `sector_id_sector`, `sitio_web`, `numero_empleados`, `ano_fundacion`, `contacto_nombres`, `contacto_apellidos`, `contacto_cargo`, `estado_id_estado`, `fecha_creacion`, `fecha_actualizacion`, `codigo_recuperacion`, `codigo_expira_en`) VALUES
-(2001, 'empresa1@correo.com', 'empresa123', 'TechCol SAS', '3000000000', 'Av. Siempre Viva 1234', '900123456', 5, 1, 'Empresa de desarrollo de software y soluciones tecnológicas', 1, 'https://docs.google.com', 1503, '2024', 'María', 'ordines', 'Gerente de Recursos Humanos', 1, '2025-06-13 03:33:49', '2025-06-15 05:35:50', NULL, NULL),
-(2002, 'empresa2@gmail.com', 'claveemp', 'Innovar Ltda.', '3127834333', 'Calle Falsa 456', '', 5, 1, 'Consultora en innovación y transformación digital', 2, 'www.innovar.com', 75, '2018', 'Carlos', 'Rodríguez', 'Director de Talento Humano', 1, '2025-06-13 03:33:49', '2025-06-13 23:54:14', NULL, NULL);
+(2001, 'empresa1@correo.com', 'empresa123', 'TechCol SAS', '3000000000', 'Av. Siempre Viva 1234', '900123456', 5, 4, 'Empresa de desarrollo de software y soluciones tecnológicas', 1, 'https://docs.google.com', 1503, '2025', 'María', 'gloriales ', 'Gerente de Recursos Humanos', 1, '2025-06-13 03:33:49', '2025-06-26 14:05:40', NULL, NULL),
+(2002, 'empresa2@gmail.com', 'claveemp', 'Innovar Ltda.', '31278345', 'Calle Falsa 456', '', 5, 1, 'Consultora en innovación y transformación digital', 2, 'https://estudiantes.portaloas.udistrital.edu.', 75, '2018', 'Carlos ', 'Rodrígues', 'Director de Talento Humano', 1, '2025-06-13 03:33:49', '2025-07-03 09:25:01', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -238,16 +238,17 @@ CREATE TABLE `estudiante` (
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
   `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `codigo_recuperacion` varchar(100) DEFAULT NULL,
-  `codigo_expira_en` datetime DEFAULT NULL
+  `codigo_expira_en` datetime DEFAULT NULL,
+  `hoja_vida_path` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
 
 --
 -- Volcado de datos para la tabla `estudiante`
 --
 
-INSERT INTO `estudiante` (`idEstudiante`, `contrasena`, `nombre`, `correo`, `telefono`, `apellidos`, `fechaNac`, `direccion`, `n_doc`, `tipo_documento_id_tipo`, `ciudad_id_ciudad`, `codigo_estudiante`, `carrera_id_carrera`, `semestre`, `promedio_academico`, `habilidades`, `experiencia_laboral`, `certificaciones`, `idiomas`, `objetivos_profesionales`, `disponibilidad_id_disponibilidad`, `estado_id_estado`, `fecha_creacion`, `fecha_actualizacion`, `codigo_recuperacion`, `codigo_expira_en`) VALUES
-(1001, '123456', 'Laura', 'maic132530@gmail.com', '3111167', 'Pérez', '2000-01-01', 'Calle 1 #1-1', '100000001', 1, 1, '20201578001', 1, 5, 4.20, 'Java, Python, SQL, HTML, CSS, JavaScript', 'Desarrolladora junior en startup por 6 meses', 'Oracle Database Foundations', 'Español (nativo), Inglés (intermedio)', 'Especializarme en desarrollo de software empresarial y cine ', 4, 1, '2025-06-13 03:33:49', '2025-06-17 23:36:56', '35a8e3', '2025-06-17 23:57:34'),
-(1002, 'abcd', 'Carlos ', 'carlos@mail.com', '657657567', 'Ramírez', '1999-02-15', 'Carrera 2 #2-24', '100000002', 1, 1, '20191578002', 2, 9, 3.85, 'Redes, Cisco, Python, Linux, Seguridad Informática', 'Técnico en soporte de redes por 1 año', 'CCNA Routing and Switching', 'Español (nativo), Inglés (avanzado)', 'Trabajar en infraestructura de redes empresariales', 5, 1, '2025-06-13 03:33:49', '2025-06-17 23:38:14', NULL, NULL);
+INSERT INTO `estudiante` (`idEstudiante`, `contrasena`, `nombre`, `correo`, `telefono`, `apellidos`, `fechaNac`, `direccion`, `n_doc`, `tipo_documento_id_tipo`, `ciudad_id_ciudad`, `codigo_estudiante`, `carrera_id_carrera`, `semestre`, `promedio_academico`, `habilidades`, `experiencia_laboral`, `certificaciones`, `idiomas`, `objetivos_profesionales`, `disponibilidad_id_disponibilidad`, `estado_id_estado`, `fecha_creacion`, `fecha_actualizacion`, `codigo_recuperacion`, `codigo_expira_en`, `hoja_vida_path`) VALUES
+(1001, '123456', 'Laura', 'maic132530@gmail.com', '3111167', 'Pérez', '2000-01-01', 'Calle 1 #1-12', '100000001', 1, 1, '20201578001', 1, 4, 4.20, 'Java, Python, SQL, HTML, CSS, JavaScript', 'Desarrolladora junior en startup por 6 meses', 'Oracle Database Foundations 2', 'Español (nativo), Inglés (intermedio)', 'Especializarme en desarrollo de software empresarial y cine ', 4, 1, '2025-06-13 03:33:49', '2025-07-03 09:33:14', NULL, NULL, '../uploads/cv/cv_68663a87d5507.pdf'),
+(1002, 'abcd', 'Carlos ', 'carlos@mail.com', '6576575', 'Ramírez', '1999-02-17', 'Carrera 2 #2-24', '100000002', 1, 1, '20191578002', 1, 9, 3.85, 'Redes, Cisco, Python, Linux, Seguridad Informática', 'Técnico en soporte de redes por 1 año', 'CCNA Routing and Switching', 'Español (nativo), Inglés (avanzado)', 'Trabajar en infraestructura de redes empresariales', 5, 1, '2025-06-13 03:33:49', '2025-07-03 09:55:08', NULL, NULL, '../uploads/cv/cv_6866537cc5c20.pdf');
 
 -- --------------------------------------------------------
 
@@ -266,7 +267,9 @@ CREATE TABLE `interes_estudiante_carrera` (
 
 INSERT INTO `interes_estudiante_carrera` (`estudiante_idEstudiante`, `carrera_id_carrera`) VALUES
 (1001, 1),
-(1002, 1);
+(1001, 2),
+(1002, 1),
+(1002, 2);
 
 -- --------------------------------------------------------
 
@@ -285,7 +288,10 @@ CREATE TABLE `interes_estudiante_oferta` (
 --
 
 INSERT INTO `interes_estudiante_oferta` (`estudiante_idEstudiante`, `oferta_idOferta`, `fecha_interes`) VALUES
-(1001, 8, '2025-06-17 23:36:20');
+(1001, 2, '2025-07-03 09:03:08'),
+(1001, 8, '2025-07-03 09:51:14'),
+(1002, 2, '2025-07-03 09:54:27'),
+(1002, 8, '2025-07-03 09:54:24');
 
 -- --------------------------------------------------------
 
@@ -344,8 +350,12 @@ CREATE TABLE `oferta` (
 --
 
 INSERT INTO `oferta` (`idOferta`, `titulo`, `descripcion`, `requisitos`, `beneficios`, `modalidad_id_modalidad`, `tipo_oferta_id_tipo_oferta`, `duracion_meses`, `horario`, `remuneracion`, `area_conocimiento_id_area`, `semestre_minimo`, `promedio_minimo`, `habilidades_requeridas`, `fecha_inicio`, `fecha_fin`, `fecha_vencimiento`, `cupos_disponibles`, `empresa_idEmpresa`, `estado_id_estado`, `fecha_creacion`, `fecha_actualizacion`) VALUES
-(2, 'Analista de Redes Jr', 'Pasantía en administración y monitoreo de infraestructura de redes corporativas', 'Conocimientos en redes, protocolos TCP/IP, experiencia con equipos Cisco', 'Certificación técnica, experiencia práctica con equipos enterprise', 1, 2, 4, '7:00 AM - 3:00 PM', 'Auxilio de alimentación y transporte', 2, 8, 3.80, 'CCNA, Cisco, Routing, Switching', '2025-08-01', '2025-11-30', '2025-07-15', 1, 2002, 1, '2025-06-13 03:33:49', '2025-06-13 03:33:49'),
-(8, 'Desarrollador Junior Backend', 'Práctica en desarrollo de aplicaciones web completas usando tecnologías modernas', 'Conocimientos en JavaScript, frameworks frontend y backend', 'Proyecto real en portafolio, mentoría senior developer', 1, 2, 5, '8:00 AM - 5:00 PM', '1000000', 4, 4, 3.00, 'JavaScript, React, Node.js, MongoDB', '2025-06-14', '2025-06-14', '2025-07-14', 30, 2001, 1, '2025-06-13 05:54:27', '2025-06-15 03:48:40');
+(2, 'Analista de Redes Jr', 'Pasantía en administración y monitoreo de infraestructura de redes corporativas', 'Conocimientos en redes, protocolos TCP/IP, experiencia con equipos Cisco', 'Certificación técnica, experiencia práctica con equipos enterprise', 1, 1, 4, '7:00 AM - 3:00 PM', 'Auxilio de alimentación y transporte', 2, 4, 3.80, 'CCNA, Cisco, Routing, Switching', '2025-08-01', '2025-11-30', '2025-07-15', 1, 2002, 1, '2025-06-13 03:33:49', '2025-07-03 09:24:41'),
+(8, 'Desarrollador Junior Backend', 'Práctica en desarrollo de aplicaciones web completas usando tecnologías modernas', 'Conocimientos en JavaScript, frameworks frontend y backend', 'Proyecto real en portafolio, mentoría senior developer', 1, 1, 8, '8:00 AM - 5:00 PM', '1000000', 4, 4, 5.00, 'JavaScript, React, Node.js, MongoDB', '2025-06-14', '2025-06-14', '2025-07-14', 30, 2001, 1, '2025-06-13 05:54:27', '2025-07-03 05:18:13'),
+(17, 'pruebaaaa ', 'pruebaaaa ', 'pruebaaaa ', 'pruebaaaa ', 3, 2, 5, '8 - 1', '1000000', 1, 4, 4.00, 'pruebaaaa ', '2025-07-10', '2025-07-24', '2025-08-24', 23, 2001, 2, '2025-07-02 22:43:37', '2025-07-02 22:43:53'),
+(18, 'pruebaaaa', 'pruebaaaa', 'pruebaaaa', 'pruebaaaa', 1, 2, 3, '7- 8', '100000', 1, 4, 4.00, 'pruebaaaa', '2025-07-17', '2025-07-10', '2025-08-16', 1, 2001, 2, '2025-07-03 00:00:56', '2025-07-03 00:01:19'),
+(19, 'prueba  q', 'prueba ', 'prueba ', 'prueba ', 3, 2, 3, '7-8 ', '10000', 4, 3, 3.00, 'prueba ', '2025-07-11', '2025-07-17', '2025-08-17', 15, 2002, 2, '2025-07-03 09:05:48', '2025-07-03 09:05:57'),
+(20, 'prueba rg', 'prueba 4', 'prueba 4', 'prueba 4', 3, 2, 3, '3', '3', 1, 3, 3.00, 'prueba 4', '2025-07-10', '2025-07-28', '2025-08-20', 13, 2001, 2, '2025-07-03 09:43:41', '2025-07-03 09:43:55');
 
 -- --------------------------------------------------------
 
@@ -358,6 +368,19 @@ CREATE TABLE `oferta_carrera_dirigida` (
   `oferta_idOferta` int(11) NOT NULL,
   `carrera_id_carrera` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+--
+-- Volcado de datos para la tabla `oferta_carrera_dirigida`
+--
+
+INSERT INTO `oferta_carrera_dirigida` (`id_oferta_carrera`, `oferta_idOferta`, `carrera_id_carrera`) VALUES
+(74, 17, 2),
+(77, 18, 2),
+(78, 8, 1),
+(84, 19, 2),
+(98, 20, 2),
+(99, 2, 2),
+(100, 2, 1);
 
 -- --------------------------------------------------------
 
@@ -382,10 +405,25 @@ CREATE TABLE `referencia` (
 --
 
 INSERT INTO `referencia` (`idReferencia`, `comentario`, `puntuacion`, `tipo_referencia_id_tipo_referencia`, `estudiante_idEstudiante`, `empresa_idEmpresa`, `estado_id_estado`, `fecha_creacion`, `fecha_actualizacion`) VALUES
-(1, 'Excelente ambiente laboral, muy buena mentoría técnica. Aprendí mucho sobre desarrollo enterprise y buenas prácticas de programación.', 4.5, 1, 1001, 2001, 1, '2025-06-13 03:33:49', '2025-06-13 03:33:49'),
+(1, 'Excelente ambiente laboral, muy buena mentoría técnica. Aprendí mucho sobre desarrollo enterprise y buenas prácticas de programación. hol;a', 4.6, 1, 1001, 2001, 2, '2025-06-13 03:33:49', '2025-06-18 19:39:03'),
 (2, 'Laura demostró excelentes habilidades técnicas y gran capacidad de aprendizaje. Se integró muy bien al equipo y completó todos sus objetivos.', 4.8, 2, 1001, 2001, 1, '2025-06-13 03:33:49', '2025-06-13 03:33:49'),
 (3, 'La empresa brinda muy buena formación en redes empresariales. El equipo técnico es muy colaborativo y el ambiente de trabajo es profesional.', 4.2, 1, 1002, 2002, 1, '2025-06-13 03:33:49', '2025-06-13 03:33:49'),
-(4, 'Carlos mostró dominio técnico sólido en redes y gran iniciativa para resolver problemas. Recomendamos su trabajo sin reservas.', 4.6, 2, 1002, 2002, 1, '2025-06-13 03:33:49', '2025-06-13 03:33:49');
+(4, 'Carlos mostró dominio técnico sólido en redes y gran iniciativa para resolver problemas. Recomendamos su trabajo sin reservas.', 4.6, 2, 1002, 2002, 1, '2025-06-13 03:33:49', '2025-06-13 03:33:49'),
+(21, 'muy buena chacha  la muchacha ', 5.0, 2, 1001, 2001, 1, '2025-07-02 22:45:51', '2025-07-03 09:52:03'),
+(25, 'hola  prueba innoiva 2', 5.0, 2, 1001, 2002, 1, '2025-06-30 23:20:55', '2025-07-02 23:45:14'),
+(32, 'excelente servicio 5/5', 5.0, 1, 1001, 2002, 1, '2025-07-03 04:56:11', '2025-07-03 04:59:53'),
+(33, 'prueba 3', 5.0, 1, 1001, 2001, 2, '2025-07-03 05:16:58', '2025-07-03 05:19:39'),
+(34, 'prueba ', 3.0, 2, 1002, 2001, 2, '2025-07-03 05:18:33', '2025-07-03 05:18:56'),
+(35, 'hola 1', 5.0, 2, 1002, 2002, 2, '2025-07-03 05:39:38', '2025-07-03 05:39:46'),
+(36, 'hola 1 ', 4.0, 2, 1002, 2001, 2, '2025-07-03 07:39:06', '2025-07-03 07:39:15'),
+(37, 'dfgdfg', 4.0, 2, 1001, 2001, 2, '2025-07-03 07:46:32', '2025-07-03 07:46:37'),
+(38, 'fsdfsdf', 3.0, 2, 1001, 2002, 1, '2025-07-03 09:17:01', '2025-07-03 09:17:01'),
+(39, 'sdfsdfasdasd', 5.0, 2, 1002, 2002, 2, '2025-07-03 09:24:10', '2025-07-03 09:24:19'),
+(40, 'hola  2', 5.0, 1, 1001, 2002, 1, '2025-07-03 09:32:44', '2025-07-03 09:48:01'),
+(41, 'hola  1', 3.0, 2, 1001, 2002, 2, '2025-07-03 09:40:54', '2025-07-03 09:41:02'),
+(42, 'sdfsdf3r3r3', 3.0, 2, 1001, 2001, 2, '2025-07-03 09:42:56', '2025-07-03 09:43:03'),
+(43, 'sdfsdfsdfsdf', 5.0, 2, 1002, 2001, 2, '2025-07-03 09:44:05', '2025-07-03 09:44:16'),
+(44, 'hola  3 ', 4.0, 1, 1002, 2002, 1, '2025-07-03 09:54:41', '2025-07-03 09:54:47');
 
 -- --------------------------------------------------------
 
@@ -673,19 +711,19 @@ ALTER TABLE `modalidad`
 -- AUTO_INCREMENT de la tabla `oferta`
 --
 ALTER TABLE `oferta`
-  MODIFY `idOferta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `idOferta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de la tabla `oferta_carrera_dirigida`
 --
 ALTER TABLE `oferta_carrera_dirigida`
-  MODIFY `id_oferta_carrera` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `id_oferta_carrera` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
 
 --
 -- AUTO_INCREMENT de la tabla `referencia`
 --
 ALTER TABLE `referencia`
-  MODIFY `idReferencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `idReferencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT de la tabla `sector_empresarial`
