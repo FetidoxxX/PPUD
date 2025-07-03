@@ -159,6 +159,76 @@ class Referencia
   }
 
   /**
+   * Actualiza los datos de una referencia existente, con validaciones específicas para el estudiante.
+   * Incluye verificación de propiedad y restricción de 24 horas.
+   *
+   * @param int $idReferencia El ID de la referencia a actualizar.
+   * @param string $idEstudianteLogueado El ID del estudiante que intenta actualizar.
+   * @param array $datos Array asociativo con los datos a actualizar ('comentario', 'puntuacion').
+   * @return array Resultado de la operación (éxito/error, mensaje).
+   */
+  public function actualizarReferenciaEstudiante($idReferencia, $idEstudianteLogueado, $datos)
+  {
+    try {
+      if (!$this->conexion) {
+        throw new Exception("Conexión a la base de datos no establecida para actualizar referencia de estudiante.");
+      }
+
+      $idReferencia = (int) $idReferencia;
+      $idEstudianteLogueado = mysqli_real_escape_string($this->conexion, $idEstudianteLogueado);
+
+      // 1. Obtener la referencia para verificar propiedad y fecha de creación
+      $referenciaExistente = $this->obtenerPorId($idReferencia);
+
+      if (!$referenciaExistente) {
+        return ['success' => false, 'message' => 'Referencia no encontrada.'];
+      }
+
+      // 2. Verificar que la referencia pertenece al estudiante logueado
+      if ($referenciaExistente['estudiante_idEstudiante'] != $idEstudianteLogueado) {
+        return ['success' => false, 'message' => 'No tienes permiso para actualizar esta referencia.'];
+      }
+
+      // 3. Verificar la restricción de 24 horas para edición
+      $fecha_creacion = new DateTime($referenciaExistente['fecha_creacion']);
+      $fecha_actual = new DateTime();
+      $diferencia = $fecha_actual->getTimestamp() - $fecha_creacion->getTimestamp();
+
+      if ($diferencia > 86400) { // 86400 segundos = 24 horas
+        return ['success' => false, 'message' => 'El tiempo de edición para esta referencia ha expirado (más de 24 horas).'];
+      }
+
+      // 4. Proceder con la actualización (usando la lógica de 'actualizar' pero con los datos filtrados)
+      $updates = [];
+      if (isset($datos['comentario'])) {
+        $updates[] = "comentario = '" . mysqli_real_escape_string($this->conexion, $datos['comentario']) . "'";
+      }
+      if (isset($datos['puntuacion'])) {
+        $puntuacion = is_numeric($datos['puntuacion']) ? (float) $datos['puntuacion'] : 'NULL';
+        $updates[] = "puntuacion = " . ($puntuacion === 'NULL' ? 'NULL' : $puntuacion);
+      }
+
+      if (empty($updates)) {
+        return ['success' => false, 'message' => 'No hay datos para actualizar.'];
+      }
+
+      $updates[] = "fecha_actualizacion = NOW()";
+      $sql = "UPDATE referencia SET " . implode(', ', $updates) . " WHERE idReferencia = $idReferencia";
+
+      if (mysqli_query($this->conexion, $sql)) {
+        return ['success' => true, 'message' => 'Referencia actualizada correctamente.'];
+      } else {
+        error_log("ERROR DB (actualizarReferenciaEstudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+        throw new Exception("Error al actualizar: " . mysqli_error($this->conexion));
+      }
+    } catch (Exception $e) {
+      error_log("ERROR (actualizarReferenciaEstudiante): " . $e->getMessage() . " en línea " . $e->getLine());
+      return ['success' => false, 'message' => $e->getMessage()];
+    }
+  }
+
+
+  /**
    * Cambia el estado de una referencia a 'inactiva' (simulando una eliminación lógica).
    *
    * @param int $idReferencia El ID de la referencia a "eliminar" (inactivar).
@@ -220,7 +290,7 @@ class Referencia
     $conditions = [];
     if ($idEmpresa !== null) {
       $idEmpresa = (int) $idEmpresa;
-      $conditions[] = "r.empresa_idEmpresa = '$idEmpresa'";
+      $conditions[] = "r.empresa_idEmpresa = $idEmpresa";
     }
     if ($idEstudiante !== null) {
       $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
@@ -228,7 +298,7 @@ class Referencia
     }
     if ($tipoReferenciaIdToInclude !== null) {
       $tipoReferenciaIdToInclude = (int) $tipoReferenciaIdToInclude;
-      $conditions[] = "r.tipo_referencia_id_tipo_referencia = '$tipoReferenciaIdToInclude'";
+      $conditions[] = "r.tipo_referencia_id_tipo_referencia = $tipoReferenciaIdToInclude";
     }
     // Añadir el filtro de estado
     if ($estado_id_estado !== null) {
@@ -275,7 +345,7 @@ class Referencia
 
     if ($idEmpresa !== null) {
       $idEmpresa = (int) $idEmpresa;
-      $conditions[] = "r.empresa_idEmpresa = '$idEmpresa'";
+      $conditions[] = "r.empresa_idEmpresa = $idEmpresa";
     }
     if ($idEstudiante !== null) {
       $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
@@ -283,7 +353,7 @@ class Referencia
     }
     if ($tipoReferenciaIdToInclude !== null) {
       $tipoReferenciaIdToInclude = (int) $tipoReferenciaIdToInclude;
-      $conditions[] = "r.tipo_referencia_id_tipo_referencia = '$tipoReferenciaIdToInclude'";
+      $conditions[] = "r.tipo_referencia_id_tipo_referencia = $tipoReferenciaIdToInclude";
     }
     // Añadir el filtro de estado
     if ($estado_id_estado !== null) {

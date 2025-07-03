@@ -170,8 +170,9 @@ switch ($action) {
     error_log("DEBUG (ajax_perfilE - obtener_referencias_estudiante_perfil): ID Estudiante de sesión: " . $idEstudiante); // Log del ID del estudiante
 
     try {
-      // Usamos el ID del estudiante de la sesión para asegurar que solo puede ver sus propias referencias
-      $referencias = $referenciaObj->obtenerTodas(null, $idEstudiante, null, 100, 0, 1); // Obtener todas las referencias activas para este estudiante
+      // Filtrar referencias donde el estudiante logueado es el RECEPTOR de la referencia.
+      // Asumimos que tipo_referencia_id_tipo_referencia = 2 es 'empresa_a_estudiante'.
+      $referencias = $referenciaObj->obtenerTodas(null, $idEstudiante, 2, 100, 0, 1); // Obtener referencias de tipo 2 (empresa a estudiante)
 
       error_log("DEBUG (ajax_perfilE - obtener_referencias_estudiante_perfil): Referencias obtenidas: " . var_export($referencias, true)); // Log del array de referencias
 
