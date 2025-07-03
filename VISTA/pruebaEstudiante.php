@@ -86,72 +86,72 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
   <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Estilos adicionales si son necesarios, siguiendo la estética de los otros módulos */
-    .card-offer {
-      border-radius: 0.75rem;
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-      overflow: hidden;
-    }
+  /* Estilos adicionales si son necesarios, siguiendo la estética de los otros módulos */
+  .card-offer {
+    border-radius: 0.75rem;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    overflow: hidden;
+  }
 
-    .card-offer:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-    }
+  .card-offer:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+  }
 
-    .card-offer .card-header {
-      background-color: #f8f9fa;
-      /* Light background for header */
-      border-bottom: 1px solid #e9ecef;
-      padding: 0.75rem 1.25rem;
-      font-weight: bold;
-    }
+  .card-offer .card-header {
+    background-color: #f8f9fa;
+    /* Light background for header */
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 1.25rem;
+    font-weight: bold;
+  }
 
-    .card-offer .card-title {
-      color: #0d6efd;
-      /* Primary color for title */
-    }
+  .card-offer .card-title {
+    color: #0d6efd;
+    /* Primary color for title */
+  }
 
-    .card-offer .card-subtitle {
-      color: #6c757d;
-      /* Secondary color for subtitle */
-    }
+  .card-offer .card-subtitle {
+    color: #6c757d;
+    /* Secondary color for subtitle */
+  }
 
-    .card-offer .list-unstyled li {
-      margin-bottom: 0.25rem;
-    }
+  .card-offer .list-unstyled li {
+    margin-bottom: 0.25rem;
+  }
 
-    .card-offer .list-unstyled i {
-      color: #0dcaf0;
-      /* Info color for icons */
-      width: 1.25rem;
-      /* Fixed width for icon alignment */
-      text-align: center;
-    }
+  .card-offer .list-unstyled i {
+    color: #0dcaf0;
+    /* Info color for icons */
+    width: 1.25rem;
+    /* Fixed width for icon alignment */
+    text-align: center;
+  }
 
-    .btn-interes {
-      background-color: #28a745;
-      /* Success color */
-      color: white;
-      border: none;
-      transition: background-color 0.2s;
-    }
+  .btn-interes {
+    background-color: #28a745;
+    /* Success color */
+    color: white;
+    border: none;
+    transition: background-color 0.2s;
+  }
 
-    .btn-interes:hover {
-      background-color: #218838;
-      /* Darker success on hover */
-    }
+  .btn-interes:hover {
+    background-color: #218838;
+    /* Darker success on hover */
+  }
 
-    .company-link {
-      cursor: pointer;
-      color: #0d6efd;
-      /* Primary color for links */
-      text-decoration: none;
-      font-weight: bold;
-    }
+  .company-link {
+    cursor: pointer;
+    color: #0d6efd;
+    /* Primary color for links */
+    text-decoration: none;
+    font-weight: bold;
+  }
 
-    .company-link:hover {
-      text-decoration: underline;
-    }
+  .company-link:hover {
+    text-decoration: underline;
+  }
   </style>
 </head>
 
@@ -350,9 +350,9 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
   <script src="../js/funcionesOfertasE.js"></script>
   <script src="../js/perfilE.js"></script>
   <script>
-    $(document).ready(function () {
-      cargarOfertas(); // Cargar ofertas al inicio
-    });
+  $(document).ready(function() {
+    cargarOfertas(); // Cargar ofertas al inicio
+  });
   </script>
 </body>
 

@@ -128,7 +128,10 @@ try {
             <a class="nav-link" href="pruebaEmpresa.php">Inicio</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" href="gestion_oferta_empresa.php">Gestión de Ofertas</a>
+            <a class="nav-link active" href="gestion_oferta_empresa.php">Gestionar Ofertas</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " href="gestion_estudiantes_empresa.php">Gestionar Estudiantes</a>
           </li>
         </ul>
 
@@ -211,6 +214,7 @@ try {
 
   <!-- Nuevo Modal para Crear Referencia -->
   <?php include 'modal_crear_referencia.php'; ?>
+  <?php include 'modal_editar_referencias.php'; ?>
 
 
   <!-- Footer -->
@@ -234,22 +238,22 @@ try {
   <!-- Incluye el nuevo archivo de JavaScript para las funciones de referencias -->
   <script src="../js/funcionesReferenciasE.js"></script>
   <script>
-    // Pasar las variables PHP a la función de inicialización de JavaScript de ofertas
-    $(document).ready(function () {
-      initializeGestionOfertas(
-        <?php echo json_encode($modalidades); ?>,
-        <?php echo json_encode($tipos_oferta); ?>,
-        <?php echo json_encode($areas_conocimiento); ?>,
-        <?php echo json_encode($carreras); ?>,
-        <?php echo json_encode($estados); ?>
-      );
-      // Pasar las variables PHP a la función de inicialización de JavaScript de referencias
-      initializeReferenciasE(
-        <?php echo json_encode($tipos_referencia); ?>,
-        <?php echo json_encode($estados_referencia); ?>
-      );
-    });
-    // La función mostrarPerfilEmpresa ahora reside en funcionesOfertas.js y es llamada directamente.
+  // Pasar las variables PHP a la función de inicialización de JavaScript de ofertas
+  $(document).ready(function() {
+    initializeGestionOfertas(
+      <?php echo json_encode($modalidades); ?>,
+      <?php echo json_encode($tipos_oferta); ?>,
+      <?php echo json_encode($areas_conocimiento); ?>,
+      <?php echo json_encode($carreras); ?>,
+      <?php echo json_encode($estados); ?>
+    );
+    // Pasar las variables PHP a la función de inicialización de JavaScript de referencias
+    initializeReferenciasE(
+      <?php echo json_encode($tipos_referencia); ?>,
+      <?php echo json_encode($estados_referencia); ?>
+    );
+  });
+  // La función mostrarPerfilEmpresa ahora reside en funcionesOfertas.js y es llamada directamente.
   </script>
 </body>
 

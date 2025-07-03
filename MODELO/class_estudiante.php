@@ -427,17 +427,99 @@ class Estudiante
       return [];
     }
     $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
-    $sql = "SELECT iec.carrera_id_carrera, c.nombre FROM interes_estudiante_carrera iec JOIN carrera c ON iec.carrera_id_carrera = c.id_carrera WHERE estudiante_idEstudiante = '$idEstudiante'";
+    $sql = "SELECT iec.carrera_id_carrera FROM interes_estudiante_carrera iec WHERE estudiante_idEstudiante = '$idEstudiante'"; // Modificado para seleccionar solo el ID
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB (obtenerCarrerasDeInteres): " . mysqli_error($this->conexion) . " SQL: " . $sql);
       return [];
     }
-    $carreras = [];
+    $carreras_ids = [];
     while ($fila = mysqli_fetch_assoc($resultado)) {
-      $carreras[] = $fila; // Devolvemos el objeto con ID y nombre
+      $carreras_ids[] = (int) $fila['carrera_id_carrera']; // Convertir a entero y añadir solo el ID
     }
-    return $carreras;
+    return $carreras_ids;
+  }
+
+  /**
+   * Obtiene todos los estudiantes activos, opcionalmente filtrados por un término de búsqueda,
+   * con paginación.
+   * @param string $busqueda Término de búsqueda (nombre, apellidos, correo, documento, ID).
+   * @param int $limit Límite de resultados por página.
+   * @param int $offset Desplazamiento para la paginación.
+   * @return array Lista de estudiantes activos.
+   */
+  public function obtenerTodosActivos($busqueda = '', $limit = 10, $offset = 0)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerTodosActivos (Estudiante).");
+      return [];
+    }
+    $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
+
+    $sql = "SELECT e.idEstudiante, e.nombre, e.apellidos, e.correo, e.codigo_estudiante, e.semestre, e.promedio_academico,
+                   c.nombre AS carrera_nombre, td.nombre AS tipo_documento_nombre, e.n_doc
+            FROM estudiante e
+            LEFT JOIN carrera c ON e.carrera_id_carrera = c.id_carrera
+            LEFT JOIN tipo_documento td ON e.tipo_documento_id_tipo = td.id_tipo
+            WHERE e.estado_id_estado = 1"; // Filtrar solo estudiantes activos
+
+    if (!empty($busqueda)) {
+      $sql .= " AND (e.nombre LIKE '%$busqueda%'
+                OR e.apellidos LIKE '%$busqueda%'
+                OR e.correo LIKE '%$busqueda%'
+                OR e.n_doc LIKE '%$busqueda%'
+                OR e.codigo_estudiante LIKE '%$busqueda%'
+                OR e.idEstudiante LIKE '%$busqueda%')";
+    }
+
+    $sql .= " ORDER BY e.nombre ASC, e.apellidos ASC LIMIT $limit OFFSET $offset";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerTodosActivos estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+
+    $estudiantes = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $estudiantes[] = $fila;
+    }
+    return $estudiantes;
+  }
+
+  /**
+   * Cuenta el total de estudiantes activos, opcionalmente filtrados por un término de búsqueda.
+   * @param string $busqueda Término de búsqueda.
+   * @return int El número total de estudiantes activos.
+   */
+  public function contarEstudiantesActivos($busqueda = '')
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en contarEstudiantesActivos (Estudiante).");
+      return 0;
+    }
+    $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
+
+    $sql = "SELECT COUNT(*) AS total
+            FROM estudiante e
+            WHERE e.estado_id_estado = 1"; // Filtrar solo estudiantes activos
+
+    if (!empty($busqueda)) {
+      $sql .= " AND (e.nombre LIKE '%$busqueda%'
+                OR e.apellidos LIKE '%$busqueda%'
+                OR e.correo LIKE '%$busqueda%'
+                OR e.n_doc LIKE '%$busqueda%'
+                OR e.codigo_estudiante LIKE '%$busqueda%'
+                OR e.idEstudiante LIKE '%$busqueda%')";
+    }
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (contarEstudiantesActivos estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return 0;
+    }
+    $fila = mysqli_fetch_assoc($resultado);
+    return (int) $fila['total'];
   }
 
 
@@ -639,13 +721,13 @@ class Estudiante
 
     // Si se encontró el estudiante, obtener sus carreras de interés
     if ($estudiante) {
-      $carreras_interes = $this->obtenerCarrerasDeInteres($idEstudiante);
-      // Extraer solo los nombres para el listado en el perfil.
-      $estudiante['carreras_interes_nombres'] = array_column($carreras_interes, 'nombre');
+      // Obtener solo los IDs de las carreras de interés
+      $carreras_interes_ids = $this->obtenerCarrerasDeInteres($idEstudiante);
+      $estudiante['carreras_interes_ids'] = $carreras_interes_ids; // Mantener los IDs para el JS
 
       // Obtener las referencias asociadas a este estudiante, incluyendo solo las de tipo 'empresa_a_estudiante'
       $referenciaObj = new Referencia();
-      // 'empresa_a_estudiante' es el nombre del tipo de referencia que se desea incluir
+      // 'empresa_a_estudiante' es el nombre del tipo de referencia que se desea incluir (asumiendo ID 2)
       $estudiante['referencias'] = $referenciaObj->obtenerTodas(null, $idEstudiante, 2);
     }
 

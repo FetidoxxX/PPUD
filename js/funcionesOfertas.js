@@ -813,6 +813,8 @@ function viewStudentProfileForCompany(idEstudiante, triggeringElement) {
  * @param {string} idEstudiante - El ID del estudiante.
  */
 function showStudentProfileModal(idEstudiante) {
+  console.log('Abriendo perfil de estudiante para ID:', idEstudiante);
+
   const perfilEstudianteContent = $('#perfilEstudianteContent');
   const referenciasListContainer = $('#referenciasListContainer');
   perfilEstudianteContent.html(
@@ -821,6 +823,10 @@ function showStudentProfileModal(idEstudiante) {
   referenciasListContainer.html(
     '<div class="text-center py-3 text-muted">Cargando referencias...</div>'
   );
+
+  // CRÍTICO: Establece el ID del estudiante en el atributo data-student-id del modal principal.
+  // Esto permite que funciones como loadAndDisplayReferences accedan al ID del estudiante.
+  $('#perfilEstudianteModal').data('student-id', idEstudiante);
 
   $.ajax({
     url: '../CONTROLADOR/ajax_Mempresa.php', // Se sigue usando ./CONTROLADOR/ajax_Mempresa.php para obtener el HTML completo del perfil
@@ -834,10 +840,18 @@ function showStudentProfileModal(idEstudiante) {
       if (response.success && response.html) {
         const studentData = response.data;
         if (studentData) {
-          $('#btnCrearReferenciaEstudiante').attr(
-            'onclick',
-            `openCreateReferenceModal('${idEstudiante}', '${studentData.nombre} ${studentData.apellidos}', this)`
+          // Actualiza el título del modal con el nombre del estudiante
+          $('#perfilEstudianteModalLabel').text(
+            'Perfil del Estudiante - ' +
+              studentData.nombre +
+              ' ' +
+              studentData.apellidos
           );
+          // Los atributos onclick del botón de crear referencia ya no son necesarios si usas delegación
+          // $('#btnCrearReferenciaEstudiante').attr(
+          //   'onclick',
+          //   `openCreateReferenceModal('${idEstudiante}', '${studentData.nombre} ${studentData.apellidos}', this)`
+          // );
         } else {
           const studentNameMatch = response.html.match(
             /Nombre:<\/strong>\s*([^<]+)/
@@ -845,14 +859,26 @@ function showStudentProfileModal(idEstudiante) {
           const studentName = studentNameMatch
             ? studentNameMatch[1].trim()
             : 'Estudiante Desconocido';
-          $('#btnCrearReferenciaEstudiante').attr(
-            'onclick',
-            `openCreateReferenceModal('${idEstudiante}', '${studentName}', this)`
+          $('#perfilEstudianteModalLabel').text(
+            'Perfil del Estudiante - ' + studentName
           );
+          // Los atributos onclick del botón de crear referencia ya no son necesarios si usas delegación
+          // $('#btnCrearReferenciaEstudiante').attr(
+          //   'onclick',
+          //   `openCreateReferenceModal('${idEstudiante}', '${studentName}', this)`
+          // );
         }
 
         perfilEstudianteContent.html(response.html);
-        loadAndDisplayReferences(idEstudiante);
+        // CRÍTICO: Cargar y mostrar las referencias para este estudiante.
+        // Se llama a esta función *después* de establecer el data-student-id en el modal.
+        // Asegúrate de pasar el nombre completo si es posible para el botón de crear referencia.
+        loadAndDisplayReferences(
+          idEstudiante,
+          studentData
+            ? studentData.nombre + ' ' + studentData.apellidos
+            : undefined
+        );
 
         const perfilEstudianteModalElement = document.getElementById(
           'perfilEstudianteModal'

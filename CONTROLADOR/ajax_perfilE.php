@@ -9,6 +9,7 @@ try {
   require_once '../MODELO/class_estudiante.php';
   require_once '../MODELO/class_oferta.php'; // Para obtener las carreras
   require_once '../MODELO/class_empresa.php'; // Para obtener ciudades y tipos de documento, sectores y estados
+  require_once '../MODELO/class_referencia.php'; // NUEVO: Incluir la clase Referencia
 
   // Verificar si la sesión de usuario está activa y es un estudiante
   $inn = 500; // Tiempo de inactividad
@@ -34,6 +35,7 @@ try {
   $estudianteObj = new Estudiante();
   $ofertaObj = new Oferta(); // Para las carreras
   $empresaObj = new Empresa(); // Para tipos de documento, ciudades, sectores y estados
+  $referenciaObj = new Referencia(); // NUEVO: Instancia de la clase Referencia
 
 } catch (Throwable $e) {
   // Captura errores fatales en la carga de clases o conexión inicial
@@ -164,8 +166,54 @@ switch ($action) {
     }
     break;
 
+  case 'obtener_referencias_estudiante_perfil': // NUEVA ACCIÓN
+    error_log("DEBUG (ajax_perfilE - obtener_referencias_estudiante_perfil): ID Estudiante de sesión: " . $idEstudiante); // Log del ID del estudiante
+
+    try {
+      // Usamos el ID del estudiante de la sesión para asegurar que solo puede ver sus propias referencias
+      $referencias = $referenciaObj->obtenerTodas(null, $idEstudiante, null, 100, 0, 1); // Obtener todas las referencias activas para este estudiante
+
+      error_log("DEBUG (ajax_perfilE - obtener_referencias_estudiante_perfil): Referencias obtenidas: " . var_export($referencias, true)); // Log del array de referencias
+
+      $html_referencias = '';
+      if (!empty($referencias)) {
+        foreach ($referencias as $ref) {
+          $puntuacion_html = '';
+          if ($ref['puntuacion'] !== null) {
+            $puntuacion_html = '<span class="badge bg-warning text-dark me-2"><i class="fas fa-star"></i> ' . htmlspecialchars(number_format($ref['puntuacion'], 1)) . '</span>';
+          }
+
+          $html_referencias .= '
+          <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+              <h6 class="card-title d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-building me-2"></i>' . htmlspecialchars($ref['empresa_nombre']) . '</span>
+                <div>
+                  ' . $puntuacion_html . '
+                  <!-- Eliminado: <span class="badge bg-primary">' . htmlspecialchars($ref['tipo_referencia_nombre']) . '</span> -->
+                </div>
+              </h6>
+              <p class="card-text text-muted">' . htmlspecialchars($ref['comentario']) . '</p>
+              <p class="card-text"><small class="text-muted">Fecha: ' . date('d/m/Y', strtotime($ref['fecha_creacion'])) . '</small></p>
+            </div>
+          </div>';
+        }
+      } else {
+        $html_referencias = '<p class="text-muted text-center py-3">No has recibido referencias aún.</p>';
+      }
+
+      error_log("DEBUG (ajax_perfilE - obtener_referencias_estudiante_perfil): HTML generado: " . $html_referencias); // Log del HTML final
+      echo json_encode(['success' => true, 'html' => $html_referencias]);
+    } catch (Exception $e) {
+      error_log("ERROR (ajax_perfilE - obtener_referencias_estudiante_perfil): " . $e->getMessage() . " en línea " . $e->getLine());
+      echo json_encode(['success' => false, 'message' => 'Error al cargar tus referencias: ' . $e->getMessage()]);
+    }
+    break;
+
   default:
     error_log("ERROR (ajax_perfilE): Acción no válida o no proporcionada: " . $action);
     echo json_encode(['success' => false, 'message' => 'Acción no válida o no proporcionada.']);
     break;
 }
+
+?>

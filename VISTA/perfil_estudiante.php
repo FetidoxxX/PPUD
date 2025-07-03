@@ -131,7 +131,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <div class="container mt-4">
     <div class="row justify-content-center">
       <div class="col-md-10">
-        <div class="card shadow">
+        <div class="card shadow mb-4">
+          <!-- Añadido mb-4 para espacio entre tarjetas -->
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Datos Personales y Académicos</h5>
           </div>
@@ -142,6 +143,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
 
               <!-- Campos de visualización (Modo Lectura) -->
               <div id="viewMode">
+                <h6 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Información Personal</h6>
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <strong>Nombre:</strong> <span id="viewNombre"></span>
@@ -152,10 +154,10 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <strong>Correo:</strong> <span id="viewCorreo"></span>
+                    <strong>Tipo Documento:</strong> <span id="viewTipoDocNombre"></span>
                   </div>
                   <div class="col-md-6">
-                    <strong>Teléfono:</strong> <span id="viewTelefono"></span>
+                    <strong>Número Documento:</strong> <span id="viewNDoc"></span>
                   </div>
                 </div>
                 <div class="row mb-3">
@@ -163,23 +165,31 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                     <strong>Fecha de Nacimiento:</strong> <span id="viewFechaNac"></span>
                   </div>
                   <div class="col-md-6">
-                    <strong>Tipo Documento:</strong> <span id="viewTipoDocNombre"></span>
-                  </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <strong>Número Documento:</strong> <span id="viewNDoc"></span>
-                  </div>
-                  <div class="col-md-6">
-                    <strong>Dirección:</strong> <span id="viewDireccion"></span>
-                  </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-md-6">
                     <strong>Ciudad:</strong> <span id="viewCiudadNombre"></span>
                   </div>
+                </div>
+                <div class="mb-4">
+                  <strong>Dirección:</strong> <span id="viewDireccion"></span>
+                </div>
+
+                <h6 class="text-primary mb-3"><i class="fas fa-at me-2"></i>Información de Contacto</h6>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <strong>Correo:</strong> <span id="viewCorreo"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Teléfono:</strong> <span id="viewTelefono"></span>
+                  </div>
+                </div>
+                <hr class="my-4">
+
+                <h6 class="text-primary mb-3"><i class="fas fa-graduation-cap me-2"></i>Información Académica</h6>
+                <div class="row mb-3">
                   <div class="col-md-6">
                     <strong>Código Estudiante:</strong> <span id="viewCodigoEstudiante"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Carrera Principal:</strong> <span id="viewCarreraPrincipal"></span>
                   </div>
                 </div>
                 <div class="row mb-3">
@@ -190,6 +200,15 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                     <strong>Promedio Académico:</strong> <span id="viewPromedioAcademico"></span>
                   </div>
                 </div>
+                <div class="mb-4">
+                  <strong>Carreras de Interés:</strong>
+                  <ul id="viewCarrerasInteresList" class="list-group list-group-flush mt-2">
+                    <!-- Las carreras de interés se cargarán aquí -->
+                  </ul>
+                </div>
+                <hr class="my-4">
+
+                <h6 class="text-primary mb-3"><i class="fas fa-lightbulb me-2"></i>Habilidades e Intereses</h6>
                 <div class="mb-3">
                   <strong>Habilidades:</strong> <span id="viewHabilidades"></span>
                 </div>
@@ -204,15 +223,6 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                 </div>
                 <div class="mb-3">
                   <strong>Objetivos Profesionales:</strong> <span id="viewObjetivosProfesionales"></span>
-                </div>
-                <div class="mb-3">
-                  <strong>Carrera Principal:</strong> <span id="viewCarreraPrincipal"></span>
-                </div>
-                <div class="mb-3">
-                  <strong>Carreras de Interés:</strong>
-                  <ul id="viewCarrerasInteresList" class="list-group list-group-flush">
-                    <!-- Las carreras de interés se cargarán aquí -->
-                  </ul>
                 </div>
               </div>
 
@@ -333,32 +343,56 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
           </div>
         </div>
 
-        <!-- Sección de Cambio de Contraseña -->
-        <div class="card shadow mt-4">
-          <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Cambiar Contraseña</h5>
+        <!-- Sección de Referencias del Estudiante -->
+        <div class="card shadow mb-4">
+          <!-- Añadido mb-4 para espacio entre tarjetas -->
+          <div class="card-header bg-primary text-white">
+            <!-- Color unificado a bg-primary -->
+            <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Referencias Recibidas</h5>
           </div>
           <div class="card-body">
-            <form id="changePasswordForm">
-              <div class="mb-3">
-                <label for="current_password" class="form-label">Contraseña Actual</label>
-                <input type="password" class="form-control" id="current_password" name="current_password" required>
-              </div>
-              <div class="mb-3">
-                <label for="new_password" class="form-label">Nueva Contraseña</label>
-                <input type="password" class="form-control" id="new_password" name="new_password" required>
-              </div>
-              <div class="mb-3">
-                <label for="confirm_new_password" class="form-label">Confirmar Nueva Contraseña</label>
-                <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password"
-                  required>
-              </div>
-              <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-warning">
-                  <i class="fas fa-key me-2"></i>Guardar Nueva Contraseña
-                </button>
-              </div>
-            </form>
+            <div id="referenciasEstudianteList" class="list-group">
+              <!-- Las referencias se cargarán aquí por JavaScript -->
+              <p class="text-muted text-center">Cargando referencias...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección de Cambio de Contraseña -->
+        <div class="card shadow mb-4">
+          <!-- Añadido mb-4 para espacio entre tarjetas -->
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <!-- Color unificado y flex para botón -->
+            <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Cambiar Contraseña</h5>
+            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapsePassword" aria-expanded="false" aria-controls="collapsePassword">
+              <i class="fas fa-chevron-down"></i> <!-- Icono para indicar colapsable -->
+            </button>
+          </div>
+          <div class="collapse" id="collapsePassword">
+            <!-- Contenido colapsable -->
+            <div class="card-body">
+              <form id="changePasswordForm">
+                <div class="mb-3">
+                  <label for="current_password" class="form-label">Contraseña Actual</label>
+                  <input type="password" class="form-control" id="current_password" name="current_password" required>
+                </div>
+                <div class="mb-3">
+                  <label for="new_password" class="form-label">Nueva Contraseña</label>
+                  <input type="password" class="form-control" id="new_password" name="new_password" required>
+                </div>
+                <div class="mb-3">
+                  <label for="confirm_new_password" class="form-label">Confirmar Nueva Contraseña</label>
+                  <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password"
+                    required>
+                </div>
+                <div class="d-flex justify-content-end">
+                  <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-key me-2"></i>Guardar Nueva Contraseña
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
