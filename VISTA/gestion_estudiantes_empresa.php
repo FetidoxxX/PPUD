@@ -99,13 +99,16 @@ $estados_referencia_disponibles = $referenciaObj->obtenerEstados();
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link" href="pruebaEmpresa.php">Inicio</a>
+            <a class="nav-link " href="pruebaEmpresa.php">Inicio</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="gestion_oferta_empresa.php">Gestionar Ofertas</a>
+            <a class="nav-link " href="gestion_oferta_empresa.php">Gestionar Ofertas</a>
           </li>
           <li class="nav-item">
             <a class="nav-link active" href="gestion_estudiantes_empresa.php">Gestionar Estudiantes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " href="perfil_empresa.php">Mi Perfil</a>
           </li>
         </ul>
 

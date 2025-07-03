@@ -125,13 +125,16 @@ try {
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link" href="pruebaEmpresa.php">Inicio</a>
+            <a class="nav-link " href="pruebaEmpresa.php">Inicio</a>
           </li>
           <li class="nav-item">
             <a class="nav-link active" href="gestion_oferta_empresa.php">Gestionar Ofertas</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link " href="gestion_estudiantes_empresa.php">Gestionar Estudiantes</a>
+            <a class="nav-link" href="gestion_estudiantes_empresa.php">Gestionar Estudiantes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " href="perfil_empresa.php">Mi Perfil</a>
           </li>
         </ul>
 
@@ -142,7 +145,7 @@ try {
               Usuario: <?php echo htmlspecialchars($_SESSION['usuario']); ?>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-              <li><a class="dropdown-item" href="#" onclick="mostrarPerfilEmpresa()">Mi Perfil</a></li>
+              <li><a class="dropdown-item" href="perfil_empresa.php" onclick="mostrarPerfilEmpresa()">Mi Perfil</a></li>
               <li>
                 <hr class="dropdown-divider">
               </li>
