@@ -155,6 +155,37 @@ function loadStudentProfile() {
         );
         $('#viewCarreraPrincipal').text(estudiante.carrera_nombre || 'N/A');
 
+        // Mostrar Hoja de Vida
+        const hojaVidaPath = estudiante.hoja_vida_path;
+        const viewHojaVidaElement = $('#viewHojaVida');
+        const currentHojaVidaContainer = $('#currentHojaVidaContainer');
+        const currentHojaVidaLink = $('#currentHojaVidaLink');
+
+        if (hojaVidaPath) {
+          viewHojaVidaElement.html(
+            `<a href="${hojaVidaPath}" target="_blank" class="btn btn-primary"><i class="fas fa-file-pdf me-2"></i>Ver Hoja de Vida</a>`
+          );
+          currentHojaVidaLink.html(
+            `<a href="${hojaVidaPath}" target="_blank"><i class="fas fa-file-pdf me-2"></i>${hojaVidaPath
+              .split('/')
+              .pop()}</a>`
+          );
+          currentHojaVidaContainer.show();
+        } else {
+          viewHojaVidaElement.text('No cargada');
+          currentHojaVidaContainer.hide();
+          currentHojaVidaLink.empty();
+        }
+        // Almacenar el path actual en un input hidden para el envío del formulario
+        // Asegúrate de que este input hidden exista en tu HTML si lo usas para re-enviar el path
+        if ($('#hoja_vida_path_current').length === 0) {
+          // Si no existe, lo creamos dinámicamente (o se añade manualmente en perfil_estudiante.php)
+          $('#studentProfileForm').append(
+            '<input type="hidden" id="hoja_vida_path_current" name="hoja_vida_path_current">'
+          );
+        }
+        $('#hoja_vida_path_current').val(hojaVidaPath || '');
+
         // Renderizar carreras de interés en modo visualización
         const carrerasInteresUl = $('#viewCarrerasInteresList');
         carrerasInteresUl.empty();
@@ -265,6 +296,11 @@ function loadStudentReferences(studentId) {
     '<p class="text-muted text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando referencias...</p>'
   ); // Mensaje de carga
 
+  console.log(
+    'DEBUG (perfilE.js - loadStudentReferences): Realizando AJAX para referencias para ID:',
+    studentId
+  ); // Nuevo log
+
   $.ajax({
     url: '../CONTROLADOR/ajax_perfilE.php', // Usamos ajax_perfilE.php para obtener las referencias del estudiante
     type: 'GET',
@@ -275,12 +311,16 @@ function loadStudentReferences(studentId) {
     dataType: 'json',
     success: function (response) {
       console.log(
-        'Respuesta de AJAX (obtener_referencias_estudiante_perfil):',
+        'DEBUG (perfilE.js - loadStudentReferences success): Respuesta completa:',
         response
-      );
+      ); // Nuevo log
       if (response.success && response.html) {
         referenciasListContainer.html(response.html);
       } else {
+        console.log(
+          'DEBUG (perfilE.js - loadStudentReferences success): No hay referencias o la respuesta no es exitosa.',
+          response
+        ); // Nuevo log
         referenciasListContainer.html(
           '<p class="text-muted text-center py-3">No has recibido referencias aún.</p>'
         );
@@ -289,9 +329,9 @@ function loadStudentReferences(studentId) {
     },
     error: function (xhr, status, error) {
       console.error(
-        'Error al cargar referencias del estudiante (AJAX):',
-        error
-      );
+        'DEBUG (perfilE.js - loadStudentReferences error): Error al cargar referencias del estudiante (AJAX):',
+        { xhr, status, error }
+      ); // Nuevo log
       referenciasListContainer.html(
         '<p class="text-danger text-center py-3">Error de conexión al cargar tus referencias.</p>'
       );

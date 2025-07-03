@@ -11,8 +11,8 @@ if (isset($_SESSION['timeout'])) {
     <html>
     <head>
       <meta charset='utf-8'>
-      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
-      <script src='../sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../SW/dist/sweetalert2.min.css'>
+      <script src='../SW/dist/sweetalert2.min.js'></script>
     </head>
     <body>
       <script type='text/javascript'>
@@ -42,8 +42,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <html>
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='./SW/dist/sweetalert2.min.css'>
+    <script src='./SW/dist/sweetalert2.min.js'></script>
   </head>
   <body>
     <script type='text/javascript'>
@@ -71,8 +71,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Perfil de Estudiante - PPUD</title>
-  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="../BOOTSTRAP/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../SW/dist/sweetalert2.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -140,6 +140,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
             <form id="studentProfileForm">
               <input type="hidden" id="idEstudiante" name="idEstudiante"
                 value="<?php echo htmlspecialchars($_SESSION['usuario_id'] ?? ''); ?>">
+              <!-- Input hidden para mantener el path actual de la hoja de vida -->
+              <input type="hidden" id="hoja_vida_path_current" name="hoja_vida_path_current">
 
               <!-- Campos de visualización (Modo Lectura) -->
               <div id="viewMode">
@@ -223,6 +225,13 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                 </div>
                 <div class="mb-3">
                   <strong>Objetivos Profesionales:</strong> <span id="viewObjetivosProfesionales"></span>
+                </div>
+                <hr class="my-4">
+
+                <h6 class="text-primary mb-3"><i class="fas fa-file-pdf me-2"></i>Hoja de Vida (PDF)</h6>
+                <div class="mb-3" id="viewHojaVida">
+                  <!-- El enlace a la hoja de vida se cargará aquí por JS -->
+                  No cargada
                 </div>
               </div>
 
@@ -325,11 +334,20 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                     <!-- Checkboxes de carreras se cargarán con JavaScript -->
                   </div>
                 </div>
+
+                <!-- Sección para cargar Hoja de Vida (PDF) -->
+                <div class="mb-3">
+                  <label for="hoja_vida_pdf" class="form-label">Subir Hoja de Vida (PDF, máx. 5MB)</label>
+                  <input class="form-control" type="file" id="hoja_vida_pdf" name="hoja_vida_pdf" accept=".pdf">
+                  <div id="currentHojaVidaContainer" class="mt-2" style="display:none;">
+                    <small class="text-muted">Hoja de Vida actual: <span id="currentHojaVidaLink"></span></small>
+                  </div>
+                </div>
               </div>
 
               <!-- Botones de acción -->
               <div class="d-flex justify-content-end mt-4">
-                <button type="button" class="btn btn-primary me-2" id="editProfileBtn">
+                <button type="button" class="btn btn-success me-2" id="editProfileBtn">
                   <i class="fas fa-edit me-2"></i>Editar Perfil
                 </button>
                 <button type="submit" class="btn btn-success me-2" id="saveProfileBtn" style="display:none;">
@@ -412,10 +430,10 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
     </div>
   </footer>
 
-  <script src="../js/jquery-3.6.1.min.js"></script>
-  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="../sw/dist/sweetalert2.min.js"></script>
-  <script src="../js/perfilE.js"></script> <!-- Script JS para la lógica del perfil -->
+  <script src="../JS/jquery-3.6.1.min.js"></script>
+  <script src="../BOOTSTRAP/js/bootstrap.bundle.min.js"></script>
+  <script src="../SW/dist/sweetalert2.min.js"></script>
+  <script src="../JS/perfilE.js"></script> <!-- Script JS para la lógica del perfil -->
 </body>
 
 </html>

@@ -294,6 +294,14 @@ class Referencia
     }
     if ($idEstudiante !== null) {
       $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+      // La columna 'estudiante_idEstudiante' se usa para el estudiante INVOLUCRADO en la referencia.
+      // Si el tipo de referencia es 'empresa_a_estudiante' (ID 2), este estudiante es el RECEPTOR.
+      // Si el tipo de referencia es 'estudiante_a_empresa' (ID 1), este estudiante es el CREADOR.
+      // Para el perfil del estudiante, queremos las referencias RECIBIDAS, que son de tipo 2.
+      // Por lo tanto, el filtro de estudiante debe aplicarse SOLO cuando el tipo de referencia sea 2.
+      // Si el tipo de referencia es 1, el estudiante_idEstudiante es el creador, no el receptor.
+      // Sin embargo, la llamada desde ajax_perfilE.php ya pasa el tipo 2, así que este filtro es correcto
+      // para identificar al estudiante como RECEPTOR.
       $conditions[] = "r.estudiante_idEstudiante = '$idEstudiante'";
     }
     if ($tipoReferenciaIdToInclude !== null) {
@@ -311,6 +319,9 @@ class Referencia
     }
 
     $sql .= " ORDER BY r.fecha_creacion DESC LIMIT $limit OFFSET $offset";
+
+    // Línea de depuración añadida
+    error_log("DEBUG (class_referencia - obtenerTodas): SQL Query: " . $sql);
 
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {

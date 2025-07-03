@@ -130,6 +130,7 @@ switch ($action) {
 
     try {
       // Usar obtenerPorIdParaEmpresa que ya trae referencias y carreras de interés (IDs)
+      // Se asume que este método también trae la 'hoja_vida_path' del estudiante.
       $estudiante_data = $estudianteObj->obtenerPorIdParaEmpresa($idEstudiante);
 
       if ($estudiante_data) {
@@ -144,17 +145,22 @@ switch ($action) {
     break;
 
   case 'crear_referencia':
+    error_log("DEBUG (empresa_estudiantes_ajax - crear_referencia): Datos recibidos en POST: " . print_r($_POST, true));
+
     try {
       $datos = [
         'comentario' => $_POST['comentario'] ?? '',
         'puntuacion' => $_POST['puntuacion'] ?? null,
-        'tipo_referencia_id_tipo_referencia' => $_POST['tipo_referencia_id_tipo_referencia'] ?? '',
+        'tipo_referencia_id_tipo_referencia' => $_POST['tipo_referencia_id_tipo_referencia'] ?? 2, // Asignar 2 por defecto si no viene
         'estudiante_idEstudiante' => $_POST['estudiante_idEstudiante'] ?? '',
         'empresa_idEmpresa' => $idEmpresaLogueada // Usar el ID de la empresa de la sesión
       ];
 
+      error_log("DEBUG (empresa_estudiantes_ajax - crear_referencia): Datos a registrar: " . print_r($datos, true));
+
       // Validación básica
-      if (empty($datos['comentario']) || empty($datos['tipo_referencia_id_tipo_referencia']) || empty($datos['estudiante_idEstudiante'])) {
+      if (empty($datos['comentario']) || empty($datos['tipo_referencia_id_tipo_referencia']) || empty($datos['estudiante_idEstudiante']) || empty($datos['empresa_idEmpresa'])) {
+        error_log("ERROR (empresa_estudiantes_ajax - crear_referencia): Datos incompletos detectados. Comentario: " . (empty($datos['comentario']) ? 'VACIO' : 'OK') . ", Tipo Ref: " . (empty($datos['tipo_referencia_id_tipo_referencia']) ? 'VACIO' : 'OK') . ", Estudiante ID: " . (empty($datos['estudiante_idEstudiante']) ? 'VACIO' : 'OK') . ", Empresa ID: " . (empty($datos['empresa_idEmpresa']) ? 'VACIO' : 'OK'));
         echo json_encode(['success' => false, 'message' => 'Datos incompletos para crear la referencia.']);
         exit();
       }
@@ -199,7 +205,7 @@ switch ($action) {
       $datos = [
         'comentario' => $_POST['comentario'] ?? '',
         'puntuacion' => $_POST['puntuacion'] ?? null,
-        'tipo_referencia_id_tipo_referencia' => $_POST['tipo_referencia_id_tipo_referencia'] ?? '',
+        'tipo_referencia_id_tipo_referencia' => $_POST['tipo_referencia_id_tipo_referencia'] ?? 2, // Asignar 2 por defecto si no viene
         // 'estado_id_estado' => $_POST['estado_id_estado'] ?? null // Si se permite actualizar el estado
       ];
 

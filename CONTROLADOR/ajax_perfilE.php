@@ -93,6 +93,48 @@ switch ($action) {
         'carrera_id_carrera' => $_POST['carrera_id_carrera'] ?? ''
       ];
 
+      // Manejo de la subida de la hoja de vida
+      $hoja_vida_path = null;
+      if (isset($_FILES['hoja_vida_pdf']) && $_FILES['hoja_vida_pdf']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['hoja_vida_pdf'];
+        $upload_dir = '../uploads/cv/'; // Directorio donde se guardarán los CVs
+        if (!is_dir($upload_dir)) {
+          mkdir($upload_dir, 0777, true); // Crear el directorio si no existe
+        }
+
+        $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $allowed_extensions = ['pdf'];
+        $max_file_size = 5 * 1024 * 1024; // 5 MB
+
+        if (!in_array(strtolower($file_extension), $allowed_extensions)) {
+          echo json_encode(['success' => false, 'message' => 'Solo se permiten archivos PDF.']);
+          exit();
+        }
+        if ($file['size'] > $max_file_size) {
+          echo json_encode(['success' => false, 'message' => 'El archivo PDF no debe exceder los 5MB.']);
+          exit();
+        }
+
+        // Generar un nombre de archivo único para evitar colisiones
+        $new_file_name = uniqid('cv_') . '.' . $file_extension;
+        $destination = $upload_dir . $new_file_name;
+
+        if (move_uploaded_file($file['tmp_name'], $destination)) {
+          $hoja_vida_path = $destination; // Guardar la ruta relativa o completa según tu necesidad
+          $datos['hoja_vida_path'] = $hoja_vida_path; // Añadir al array de datos para el modelo
+        } else {
+          echo json_encode(['success' => false, 'message' => 'Error al mover el archivo subido.']);
+          exit();
+        }
+      } else if (isset($_POST['hoja_vida_path_current']) && empty($_FILES['hoja_vida_pdf']['name'])) {
+        // Si no se subió un nuevo archivo pero hay un path actual, mantenerlo
+        $datos['hoja_vida_path'] = $_POST['hoja_vida_path_current'];
+      } else {
+        // Si no se subió un archivo y no hay path actual, establecer como NULL
+        $datos['hoja_vida_path'] = NULL;
+      }
+
+
       // Las carreras de interés vienen como un array (pueden estar vacías)
       // Asegurarse de que $_POST['carreras_interes'] es un array para evitar warnings
       $carreras_interes_ids = isset($_POST['carreras_interes']) && is_array($_POST['carreras_interes'])
@@ -112,7 +154,7 @@ switch ($action) {
     try {
       $contrasenaActual = $_POST['current_password'] ?? '';
       $contrasenaNueva = $_POST['new_password'] ?? '';
-      $confirmarContrasena = $_POST['confirm_new_password'] ?? '';
+      $confirmarContrasena = $_POST['new_password_confirm'] ?? ''; // Corregido: el nombre del campo en el formulario es 'confirm_new_password'
 
       if (empty($contrasenaActual) || empty($contrasenaNueva) || empty($confirmarContrasena)) {
         echo json_encode(['success' => false, 'message' => 'Todos los campos de contraseña son requeridos.']);
@@ -170,9 +212,13 @@ switch ($action) {
     error_log("DEBUG (ajax_perfilE - obtener_referencias_estudiante_perfil): ID Estudiante de sesión: " . $idEstudiante); // Log del ID del estudiante
 
     try {
-      // Filtrar referencias donde el estudiante logueado es el RECEPTOR de la referencia.
-      // Asumimos que tipo_referencia_id_tipo_referencia = 2 es 'empresa_a_estudiante'.
-      $referencias = $referenciaObj->obtenerTodas(null, $idEstudiante, 2, 100, 0, 1); // Obtener referencias de tipo 2 (empresa a estudiante)
+      // Obtener las referencias DONDE el estudiante logueado es el RECEPTOR de la referencia.
+      // idEmpresa = null (no filtrar por empresa específica)
+      // idEstudiante = $idEstudiante (filtrar por el estudiante que RECIBE la referencia)
+      // tipoReferenciaIdToInclude = 2 (FORZAR a obtener solo referencias de tipo 'empresa_a_estudiante')
+      // limit = 100, offset = 0 (obtener hasta 100 referencias)
+      // estado_id_estado = 1 (solo referencias activas)
+      $referencias = $referenciaObj->obtenerTodas(null, $idEstudiante, 2, 100, 0, 1);
 
       error_log("DEBUG (ajax_perfilE - obtener_referencias_estudiante_perfil): Referencias obtenidas: " . var_export($referencias, true)); // Log del array de referencias
 
@@ -184,18 +230,21 @@ switch ($action) {
             $puntuacion_html = '<span class="badge bg-warning text-dark me-2"><i class="fas fa-star"></i> ' . htmlspecialchars(number_format($ref['puntuacion'], 1)) . '</span>';
           }
 
+          // Obtener el nombre de la empresa que hizo la referencia
+          // Asumiendo que 'empresa_nombre' ya viene en el resultado de obtenerTodas si el JOIN es correcto
+          $empresa_nombre = htmlspecialchars($ref['empresa_nombre'] ?? 'Empresa Desconocida');
+
           $html_referencias .= '
           <div class="card mb-3 shadow-sm">
             <div class="card-body">
               <h6 class="card-title d-flex justify-content-between align-items-center">
-                <span><i class="fas fa-building me-2"></i>' . htmlspecialchars($ref['empresa_nombre']) . '</span>
+                <span><i class="fas fa-building me-2"></i>' . $empresa_nombre . '</span>
                 <div>
                   ' . $puntuacion_html . '
-                  <!-- Eliminado: <span class="badge bg-primary">' . htmlspecialchars($ref['tipo_referencia_nombre']) . '</span> -->
                 </div>
               </h6>
               <p class="card-text text-muted">' . htmlspecialchars($ref['comentario']) . '</p>
-              <p class="card-text"><small class="text-muted">Fecha: ' . date('d/m/Y', strtotime($ref['fecha_creacion'])) . '</small></p>
+              <p class="card-text"><small class="text-muted">Fecha: ' . date('d/m/Y H:i', strtotime($ref['fecha_creacion'])) . '</small></p>
             </div>
           </div>';
         }

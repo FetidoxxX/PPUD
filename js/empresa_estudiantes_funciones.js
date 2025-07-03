@@ -1,134 +1,217 @@
-let globalCarrerasModulo = [];
-let globalTiposReferenciaModulo = [];
-let globalEstadosReferenciaModulo = [];
-let currentStudentListPageModulo = 1;
-let totalStudentPagesModulo = 1;
-let currentSearchQueryModulo = '';
+/**
+ * empresa_estudiantes_funciones.js
+ *
+ * Este archivo contiene las funciones JavaScript para la gestión de estudiantes
+ * por parte de una empresa, incluyendo la carga del listado de estudiantes,
+ * la visualización de su perfil completo y la gestión de referencias.
+ */
 
-// Variable global para almacenar el elemento que activó el modal de referencia, para devolver el foco
-let lastReferenceModalTriggerModulo = null;
-// Variable global para almacenar el ID de la referencia que se está editando
-let currentEditingReferenceIdModulo = null;
+// NOTA: EMPRESA_ID_MODULO se espera que sea una constante global definida en el script PHP
+// que incluye este archivo JS (e.g., en gestion_estudiantes_empresa.php).
+// No se declara aquí para evitar conflictos con la declaración 'const' de PHP.
+
+let globalCarrerasDisponibles = [];
+let globalTiposReferencia = [];
+let globalEstadosReferencia = [];
 
 /**
- * Inicializa la lógica de JavaScript para la gestión de estudiantes en el módulo de empresa.
- * @param {Array} carreras - Array de objetos con todas las carreras disponibles.
- * @param {Array} tiposReferencia - Array de objetos con los tipos de referencia.
- * @param {Array} estadosReferencia - Array de objetos con los estados de referencia.
+ * Inicializa las funciones de gestión de estudiantes para la empresa.
+ * Se llama al cargar el DOM.
+ * @param {Array} carreras - Array de objetos de carreras disponibles.
+ * @param {Array} tiposReferencia - Array de objetos de tipos de referencia disponibles.
+ * @param {Array} estadosReferencia - Array de objetos de estados de referencia disponibles.
  */
 function initializeEmpresaEstudiantes(
   carreras,
   tiposReferencia,
   estadosReferencia
 ) {
-  globalCarrerasModulo = carreras;
-  globalTiposReferenciaModulo = tiposReferencia;
-  globalEstadosReferenciaModulo = estadosReferencia;
+  globalCarrerasDisponibles = carreras;
+  globalTiposReferencia = tiposReferencia;
+  globalEstadosReferencia = estadosReferencia;
 
-  // DEBUG: Log globalCarrerasModulo para verificar que se carga correctamente
-  console.log(
-    'DEBUG: globalCarrerasModulo en initializeEmpresaEstudiantes:',
-    globalCarrerasModulo
-  );
-
-  loadStudentListModulo(currentStudentListPageModulo, currentSearchQueryModulo);
-
-  // Event listener para la búsqueda
-  $('#searchStudentInput').on('keypress', function (e) {
-    if (e.which === 13) {
-      // Enter key
-      $('#searchStudentBtn').click();
-    }
-  });
-
-  $('#searchStudentBtn').on('click', function () {
-    currentSearchQueryModulo = $('#searchStudentInput').val();
-    currentStudentListPageModulo = 1; // Reset to first page on new search
-    loadStudentListModulo(
-      currentStudentListPageModulo,
-      currentSearchQueryModulo
+  // Verificación de EMPRESA_ID_MODULO: Asegura que la variable global esté disponible.
+  // Si por alguna razón no se ha definido en PHP, se intenta un fallback.
+  if (
+    typeof EMPRESA_ID_MODULO === 'undefined' ||
+    EMPRESA_ID_MODULO === null ||
+    EMPRESA_ID_MODULO === ''
+  ) {
+    console.warn(
+      'EMPRESA_ID_MODULO no está definido o está vacío. Intentando obtenerlo del DOM.'
     );
-  });
-
-  // Event listener para la paginación
-  $('#studentPagination').on('click', '.page-link', function (e) {
-    e.preventDefault();
-    const page = $(this).data('page');
-    if (page && page !== currentStudentListPageModulo) {
-      currentStudentListPageModulo = page;
-      loadStudentListModulo(
-        currentStudentListPageModulo,
-        currentSearchQueryModulo
+    // Intentar obtenerlo de un input hidden si existe
+    EMPRESA_ID_MODULO = $('#empresaEstudiantesReferenciaEmpresaId').val();
+    if (!EMPRESA_ID_MODULO) {
+      console.error(
+        'EMPRESA_ID_MODULO sigue sin estar disponible. Algunas funcionalidades (como referencias) podrían fallar.'
       );
     }
+  }
+
+  cargarListadoEstudiantes(); // Cargar el listado inicial de estudiantes
+
+  // Evento para el botón de búsqueda
+  $('#searchStudentBtn').on('click', function () {
+    cargarListadoEstudiantes(1, $('#searchStudentInput').val());
   });
 
-  // Delegación de eventos para los botones "Ver Perfil" y nombres de estudiante
+  // Evento para la tecla Enter en el campo de búsqueda
+  $('#searchStudentInput').on('keypress', function (e) {
+    if (e.which === 13) {
+      // 13 es el código de la tecla Enter
+      cargarListadoEstudiantes(1, $('#searchStudentInput').val());
+    }
+  });
+
+  // Delegación de eventos para los botones "Ver Perfil" en las tarjetas de estudiantes
   $(document).on('click', '.view-student-profile-modulo', function (e) {
     e.preventDefault();
     const studentId = $(this).data('id');
     const studentName = $(this).data('name');
-    showStudentProfileModalModulo(studentId, studentName);
+    $('#empresaEstudiantesPerfilModalLabel').text('Perfil de ' + studentName);
+    loadStudentProfileForCompany(studentId);
+    $('#empresaEstudiantesPerfilModal').modal('show');
+
+    // Actualizar el data-student-id y data-student-name del formulario de crear referencia
+    $('#createReferenceFormModulo').data('student-id', studentId);
+    $('#createReferenceFormModulo').data('student-name', studentName);
+    $('#empresaEstudiantesReferenciaEstudianteId').val(studentId); // También para el input hidden del modal de referencia
   });
 
-  // Manejar el clic en el botón "Crear Referencia" dentro del modal de perfil de estudiante
-  $(document).on('submit', '.create-reference-form-modulo', function (event) {
-    event.preventDefault();
-    lastReferenceModalTriggerModulo = this; // Guardar el elemento que activó el modal
-    const studentId = $(this).data('student-id');
-    const studentName = $(this).data('student-name');
-    openCreateReferenceModalModulo(studentId, studentName);
-  });
-
-  // Manejar el envío del formulario de referencia (creación/edición)
-  $('#empresaEstudiantesReferenciaForm').submit(function (event) {
-    event.preventDefault();
-    console.log(
-      'Formulario de referencia (empresaEstudiantesReferenciaForm) enviado. Previniendo default.'
-    );
-    if (currentEditingReferenceIdModulo) {
-      updateReferenceModulo();
-    } else {
-      saveReferenceModulo();
-    }
-  });
-
-  // Escuchar el evento de cierre del modal de referencia para limpiar el formulario y resetear el ID de edición
-  $('#empresaEstudiantesReferenciaModal').on('hidden.bs.modal', function () {
-    $('#empresaEstudiantesReferenciaForm')[0].reset(); // Limpiar el formulario
-    currentEditingReferenceIdModulo = null; // Resetear el ID de la referencia que se está editando
-    $('#empresaEstudiantesReferenciaModalLabel').text('Crear Nueva Referencia'); // Resetear título del modal
+  // Delegación de eventos para el formulario de crear referencia
+  $(document).on('submit', '#createReferenceFormModulo', function (e) {
+    e.preventDefault();
+    // Resetear el formulario del modal de referencia antes de abrirlo para crear
+    $('#empresaEstudiantesReferenciaForm')[0].reset();
+    $('#empresaEstudiantesCurrentEditingReferenceId').val(''); // Asegurarse de que no hay ID de referencia para edición
+    $('#empresaEstudiantesReferenciaModalLabel').text('Crear Nueva Referencia'); // Título del modal
     $('#empresaEstudiantesSaveReferenceBtn').html(
       '<i class="fas fa-save me-2"></i>Guardar Referencia'
-    ); // Resetear texto del botón
-    if (lastReferenceModalTriggerModulo) {
-      $(lastReferenceModalTriggerModulo).focus(); // Devolver el foco al elemento que abrió el modal
-      lastReferenceModalTriggerModulo = null;
-    }
+    ); // Texto e icono del botón
+
+    // Pre-llenar el ID del estudiante en el modal de referencia
+    const studentId = $(this).data('student-id');
+    const studentName = $(this).data('student-name');
+    $('#empresaEstudiantesReferenciaEstudianteId').val(studentId);
+    // Establecer el tipo de referencia por defecto a 2 (empresa_a_estudiante)
+    $('#empresaEstudiantesTipoReferencia').val(2);
+
+    // Abrir el modal de creación/edición de referencia
+    $('#empresaEstudiantesReferenciaModal').modal('show');
   });
 
-  // Delegación de eventos para los botones de editar/eliminar referencias dentro del modal de perfil
+  // Manejo del envío del formulario de referencia (crear/editar)
+  $('#empresaEstudiantesReferenciaForm').submit(function (e) {
+    e.preventDefault();
+    const idReferencia = $(
+      '#empresaEstudiantesCurrentEditingReferenceId'
+    ).val(); // Obtener ID para saber si es edición
+
+    let url = '../CONTROLADOR/empresa_estudiantes_ajax.php';
+    let action = '';
+
+    const formData = {
+      comentario: $('#empresaEstudiantesComentario').val(),
+      puntuacion: $('#empresaEstudiantesPuntuacion').val(),
+      tipo_referencia_id_tipo_referencia: $(
+        '#empresaEstudiantesTipoReferencia'
+      ).val(), // Asegurar que se envía
+      estudiante_idEstudiante: $(
+        '#empresaEstudiantesReferenciaEstudianteId'
+      ).val(),
+      empresa_idEmpresa: EMPRESA_ID_MODULO, // Asegurar que el ID de la empresa logueada se envía
+    };
+
+    if (idReferencia) {
+      action = 'actualizar_referencia';
+      formData.idReferencia = idReferencia; // Añadir el ID de referencia para la actualización
+    } else {
+      action = 'crear_referencia';
+    }
+    formData.action = action; // Añadir la acción al objeto formData
+
+    console.log('DEBUG: Datos a enviar para referencia:', formData); // DEBUG
+
+    $.ajax({
+      url: url,
+      type: 'POST',
+      data: formData, // Enviar el objeto directamente
+      dataType: 'json',
+      success: function (response) {
+        if (response.success) {
+          Swal.fire('¡Éxito!', response.message, 'success');
+          $('#empresaEstudiantesReferenciaModal').modal('hide');
+          // Recargar las referencias del estudiante en el perfil
+          const currentStudentId = $(
+            '#empresaEstudiantesReferenciaEstudianteId'
+          ).val();
+          // Asegurarse de que EMPRESA_ID_MODULO esté definido antes de usarlo
+          if (
+            typeof EMPRESA_ID_MODULO !== 'undefined' &&
+            EMPRESA_ID_MODULO !== null &&
+            EMPRESA_ID_MODULO !== ''
+          ) {
+            loadStudentReferencesForCompany(
+              currentStudentId,
+              EMPRESA_ID_MODULO
+            );
+          } else {
+            console.error(
+              'EMPRESA_ID_MODULO no está disponible, no se pueden recargar las referencias.'
+            );
+          }
+        } else {
+          Swal.fire('Error', response.message, 'error');
+        }
+      },
+      error: function (xhr, status, error) {
+        console.error('Error en la operación de referencia:', {
+          xhr,
+          status,
+          error,
+        });
+        Swal.fire(
+          'Error',
+          'No se pudo realizar la operación. Intente de nuevo.',
+          'error'
+        );
+      },
+    });
+  });
+
+  // Delegación de eventos para los botones de editar referencia
   $(document).on('click', '.edit-reference-btn-modulo', function () {
     const idReferencia = $(this).data('id');
-    const studentId = $('#empresaEstudiantesPerfilModal').data('student-id');
-    const studentName = $('#empresaEstudiantesPerfilModal').data(
-      'student-name'
-    );
-    loadReferenceForEditModulo(idReferencia, studentId, studentName);
+    loadReferenceForEdit(idReferencia);
   });
 
+  // Delegación de eventos para los botones de eliminar referencia
   $(document).on('click', '.delete-reference-btn-modulo', function () {
     const idReferencia = $(this).data('id');
-    confirmAndDeleteReferenceModulo(idReferencia);
+    Swal.fire({
+      title: '¿Está seguro?',
+      text: '¡No podrá revertir esto!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminarla!',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        deleteReference(idReferencia);
+      }
+    });
   });
 }
 
 /**
- * Carga el listado de estudiantes desde el servidor y lo muestra.
+ * Carga el listado de estudiantes activos con paginación y búsqueda.
  * @param {number} page - La página actual a cargar.
  * @param {string} busqueda - Término de búsqueda.
  */
-function loadStudentListModulo(page, busqueda) {
+function cargarListadoEstudiantes(page = 1, busqueda = '') {
   const studentListContainer = $('#studentListContainer');
   studentListContainer.html(
     '<p class="text-center text-muted w-100 py-4"><i class="fas fa-spinner fa-spin me-2"></i>Cargando estudiantes...</p>'
@@ -136,7 +219,7 @@ function loadStudentListModulo(page, busqueda) {
   $('#studentPagination').empty();
 
   $.ajax({
-    url: '../CONTROLADOR/empresa_estudiantes_ajax.php', // Usar el nuevo controlador
+    url: '../CONTROLADOR/empresa_estudiantes_ajax.php',
     type: 'GET',
     data: {
       action: 'obtener_listado_estudiantes',
@@ -145,37 +228,27 @@ function loadStudentListModulo(page, busqueda) {
     },
     dataType: 'json',
     success: function (response) {
-      console.log(
-        'DEBUG (empresa_estudiantes_funciones.js - loadStudentListModulo success):',
-        response
-      );
       if (response.success) {
         studentListContainer.html(response.html);
-        totalStudentPagesModulo = Math.ceil(
-          response.totalEstudiantes / response.limit
+        renderPagination(
+          response.totalEstudiantes,
+          response.limit,
+          response.currentPage
         );
-        renderPaginationModulo(response.currentPage, totalStudentPagesModulo);
       } else {
         studentListContainer.html(
-          '<p class="text-center text-danger w-100 py-4">Error al cargar estudiantes: ' +
-            response.message +
-            '</p>'
+          `<p class="text-center text-danger w-100 py-4">${response.message}</p>`
         );
-        Swal.fire('Error', response.message, 'error');
       }
     },
     error: function (xhr, status, error) {
-      console.error(
-        'ERROR (empresa_estudiantes_funciones.js - loadStudentListModulo error):',
-        { xhr, status, error }
-      );
+      console.error('Error al cargar listado de estudiantes:', {
+        xhr,
+        status,
+        error,
+      });
       studentListContainer.html(
-        '<p class="text-center text-danger w-100 py-4">Error de conexión al cargar el listado de estudiantes.</p>'
-      );
-      Swal.fire(
-        'Error de Conexión',
-        'No se pudo cargar el listado de estudiantes. Intente de nuevo.',
-        'error'
+        '<p class="text-center text-danger w-100 py-4">Error al cargar estudiantes. Intente de nuevo.</p>'
       );
     },
   });
@@ -183,10 +256,12 @@ function loadStudentListModulo(page, busqueda) {
 
 /**
  * Renderiza los controles de paginación.
- * @param {number} currentPage - La página actual.
- * @param {number} totalPages - El número total de páginas.
+ * @param {number} totalItems - Número total de elementos.
+ * @param {number} limit - Número de elementos por página.
+ * @param {number} currentPage - Página actual.
  */
-function renderPaginationModulo(currentPage, totalPages) {
+function renderPagination(totalItems, limit, currentPage) {
+  const totalPages = Math.ceil(totalItems / limit);
   const paginationContainer = $('#studentPagination');
   paginationContainer.empty();
 
@@ -196,237 +271,276 @@ function renderPaginationModulo(currentPage, totalPages) {
 
   let paginationHtml = '';
 
-  // Previous button
+  // Botón "Anterior"
   paginationHtml += `<li class="page-item ${
     currentPage === 1 ? 'disabled' : ''
   }">
                         <a class="page-link" href="#" data-page="${
                           currentPage - 1
-                        }" aria-label="Previous">
-                          <span aria-hidden="true">&laquo;</span>
-                        </a>
+                        }">Anterior</a>
                       </li>`;
 
-  // Page numbers
-  for (let i = 1; i <= totalPages; i++) {
+  // Números de página
+  let startPage = Math.max(1, currentPage - 2);
+  let endPage = Math.min(totalPages, currentPage + 2);
+
+  if (startPage > 1) {
+    paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+    if (startPage > 2) {
+      paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
     paginationHtml += `<li class="page-item ${
-      currentPage === i ? 'active' : ''
+      i === currentPage ? 'active' : ''
     }">
                           <a class="page-link" href="#" data-page="${i}">${i}</a>
                         </li>`;
   }
 
-  // Next button
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) {
+      paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+    paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+  }
+
+  // Botón "Siguiente"
   paginationHtml += `<li class="page-item ${
     currentPage === totalPages ? 'disabled' : ''
   }">
                         <a class="page-link" href="#" data-page="${
                           currentPage + 1
-                        }" aria-label="Next">
-                          <span aria-hidden="true">&raquo;</span>
-                        </a>
+                        }">Siguiente</a>
                       </li>`;
 
   paginationContainer.html(paginationHtml);
+
+  // Evento de clic para los enlaces de paginación
+  paginationContainer.find('.page-link').on('click', function (e) {
+    e.preventDefault();
+    const newPage = parseInt($(this).data('page'));
+    if (!isNaN(newPage) && newPage > 0 && newPage <= totalPages) {
+      cargarListadoEstudiantes(newPage, $('#searchStudentInput').val());
+    }
+  });
 }
 
 /**
- * Muestra el modal con el perfil completo de un estudiante.
- * @param {string} idEstudiante - El ID del estudiante a mostrar.
- * @param {string} studentName - El nombre completo del estudiante.
+ * Carga el perfil completo de un estudiante para ser visualizado por la empresa.
+ * @param {string} studentId - El ID del estudiante cuyo perfil se cargará.
  */
-function showStudentProfileModalModulo(idEstudiante, studentName) {
-  const perfilEstudianteModal = $('#empresaEstudiantesPerfilModal');
-  const perfilEstudianteContent = $('#empresaEstudiantesPerfilContent');
-  const perfilEstudianteModalLabel = $('#empresaEstudiantesPerfilModalLabel');
-  const btnCrearReferenciaEstudiante = $('#btnCrearReferenciaEstudianteModulo');
-  const createReferenceForm = $('#createReferenceFormModulo');
+function loadStudentProfileForCompany(studentId) {
+  const perfilContentContainer = $('#empresaEstudiantesPerfilContent');
 
-  perfilEstudianteModalLabel.text('Perfil de ' + studentName);
-  perfilEstudianteContent.html(
-    '<p class="text-center text-muted py-5"><i class="fas fa-spinner fa-spin me-2"></i>Cargando perfil...</p>'
+  perfilContentContainer.html(
+    '<p class="text-muted text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando perfil...</p>'
   );
-  $('#empresaEstudiantesReferenciasListContainer').html(
-    '<p class="text-muted text-center">Cargando referencias...</p>'
-  );
-
-  // Almacenar el ID y nombre del estudiante en el modal para uso posterior (e.g., crear referencia)
-  perfilEstudianteModal.data('student-id', idEstudiante);
-  perfilEstudianteModal.data('student-name', studentName);
-  createReferenceForm.data('student-id', idEstudiante);
-  createReferenceForm.data('student-name', studentName);
-
-  // Mostrar el botón de crear referencia
-  btnCrearReferenciaEstudiante.show();
 
   $.ajax({
-    url: '../CONTROLADOR/empresa_estudiantes_ajax.php', // Usar el nuevo controlador
+    url: '../CONTROLADOR/empresa_estudiantes_ajax.php',
     type: 'GET',
     data: {
       action: 'obtener_perfil_estudiante_completo',
-      idEstudiante: idEstudiante,
+      idEstudiante: studentId,
     },
     dataType: 'json',
     success: function (response) {
-      console.log(
-        'DEBUG (empresa_estudiantes_funciones.js - showStudentProfileModalModulo success):',
-        response
-      );
+      console.log('Respuesta completa del AJAX:', response); // Log de la respuesta completa
       if (response.success && response.data) {
         const estudiante = response.data;
+        console.log('Objeto estudiante recibido:', estudiante); // Log del objeto estudiante
 
-        // DEBUG: Log estudiante.carreras_interes_ids para verificar los IDs que vienen del backend
-        console.log(
-          'DEBUG: estudiante.carreras_interes_ids:',
-          estudiante.carreras_interes_ids
-        );
+        let carrerasInteresNombres = 'No especificadas';
+        if (
+          estudiante.carreras_interes_ids &&
+          globalCarrerasDisponibles.length > 0
+        ) {
+          const nombres = estudiante.carreras_interes_ids
+            .map((id) => {
+              const carrera = globalCarrerasDisponibles.find(
+                (c) => parseInt(c.id_carrera) === parseInt(id)
+              );
+              return carrera ? carrera.nombre : null;
+            })
+            .filter((nombre) => nombre !== null);
+          if (nombres.length > 0) {
+            carrerasInteresNombres = nombres.join(', ');
+          }
+        }
 
-        // Construir el HTML para el modo de visualización del perfil
-        let profileHtml = `
-          <h6 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Información Personal</h6>
-          <div class="row mb-3">
-            <div class="col-md-6"><strong>Nombre:</strong> ${
-              estudiante.nombre || 'N/A'
-            }</div>
-            <div class="col-md-6"><strong>Apellidos:</strong> ${
-              estudiante.apellidos || 'N/A'
-            }</div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6"><strong>Tipo Documento:</strong> ${
-              estudiante.tipo_documento_nombre || 'N/A'
-            }</div>
-            <div class="col-md-6"><strong>Número Documento:</strong> ${
-              estudiante.n_doc || 'N/A'
-            }</div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6"><strong>Fecha de Nacimiento:</strong> ${
-              estudiante.fechaNac
-                ? new Date(estudiante.fechaNac).toLocaleDateString()
-                : 'N/A'
-            }</div>
-            <div class="col-md-6"><strong>Ciudad:</strong> ${
-              estudiante.ciudad_nombre || 'N/A'
-            }</div>
-          </div>
-          <div class="mb-4"><strong>Dirección:</strong> ${
-            estudiante.direccion || 'N/A'
-          }</div>
-
-          <h6 class="text-primary mb-3"><i class="fas fa-at me-2"></i>Información de Contacto</h6>
-          <div class="row mb-3">
-            <div class="col-md-6"><strong>Correo:</strong> ${
-              estudiante.correo || 'N/A'
-            }</div>
-            <div class="col-md-6"><strong>Teléfono:</strong> ${
-              estudiante.telefono || 'N/A'
-            }</div>
-          </div>
-          <hr class="my-4">
-
-          <h6 class="text-primary mb-3"><i class="fas fa-graduation-cap me-2"></i>Información Académica</h6>
-          <div class="row mb-3">
-            <div class="col-md-6"><strong>Código Estudiante:</strong> ${
-              estudiante.codigo_estudiante || 'N/A'
-            }</div>
-            <div class="col-md-6"><strong>Carrera Principal:</strong> ${
-              estudiante.carrera_nombre || 'N/A'
-            }</div>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6"><strong>Semestre:</strong> ${
-              estudiante.semestre || 'N/A'
-            }</div>
-            <div class="col-md-6"><strong>Promedio Académico:</strong> ${
-              estudiante.promedio_academico || 'N/A'
-            }</div>
-          </div>
-          <div class="mb-4">
-            <strong>Carreras de Interés:</strong>
-            <ul class="list-group list-group-flush mt-2">
-              ${
-                estudiante.carreras_interes_ids &&
-                estudiante.carreras_interes_ids.length > 0
-                  ? estudiante.carreras_interes_ids
-                      .map((id) => {
-                        const carrera = globalCarrerasModulo.find((c) => {
-                          // DEBUG: Log para ver la comparación de tipos y valores
-                          console.log(
-                            `DEBUG: Comparando ID de interés: ${id} (tipo: ${typeof id}) con ID de carrera global: ${
-                              c.id_carrera
-                            } (tipo: ${typeof c.id_carrera})`
-                          );
-                          return parseInt(c.id_carrera) === id;
-                        });
-                        return `<li class="list-group-item py-1">${
-                          carrera
-                            ? carrera.nombre
-                            : 'Carrera desconocida (ID: ' + id + ')'
-                        }</li>`;
-                      })
-                      .join('')
-                  : '<li class="list-group-item py-1 text-muted">No se han seleccionado carreras de interés.</li>'
+        let perfilHtml = `
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <strong>Nombre:</strong> ${estudiante.nombre || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Apellidos:</strong> ${estudiante.apellidos || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Correo:</strong> ${estudiante.correo || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Teléfono:</strong> ${estudiante.telefono || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Fecha de Nacimiento:</strong> ${
+                estudiante.fechaNac
+                  ? new Date(estudiante.fechaNac).toLocaleDateString()
+                  : 'N/A'
               }
-            </ul>
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Tipo Documento:</strong> ${
+                estudiante.tipo_documento_nombre || 'N/A'
+              }
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Número Documento:</strong> ${estudiante.n_doc || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Dirección:</strong> ${estudiante.direccion || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Ciudad:</strong> ${estudiante.ciudad_nombre || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Código Estudiante:</strong> ${
+                estudiante.codigo_estudiante || 'N/A'
+              }
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Carrera Principal:</strong> ${
+                estudiante.carrera_nombre || 'N/A'
+              }
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Semestre:</strong> ${estudiante.semestre || 'N/A'}
+            </div>
+            <div class="col-md-6 mb-3">
+              <strong>Promedio Académico:</strong> ${
+                estudiante.promedio_academico || 'N/A'
+              }
+            </div>
+            <div class="col-12 mb-3">
+              <strong>Carreras de Interés:</strong> ${carrerasInteresNombres}
+            </div>
+            <div class="col-12 mb-3">
+              <strong>Habilidades:</strong> ${estudiante.habilidades || 'N/A'}
+            </div>
+            <div class="col-12 mb-3">
+              <strong>Experiencia Laboral:</strong> ${
+                estudiante.experiencia_laboral || 'N/A'
+              }
+            </div>
+            <div class="col-12 mb-3">
+              <strong>Certificaciones:</strong> ${
+                estudiante.certificaciones || 'N/A'
+              }
+            </div>
+            <div class="col-12 mb-3">
+              <strong>Idiomas:</strong> ${estudiante.idiomas || 'N/A'}
+            </div>
+            <div class="col-12 mb-3">
+              <strong>Objetivos Profesionales:</strong> ${
+                estudiante.objetivos_profesionales || 'N/A'
+              }
+            </div>
           </div>
-          <hr class="my-4">
-
-          <h6 class="text-primary mb-3"><i class="fas fa-lightbulb me-2"></i>Habilidades e Intereses</h6>
-          <div class="mb-3"><strong>Habilidades:</strong> ${
-            estudiante.habilidades || 'N/A'
-          }</div>
-          <div class="mb-3"><strong>Experiencia Laboral:</strong> ${
-            estudiante.experiencia_laboral || 'N/A'
-          }</div>
-          <div class="mb-3"><strong>Certificaciones:</strong> ${
-            estudiante.certificaciones || 'N/A'
-          }</div>
-          <div class="mb-3"><strong>Idiomas:</strong> ${
-            estudiante.idiomas || 'N/A'
-          }</div>
-          <div class="mb-3"><strong>Objetivos Profesionales:</strong> ${
-            estudiante.objetivos_profesionales || 'N/A'
-          }</div>
         `;
-        perfilEstudianteContent.html(profileHtml);
+        perfilContentContainer.html(perfilHtml);
 
-        // Cargar y mostrar las referencias para este estudiante
-        loadAndDisplayReferencesModulo(idEstudiante);
-
-        // Mostrar el modal
-        new bootstrap.Modal(perfilEstudianteModal).show();
-      } else {
-        perfilEstudianteContent.html(
-          '<p class="text-center text-danger py-5">Error al cargar el perfil: ' +
-            response.message +
-            '</p>'
+        // Lógica para el botón de descarga de Hoja de Vida
+        console.log(
+          'Valor de estudiante.hoja_vida_path:',
+          estudiante.hoja_vida_path
         );
-        Swal.fire('Error', response.message, 'error');
+        // Se asegura de que la ruta exista y no sea una cadena vacía o solo espacios en blanco.
+        if (
+          typeof estudiante.hoja_vida_path === 'string' &&
+          estudiante.hoja_vida_path.trim() !== ''
+        ) {
+          const downloadLink = estudiante.hoja_vida_path.trim();
+          console.log('Ruta de descarga construida:', downloadLink);
+          // Insertar el botón directamente en el perfilContentContainer
+          perfilContentContainer.append(`
+            <div class="mb-3 text-center">
+              <a href="${downloadLink}" target="_blank" class="btn btn-success">
+                <i class="fas fa-download me-2"></i> Descargar Hoja de Vida
+              </a>
+            </div>
+          `);
+          console.log(
+            'Botón de descarga de CV insertado directamente en perfilContentContainer.'
+          );
+        } else {
+          perfilContentContainer.append(`
+            <div class="mb-3 text-center">
+              <p class="text-muted">El estudiante no ha cargado una hoja de vida.</p>
+            </div>
+          `);
+          console.log('Mensaje de CV no disponible insertado.');
+        }
+
+        // Cargar las referencias del estudiante
+        // Asegurarse de que EMPRESA_ID_MODULO esté definido antes de usarlo
+        if (
+          typeof EMPRESA_ID_MODULO !== 'undefined' &&
+          EMPRESA_ID_MODULO !== null &&
+          EMPRESA_ID_MODULO !== ''
+        ) {
+          loadStudentReferencesForCompany(studentId, EMPRESA_ID_MODULO);
+        } else {
+          console.error(
+            'EMPRESA_ID_MODULO no está definido, no se pueden cargar las referencias del estudiante.'
+          );
+          $('#empresaEstudiantesReferenciasListContainer').html(
+            '<p class="text-danger text-center py-3">Error: ID de empresa no disponible para cargar referencias.</p>'
+          );
+        }
+      } else {
+        perfilContentContainer.html(
+          `<p class="text-center text-danger py-3">${response.message}</p>`
+        );
+        // Si el perfil no se carga, asegurar que el mensaje de CV no disponible también se muestre o se limpie
+        perfilContentContainer.append(`
+            <div class="mb-3 text-center">
+              <p class="text-muted">No se pudo cargar la información de la hoja de vida.</p>
+            </div>
+          `);
+        $('#empresaEstudiantesReferenciasListContainer').html(
+          '<p class="text-muted text-center py-3">No hay referencias para este estudiante.</p>'
+        );
       }
     },
     error: function (xhr, status, error) {
-      console.error(
-        'ERROR (empresa_estudiantes_funciones.js - showStudentProfileModalModulo error):',
-        { xhr, status, error }
+      console.error('Error al cargar el perfil del estudiante:', {
+        xhr,
+        status,
+        error,
+      });
+      perfilContentContainer.html(
+        '<p class="text-center text-danger py-3">Error de conexión al cargar el perfil. Intente de nuevo.</p>'
       );
-      perfilEstudianteContent.html(
-        '<p class="text-center text-danger py-5">Error de conexión al cargar el perfil del estudiante.</p>'
-      );
-      Swal.fire(
-        'Error de Conexión',
-        'No se pudo cargar el perfil del estudiante. Intente de nuevo.',
-        'error'
+      perfilContentContainer.append(`
+            <div class="mb-3 text-center">
+              <p class="text-danger">Error al cargar la información de la hoja de vida.</p>
+            </div>
+          `);
+      $('#empresaEstudiantesReferenciasListContainer').html(
+        '<p class="text-danger text-center py-3">Error de conexión al cargar referencias.</p>'
       );
     },
   });
 }
 
 /**
- * Carga y muestra las referencias de un estudiante dentro del modal de perfil.
+ * Carga las referencias de un estudiante específicas para la vista de la empresa.
  * @param {string} studentId - El ID del estudiante.
+ * @param {string} empresaId - El ID de la empresa logueada para verificar permisos de edición/eliminación.
  */
-function loadAndDisplayReferencesModulo(studentId) {
+function loadStudentReferencesForCompany(studentId, empresaId) {
   const referenciasListContainer = $(
     '#empresaEstudiantesReferenciasListContainer'
   );
@@ -435,19 +549,15 @@ function loadAndDisplayReferencesModulo(studentId) {
   );
 
   $.ajax({
-    url: '../CONTROLADOR/empresa_estudiantes_ajax.php', // Usar el nuevo controlador
+    url: '../CONTROLADOR/empresa_estudiantes_ajax.php',
     type: 'GET',
     data: {
       action: 'obtener_referencias_estudiante_perfil',
       idEstudiante: studentId,
-      empresa_id: EMPRESA_ID_MODULO, // Usar la variable global JavaScript de este módulo
+      empresa_id: empresaId, // Pasar el ID de la empresa para la lógica de botones
     },
     dataType: 'json',
     success: function (response) {
-      console.log(
-        'DEBUG (empresa_estudiantes_funciones.js - loadAndDisplayReferencesModulo success):',
-        response
-      );
       if (response.success && response.html) {
         referenciasListContainer.html(response.html);
       } else {
@@ -457,121 +567,25 @@ function loadAndDisplayReferencesModulo(studentId) {
       }
     },
     error: function (xhr, status, error) {
-      console.error(
-        'ERROR (empresa_estudiantes_funciones.js - loadAndDisplayReferencesModulo error):',
-        { xhr, status, error }
-      );
-      referenciasListContainer.html(
-        '<p class="text-danger text-center py-3">Error al cargar las referencias.</p>'
-      );
-    },
-  });
-}
-
-/**
- * Abre el modal para crear una nueva referencia.
- * @param {string} studentId - El ID del estudiante al que se le creará la referencia.
- * @param {string} studentName - El nombre del estudiante.
- */
-function openCreateReferenceModalModulo(studentId, studentName) {
-  currentEditingReferenceIdModulo = null; // Asegurarse de que es una creación
-  $('#empresaEstudiantesReferenciaModalLabel').text(
-    'Crear Referencia para ' + studentName
-  );
-  $('#empresaEstudiantesSaveReferenceBtn').html(
-    '<i class="fas fa-save me-2"></i>Guardar Referencia'
-  );
-
-  $('#empresaEstudiantesReferenciaEstudianteId').val(studentId);
-  // No se renderiza el select de tipos de referencia, se asume el tipo "empresa_a_estudiante" (ID 2)
-
-  new bootstrap.Modal($('#empresaEstudiantesReferenciaModal')).show();
-}
-
-/**
- * Guarda una nueva referencia en la base de datos.
- */
-function saveReferenceModulo() {
-  const formData = {
-    action: 'crear_referencia',
-    estudiante_idEstudiante: $(
-      '#empresaEstudiantesReferenciaEstudianteId'
-    ).val(),
-    empresa_idEmpresa: EMPRESA_ID_MODULO, // Usar la variable global de este módulo
-    tipo_referencia_id_tipo_referencia: 2, // Se asume tipo "empresa_a_estudiante" (ID 2)
-    puntuacion: $('#empresaEstudiantesPuntuacion').val(),
-    comentario: $('#empresaEstudiantesComentario').val(),
-  };
-
-  Swal.fire({
-    title: 'Guardando referencia...',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-
-  $.ajax({
-    url: '../CONTROLADOR/empresa_estudiantes_ajax.php', // Usar el nuevo controlador
-    type: 'POST',
-    data: formData,
-    dataType: 'json',
-    success: function (response) {
-      Swal.close();
-      console.log('Respuesta de creación (AJAX - Módulo):', response);
-      if (response.success) {
-        Swal.fire('¡Éxito!', response.message, 'success');
-        $('#empresaEstudiantesReferenciaModal').modal('hide'); // Cerrar el modal
-        // Recargar las referencias del estudiante
-        const studentId = $('#empresaEstudiantesPerfilModal').data(
-          'student-id'
-        );
-        if (studentId) {
-          loadAndDisplayReferencesModulo(studentId);
-        }
-      } else {
-        Swal.fire('Error', response.message, 'error');
-      }
-    },
-    error: function (xhr, status, error) {
-      Swal.close();
-      console.error('Error al guardar referencia (AJAX - Módulo):', {
+      console.error('Error al cargar referencias del estudiante (Empresa):', {
         xhr,
         status,
         error,
       });
-      Swal.fire(
-        'Error de Conexión',
-        'No se pudo guardar la referencia. Intente de nuevo.',
-        'error'
+      referenciasListContainer.html(
+        '<p class="text-danger text-center py-3">Error de conexión al cargar referencias.</p>'
       );
     },
   });
 }
 
 /**
- * Carga los datos de una referencia existente en el modal de edición.
+ * Carga los datos de una referencia específica para su edición.
  * @param {string} idReferencia - El ID de la referencia a editar.
- * @param {string} studentId - El ID del estudiante asociado.
- * @param {string} studentName - El nombre del estudiante asociado.
  */
-function loadReferenceForEditModulo(idReferencia, studentId, studentName) {
-  currentEditingReferenceIdModulo = idReferencia;
-  $('#empresaEstudiantesReferenciaModalLabel').text('Editar Referencia');
-  $('#empresaEstudiantesSaveReferenceBtn').html(
-    '<i class="fas fa-save me-2"></i>Actualizar Referencia'
-  );
-
-  Swal.fire({
-    title: 'Cargando referencia...',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-
+function loadReferenceForEdit(idReferencia) {
   $.ajax({
-    url: '../CONTROLADOR/empresa_estudiantes_ajax.php', // Usar el nuevo controlador
+    url: '../CONTROLADOR/empresa_estudiantes_ajax.php',
     type: 'GET',
     data: {
       action: 'obtener_referencia_por_id',
@@ -579,33 +593,36 @@ function loadReferenceForEditModulo(idReferencia, studentId, studentName) {
     },
     dataType: 'json',
     success: function (response) {
-      Swal.close();
-      console.log(
-        'Respuesta de carga de referencia (AJAX - Módulo):',
-        response
-      );
       if (response.success && response.data) {
         const ref = response.data;
-        $('#empresaEstudiantesReferenciaEstudianteId').val(studentId);
-        $('#empresaEstudiantesReferenciaEmpresaId').val(ref.empresa_idEmpresa);
         $('#empresaEstudiantesCurrentEditingReferenceId').val(ref.idReferencia);
-        // No se renderiza el select de tipos de referencia, se asume el tipo "empresa_a_estudiante" (ID 2)
+        $('#empresaEstudiantesReferenciaEstudianteId').val(
+          ref.estudiante_idEstudiante
+        );
         $('#empresaEstudiantesPuntuacion').val(ref.puntuacion);
         $('#empresaEstudiantesComentario').val(ref.comentario);
+        // Asegurarse de que el input hidden para el tipo de referencia tenga el valor 2 (empresa_a_estudiante)
+        $('#empresaEstudiantesTipoReferencia').val(
+          ref.tipo_referencia_id_tipo_referencia
+        );
 
-        new bootstrap.Modal($('#empresaEstudiantesReferenciaModal')).show();
+        $('#empresaEstudiantesReferenciaModalLabel').text('Editar Referencia');
+        $('#empresaEstudiantesSaveReferenceBtn').html(
+          '<i class="fas fa-save me-2"></i>Actualizar Referencia'
+        );
+        $('#empresaEstudiantesReferenciaModal').modal('show');
       } else {
         Swal.fire('Error', response.message, 'error');
       }
     },
     error: function (xhr, status, error) {
-      Swal.close();
-      console.error(
-        'Error al cargar referencia para edición (AJAX - Módulo):',
-        { xhr, status, error }
-      );
+      console.error('Error al cargar referencia para edición:', {
+        xhr,
+        status,
+        error,
+      });
       Swal.fire(
-        'Error de Conexión',
+        'Error',
         'No se pudo cargar la referencia para edición. Intente de nuevo.',
         'error'
       );
@@ -614,103 +631,12 @@ function loadReferenceForEditModulo(idReferencia, studentId, studentName) {
 }
 
 /**
- * Actualiza una referencia existente en la base de datos.
- */
-function updateReferenceModulo() {
-  const formData = {
-    action: 'actualizar_referencia',
-    idReferencia: currentEditingReferenceIdModulo,
-    tipo_referencia_id_tipo_referencia: 2, // Se asume tipo "empresa_a_estudiante" (ID 2)
-    puntuacion: $('#empresaEstudiantesPuntuacion').val(),
-    comentario: $('#empresaEstudiantesComentario').val(),
-  };
-
-  Swal.fire({
-    title: 'Actualizando referencia...',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-
-  $.ajax({
-    url: '../CONTROLADOR/empresa_estudiantes_ajax.php', // Usar el nuevo controlador
-    type: 'POST',
-    data: formData,
-    dataType: 'json',
-    success: function (response) {
-      Swal.close();
-      console.log('Respuesta de actualización (AJAX - Módulo):', response);
-      if (response.success) {
-        Swal.fire('¡Actualizada!', response.message, 'success');
-        $('#empresaEstudiantesReferenciaModal').modal('hide'); // Cerrar el modal
-        // Recargar las referencias del estudiante
-        const studentId = $('#empresaEstudiantesPerfilModal').data(
-          'student-id'
-        );
-        if (studentId) {
-          loadAndDisplayReferencesModulo(studentId);
-        }
-      } else {
-        Swal.fire('Error', response.message, 'error');
-      }
-    },
-    error: function (xhr, status, error) {
-      Swal.close();
-      console.error('Error al actualizar referencia (AJAX - Módulo):', {
-        xhr,
-        status,
-        error,
-      });
-      Swal.fire(
-        'Error de Conexión',
-        'No se pudo actualizar la referencia. Intente de nuevo.',
-        'error'
-      );
-    },
-  });
-}
-
-/**
- * Confirma y "elimina" (desactiva) una referencia.
+ * Elimina (desactiva) una referencia.
  * @param {string} idReferencia - El ID de la referencia a eliminar.
  */
-function confirmAndDeleteReferenceModulo(idReferencia) {
-  Swal.fire({
-    title: '¿Estás seguro?',
-    text: 'Esta acción desactivará la referencia. ¡No podrás revertirla!',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#dc3545',
-    cancelButtonColor: '#6c757d',
-    confirmButtonText: 'Sí, desactivar',
-    cancelButtonText: 'Cancelar',
-  }).then((result) => {
-    if (result.isConfirmed) {
-      deleteReferenceModulo(idReferencia);
-    }
-  });
-}
-
-/**
- * Realiza la solicitud AJAX para "eliminar" (desactivar) una referencia.
- * @param {string} idReferencia - El ID de la referencia a desactivar.
- */
-function deleteReferenceModulo(idReferencia) {
-  console.log(
-    'Enviando solicitud de eliminación para idReferencia:',
-    idReferencia
-  );
-  Swal.fire({
-    title: 'Desactivando referencia...',
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-
+function deleteReference(idReferencia) {
   $.ajax({
-    url: '../CONTROLADOR/empresa_estudiantes_ajax.php', // Usar el nuevo controlador
+    url: '../CONTROLADOR/empresa_estudiantes_ajax.php',
     type: 'POST',
     data: {
       action: 'eliminar_referencia',
@@ -718,64 +644,39 @@ function deleteReferenceModulo(idReferencia) {
     },
     dataType: 'json',
     success: function (response) {
-      Swal.close();
-      console.log('Respuesta de eliminación (AJAX - Módulo):', response);
       if (response.success) {
-        Swal.fire('¡Desactivada!', response.message, 'success');
-        // Recargar las referencias del estudiante después de eliminar/desactivar
-        const studentId = $('#empresaEstudiantesPerfilModal').data(
-          'student-id'
-        );
-        if (studentId) {
-          loadAndDisplayReferencesModulo(studentId);
+        Swal.fire('¡Eliminada!', response.message, 'success');
+        // Recargar las referencias del estudiante en el perfil
+        const currentStudentId = $(
+          '#empresaEstudiantesReferenciaEstudianteId'
+        ).val();
+        // Asegurarse de que EMPRESA_ID_MODULO esté definido antes de usarlo
+        if (
+          typeof EMPRESA_ID_MODULO !== 'undefined' &&
+          EMPRESA_ID_MODULO !== null &&
+          EMPRESA_ID_MODULO !== ''
+        ) {
+          loadStudentReferencesForCompany(currentStudentId, EMPRESA_ID_MODULO);
+        } else {
+          console.error(
+            'EMPRESA_ID_MODULO no está definido, no se pueden recargar las referencias después de eliminar.'
+          );
         }
       } else {
         Swal.fire('Error', response.message, 'error');
       }
     },
     error: function (xhr, status, error) {
-      Swal.close();
-      console.error('Error al eliminar referencia (AJAX - Módulo):', {
+      console.error('Error al eliminar referencia:', {
         xhr,
         status,
         error,
       });
       Swal.fire(
-        'Error de Conexión',
-        'No se pudo desactivar la referencia. Intente de nuevo.',
+        'Error',
+        'No se pudo eliminar la referencia. Intente de nuevo.',
         'error'
       );
     },
   });
-}
-
-/**
- * Función de utilidad para renderizar opciones en un <select>.
- * Esta función ya no se usa para el tipo de referencia en este módulo,
- * pero se mantiene por si se necesita para otros selectores en el futuro.
- * @param {Array} data - El array de objetos con los datos (ej: [{id: 1, nombre: 'Opción 1'}]).
- * @param {string} selectId - El ID del elemento <select> en el DOM.
- * @param {string} valueKey - La clave del objeto a usar como 'value' de la opción (ej: 'id_tipo').
- * @param {string} textKey - La clave del objeto a usar como texto visible de la opción (ej: 'nombre').
- * @param {string|number} selectedValue - El valor que debe estar pre-seleccionado.
- */
-function renderSelectOptionsModulo(
-  data,
-  selectId,
-  valueKey,
-  textKey,
-  selectedValue = null
-) {
-  const selectElement = $(`#${selectId}`);
-  selectElement.empty();
-  selectElement.append('<option value="">Seleccione...</option>'); // Opción por defecto
-
-  data.forEach((item) => {
-    const option = `<option value="${item[valueKey]}">${item[textKey]}</option>`;
-    selectElement.append(option);
-  });
-
-  if (selectedValue !== null) {
-    selectElement.val(selectedValue);
-  }
 }

@@ -73,6 +73,7 @@ class Estudiante
       $disponibilidad_id_disponibilidad = isset($datos['disponibilidad_id_disponibilidad']) && $datos['disponibilidad_id_disponibilidad'] !== '' ? (int) $datos['disponibilidad_id_disponibilidad'] : NULL;
       // estado_id_estado es por defecto activo
       $estado_id_estado = 1;
+      $hoja_vida_path = isset($datos['hoja_vida_path']) && $datos['hoja_vida_path'] !== '' ? mysqli_real_escape_string($this->conexion, $datos['hoja_vida_path']) : NULL;
 
 
       // Verificar si ya existe el ID o el correo o el número de documento
@@ -91,7 +92,7 @@ class Estudiante
                 idEstudiante, contrasena, nombre, correo, telefono, apellidos, fechaNac, direccion, n_doc,
                 tipo_documento_id_tipo, ciudad_id_ciudad, codigo_estudiante, carrera_id_carrera, semestre,
                 promedio_academico, habilidades, experiencia_laboral, certificaciones, idiomas, objetivos_profesionales,
-                disponibilidad_id_disponibilidad, estado_id_estado, fecha_creacion, fecha_actualizacion
+                disponibilidad_id_disponibilidad, estado_id_estado, fecha_creacion, fecha_actualizacion, hoja_vida_path
               ) VALUES (
                 '$idEstudiante', '$contrasena', '$nombre', '$correo', '$telefono', '$apellidos', '$fechaNac', '$direccion', '$n_doc',
                 " . ($tipo_documento_id_tipo ? "$tipo_documento_id_tipo" : "NULL") . ",
@@ -107,7 +108,8 @@ class Estudiante
                 " . ($objetivos_profesionales ? "'$objetivos_profesionales'" : "NULL") . ",
                 " . ($disponibilidad_id_disponibilidad ? "$disponibilidad_id_disponibilidad" : "NULL") . ",
                 " . ($estado_id_estado ? "$estado_id_estado" : "NULL") . ",
-                NOW(), NOW()
+                NOW(), NOW(),
+                " . ($hoja_vida_path ? "'$hoja_vida_path'" : "NULL") . "
               )";
 
       if (mysqli_query($this->conexion, $sql)) {
@@ -324,7 +326,8 @@ class Estudiante
         'ciudad_id_ciudad',
         'carrera_id_carrera',
         'disponibilidad_id_disponibilidad',
-        'estado_id_estado'
+        'estado_id_estado',
+        'hoja_vida_path' // Añadido el campo hoja_vida_path
       ];
 
       foreach ($campos_permitidos as $campo) {
@@ -697,7 +700,8 @@ class Estudiante
                   e.idiomas,
                   e.objetivos_profesionales,
                   dh.nombre AS disponibilidad_nombre,
-                  est.nombre AS estado_nombre
+                  est.nombre AS estado_nombre,
+                  e.hoja_vida_path -- Añadido hoja_vida_path
               FROM
                   estudiante e
               LEFT JOIN

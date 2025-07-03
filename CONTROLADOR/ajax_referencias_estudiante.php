@@ -2,10 +2,6 @@
 session_start();
 header('Content-Type: application/json');
 
-// Habilitar la visualización de errores para depuración (QUITAR EN PRODUCCIÓN)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
 try {
   require_once '../MODELO/class_empresa.php';
   require_once '../MODELO/class_referencia.php';
@@ -41,12 +37,9 @@ $idEstudianteLogueado = $_SESSION['usuario_id']; // ID del estudiante logueado
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-error_log("DEBUG (ajax_referencias_estudiante): Acción recibida: " . $action); // Log la acción
-
 switch ($action) {
   case 'obtener_perfil_empresa_completo':
     $idEmpresa = $_GET['idEmpresa'] ?? '';
-    error_log("DEBUG (ajax_referencias_estudiante - obtener_perfil_empresa_completo): idEmpresa: " . $idEmpresa); // Log idEmpresa
     if (empty($idEmpresa)) {
       echo json_encode(['success' => false, 'message' => 'ID de empresa no proporcionado.']);
       exit();
@@ -54,7 +47,6 @@ switch ($action) {
 
     try {
       $empresa_data = $empresaObj->obtenerPorId($idEmpresa);
-      error_log("DEBUG (ajax_referencias_estudiante - obtener_perfil_empresa_completo): Datos de empresa obtenidos: " . json_encode($empresa_data)); // Log datos de la empresa
 
       if ($empresa_data) {
         // Formatear la salida para la visualización en el modal
@@ -124,31 +116,40 @@ switch ($action) {
     break;
 
   case 'crear_referencia':
-    error_log("DEBUG (ajax_referencias_estudiante - crear_referencia): Datos recibidos: " . json_encode($_POST)); // Log datos recibidos
+    // --- INICIO DEPURACIÓN ---
+    error_log("DEBUG (ajax_referencias_estudiante - crear_referencia): Datos recibidos en POST: " . print_r($_POST, true));
+    error_log("DEBUG (ajax_referencias_estudiante - crear_referencia): ID Estudiante Logueado: " . $idEstudianteLogueado);
+    // --- FIN DEPURACIÓN ---
+
     try {
       $datos = [
         'comentario' => $_POST['comentario'] ?? '',
         'puntuacion' => $_POST['puntuacion'] ?? null,
-        'tipo_referencia_id_tipo_referencia' => $_POST['tipo_referencia_id_tipo_referencia'] ?? 1, // Usar el valor enviado o 1 por defecto
+        // Aseguramos que el tipo de referencia se obtenga del POST o se asigne por defecto
+        'tipo_referencia_id_tipo_referencia' => $_POST['tipo_referencia_id_tipo_referencia'] ?? 1,
         'estudiante_idEstudiante' => $idEstudianteLogueado, // ID del estudiante de la sesión
         'empresa_idEmpresa' => $_POST['empresa_idEmpresa'] ?? ''
       ];
 
-      if (empty($datos['comentario'])) {
-        echo json_encode(['success' => false, 'message' => 'El comentario no puede estar vacío.']);
-        exit();
-      }
-      if (empty($datos['empresa_idEmpresa'])) {
-        echo json_encode(['success' => false, 'message' => 'ID de empresa no proporcionado para crear la referencia.']);
-        exit();
-      }
-      if (empty($datos['estudiante_idEstudiante'])) {
-        echo json_encode(['success' => false, 'message' => 'ID de estudiante no proporcionado para crear la referencia.']);
+      // --- INICIO DEPURACIÓN ---
+      error_log("DEBUG (ajax_referencias_estudiante - crear_referencia): Datos a registrar: " . print_r($datos, true));
+      // --- FIN DEPURACIÓN ---
+
+      if (empty($datos['comentario']) || empty($datos['tipo_referencia_id_tipo_referencia']) || empty($datos['estudiante_idEstudiante']) || empty($datos['empresa_idEmpresa'])) {
+        error_log("ERROR (ajax_referencias_estudiante - crear_referencia): Datos incompletos detectados. Comentario: " . (empty($datos['comentario']) ? 'VACIO' : 'OK') . ", Tipo Ref: " . (empty($datos['tipo_referencia_id_tipo_referencia']) ? 'VACIO' : 'OK') . ", Estudiante ID: " . (empty($datos['estudiante_idEstudiante']) ? 'VACIO' : 'OK') . ", Empresa ID: " . (empty($datos['empresa_idEmpresa']) ? 'VACIO' : 'OK'));
+        echo json_encode(['success' => false, 'message' => 'Datos incompletos para crear la referencia.']);
         exit();
       }
 
+      // ** ANTES: Bloque de validación que impedía múltiples referencias de estudiante a empresa. **
+      // ** AHORA: Este bloque ha sido eliminado para permitir que un estudiante genere varias referencias a la misma empresa. **
+      // $referencias_existentes = $referenciaObj->obtenerTodas($datos['empresa_idEmpresa'], $idEstudianteLogueado, 1, 1, 0, 1);
+      // if (!empty($referencias_existentes)) {
+      //   echo json_encode(['success' => false, 'message' => 'Ya has creado una referencia activa para esta empresa. Solo puedes tener una referencia activa por empresa.']);
+      //   exit();
+      // }
+
       $resultado = $referenciaObj->registrar($datos);
-      error_log("DEBUG (ajax_referencias_estudiante - crear_referencia): Resultado del registro: " . json_encode($resultado)); // Log resultado del registro
       echo json_encode($resultado);
     } catch (Exception $e) {
       error_log("ERROR (ajax_referencias_estudiante - crear_referencia): " . $e->getMessage() . " en línea " . $e->getLine());
@@ -157,16 +158,14 @@ switch ($action) {
     break;
 
   case 'obtener_referencia_por_id':
-    $idReferencia = $_GET['idReferencia'] ?? '';
-    error_log("DEBUG (ajax_referencias_estudiante - obtener_referencia_por_id): idReferencia: " . $idReferencia); // Log idReferencia
-    if (empty($idReferencia)) {
-      echo json_encode(['success' => false, 'message' => 'ID de referencia no proporcionado.']);
-      exit();
-    }
-
     try {
+      $idReferencia = $_GET['idReferencia'] ?? '';
+      if (empty($idReferencia)) {
+        echo json_encode(['success' => false, 'message' => 'ID de referencia no proporcionado.']);
+        exit();
+      }
+
       $referencia = $referenciaObj->obtenerPorId($idReferencia);
-      error_log("DEBUG (ajax_referencias_estudiante - obtener_referencia_por_id): Referencia obtenida: " . json_encode($referencia)); // Log referencia obtenida
 
       if ($referencia) {
         // Verificar que la referencia pertenece al estudiante logueado
@@ -174,8 +173,15 @@ switch ($action) {
           echo json_encode(['success' => false, 'message' => 'No tienes permiso para ver esta referencia.']);
           exit();
         }
-        // La validación de 24 horas para edición se hará en el cliente (para deshabilitar el botón)
-        // y también en el servidor al intentar actualizar para mayor seguridad.
+        // Verificar la restricción de 24 horas para edición
+        $fecha_creacion = new DateTime($referencia['fecha_creacion']);
+        $fecha_actual = new DateTime();
+        $diferencia = $fecha_actual->getTimestamp() - $fecha_creacion->getTimestamp();
+        if ($diferencia > 86400) { // 86400 segundos = 24 horas
+          echo json_encode(['success' => false, 'message' => 'El tiempo de edición para esta referencia ha expirado (más de 24 horas).']);
+          exit();
+        }
+
         echo json_encode(['success' => true, 'data' => $referencia]);
       } else {
         echo json_encode(['success' => false, 'message' => 'Referencia no encontrada.']);
@@ -187,26 +193,22 @@ switch ($action) {
     break;
 
   case 'actualizar_referencia':
-    error_log("DEBUG (ajax_referencias_estudiante - actualizar_referencia): Datos recibidos: " . json_encode($_POST)); // Log datos recibidos
     try {
       $idReferencia = $_POST['idReferencia'] ?? '';
       $datos = [
         'comentario' => $_POST['comentario'] ?? '',
         'puntuacion' => $_POST['puntuacion'] ?? null,
+        // Aseguramos que el tipo de referencia se obtenga del POST o se asigne por defecto
+        'tipo_referencia_id_tipo_referencia' => $_POST['tipo_referencia_id_tipo_referencia'] ?? 1,
       ];
 
       if (empty($idReferencia)) {
         echo json_encode(['success' => false, 'message' => 'ID de referencia no proporcionado para actualizar.']);
         exit();
       }
-      if (empty($datos['comentario'])) {
-        echo json_encode(['success' => false, 'message' => 'El comentario no puede estar vacío.']);
-        exit();
-      }
 
       // Llamar al nuevo método que incluye la lógica de validación de 24 horas y propiedad
       $resultado = $referenciaObj->actualizarReferenciaEstudiante($idReferencia, $idEstudianteLogueado, $datos);
-      error_log("DEBUG (ajax_referencias_estudiante - actualizar_referencia): Resultado de la actualización: " . json_encode($resultado)); // Log resultado de la actualización
       echo json_encode($resultado);
     } catch (Exception $e) {
       error_log("ERROR (ajax_referencias_estudiante - actualizar_referencia): " . $e->getMessage() . " en línea " . $e->getLine());
@@ -215,21 +217,19 @@ switch ($action) {
     break;
 
   case 'obtener_referencias_empresa_perfil':
-    $idEmpresa = $_GET['idEmpresa'] ?? '';
-    $idEstudiante = $_GET['idEstudiante'] ?? ''; // El ID del estudiante logueado
-    error_log("DEBUG (ajax_referencias_estudiante - obtener_referencias_empresa_perfil): idEmpresa: " . $idEmpresa . ", idEstudiante: " . $idEstudiante); // Log parámetros
-
-    if (empty($idEmpresa) || empty($idEstudiante)) {
-      echo json_encode(['success' => false, 'message' => 'ID de empresa o estudiante no proporcionado.']);
-      exit();
-    }
-
     try {
+      $idEmpresa = $_GET['idEmpresa'] ?? '';
+      $idEstudiante = $_GET['idEstudiante'] ?? ''; // El ID del estudiante logueado
+
+      if (empty($idEmpresa) || empty($idEstudiante)) {
+        echo json_encode(['success' => false, 'message' => 'ID de empresa o estudiante no proporcionado.']);
+        exit();
+      }
+
       // Obtener las referencias asociadas a esta empresa, incluyendo solo las de tipo 'estudiante_a_empresa' (ID 1)
       // y que estén activas (ID 1).
       // Se pasa el idEmpresa y el idEstudiante para filtrar correctamente
       $referencias = $referenciaObj->obtenerTodas($idEmpresa, null, 1, 100, 0, 1);
-      error_log("DEBUG (ajax_referencias_estudiante - obtener_referencias_empresa_perfil): Referencias obtenidas de la BD: " . json_encode($referencias)); // Log referencias obtenidas
 
       $html_referencias = '';
       if (!empty($referencias)) {
@@ -252,6 +252,9 @@ switch ($action) {
               <div class="d-inline-flex gap-2 ms-auto">
                 <button type="button" class="btn btn-warning btn-sm edit-reference-btn-estudiante"
                   data-id-referencia="' . htmlspecialchars($ref['idReferencia']) . '"
+                  data-comentario="' . htmlspecialchars($ref['comentario']) . '"
+                  data-puntuacion="' . htmlspecialchars($ref['puntuacion'] ?? '') . '"
+                  data-fecha-creacion="' . htmlspecialchars($ref['fecha_creacion']) . '"
                   title="Editar Referencia">
                   <i class="fas fa-pencil-alt"></i>
                 </button>
@@ -292,7 +295,6 @@ switch ($action) {
         $html_referencias = '<p class="text-muted text-center py-3">No hay referencias de estudiantes para esta empresa.</p>';
       }
 
-      error_log("DEBUG (ajax_referencias_estudiante - obtener_referencias_empresa_perfil): HTML generado: " . $html_referencias); // Log HTML generado
       echo json_encode(['success' => true, 'html' => $html_referencias]);
     } catch (Exception $e) {
       error_log("ERROR (ajax_referencias_estudiante - obtener_referencias_empresa_perfil): " . $e->getMessage() . " en línea " . $e->getLine());

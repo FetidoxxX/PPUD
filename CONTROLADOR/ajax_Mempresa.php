@@ -249,8 +249,10 @@ switch ($action) {
     break;
 
   case 'render_interesados_list_html':
+    error_log("DEBUG: Action 'render_interesados_list_html' called."); // DEBUG
     $idOferta = $_GET['idOferta'] ?? '';
     if (empty($idOferta)) {
+      error_log("ERROR: ID de oferta no proporcionada para render_interesados_list_html."); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => false, 'message' => 'ID de oferta no proporcionada.']);
       break;
@@ -258,12 +260,14 @@ switch ($action) {
     // Verificar que la oferta pertenece a la empresa logueada
     $oferta = $ofertaObj->obtenerPorId($idOferta);
     if (!$oferta || $oferta['empresa_idEmpresa'] != $idEmpresa) {
+      error_log("ERROR: Intento de acceder a interesados de oferta no propia. Oferta ID: " . $idOferta . ", Empresa ID Sesion: " . $idEmpresa); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => false, 'message' => 'No tienes permiso para ver los interesados de esta oferta.']);
       break;
     }
 
     $estudiantes_interesados = $ofertaObj->obtenerEstudiantesInteresados($idOferta);
+    error_log("DEBUG: Estudiantes interesados obtenidos para oferta " . $idOferta . ": " . print_r($estudiantes_interesados, true)); // DEBUG
 
     $html_list = '';
     if (!empty($estudiantes_interesados)) {
@@ -279,13 +283,16 @@ switch ($action) {
     } else {
       $html_list = '<li class="list-group-item text-center text-muted py-3">No hay estudiantes interesados en esta oferta.</li>';
     }
+    error_log("DEBUG: HTML generado para interesados: " . $html_list); // DEBUG
     ob_end_clean();
     echo json_encode(['success' => true, 'html' => $html_list]);
     break;
 
   case 'render_perfil_estudiante_html':
+    error_log("DEBUG: Action 'render_perfil_estudiante_html' called."); // DEBUG
     $idEstudiante = $_GET['id'] ?? '';
     if (empty($idEstudiante)) {
+      error_log("ERROR: ID de estudiante no proporcionada para render_perfil_estudiante_html."); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => false, 'message' => 'ID de estudiante no proporcionada.']);
       break;
@@ -293,6 +300,7 @@ switch ($action) {
 
     // Obtener el perfil del estudiante
     $estudiante_data = $estudianteObj->obtenerPorIdParaEmpresa($idEstudiante);
+    error_log("DEBUG: Datos de estudiante obtenidos para ID " . $idEstudiante . ": " . print_r($estudiante_data, true)); // DEBUG
 
     if ($estudiante_data) {
       $html_content = '
@@ -357,8 +365,10 @@ switch ($action) {
     break;
 
   case 'obtener_referencias_empresa_perfil': // NUEVA ACCIÓN
+    error_log("DEBUG: Action 'obtener_referencias_empresa_perfil' called."); // DEBUG
     $idEmpresaReferencias = $_GET['idEmpresa'] ?? '';
     if (empty($idEmpresaReferencias)) {
+      error_log("ERROR: ID de empresa no proporcionada para obtener referencias."); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => false, 'message' => 'ID de empresa no proporcionada para obtener referencias.']);
       break;
@@ -369,6 +379,7 @@ switch ($action) {
       // Asumimos que tipo_referencia_id_tipo_referencia = 1 es 'estudiante_a_empresa'.
       // Se usa un límite alto para obtener todas las referencias activas de la empresa.
       $referencias = $referenciaObj->obtenerTodas($idEmpresaReferencias, null, 1, 999, 0, 1); // Obtener referencias de tipo 1 (estudiante a empresa)
+      error_log("DEBUG: Referencias obtenidas para empresa " . $idEmpresaReferencias . ": " . print_r($referencias, true)); // DEBUG
 
       $html_referencias = '';
       if (!empty($referencias)) {
@@ -398,6 +409,7 @@ switch ($action) {
         $html_referencias = '<p class="text-muted text-center py-3">No has recibido referencias de estudiantes aún.</p>';
       }
 
+      error_log("DEBUG: HTML generado para referencias de empresa: " . $html_referencias); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => true, 'html' => $html_referencias]);
     } catch (Exception $e) {

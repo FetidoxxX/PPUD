@@ -11,6 +11,7 @@
       <div class="modal-body">
         <div id="empresaEstudiantesPerfilContent">
           <!-- El contenido del perfil del estudiante se cargará aquí -->
+          <!-- El botón de descarga de hoja de vida se insertará directamente aquí por JS -->
         </div>
         <hr class="my-4">
         <div class="d-flex justify-content-end mb-3">

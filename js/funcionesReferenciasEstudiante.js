@@ -31,11 +31,9 @@ function loadCompanyProfileModalForStudent(idEmpresa, empresaNombre) {
   );
 
   // Almacenar el ID y nombre de la empresa en el formulario de crear referencia dentro del modal
-  // MODIFICADO: Establecer el data-company-id directamente en el formulario
-  createReferenceFormEstudiante.attr('data-company-id', idEmpresa);
+  createReferenceFormEstudiante.data('company-id', idEmpresa); // Usar .data() para almacenar
   createReferenceFormEstudiante.data('company-name', empresaNombre);
   // También establecer el valor en el input hidden del modal de referencia para la empresa
-  // Esto es para cuando el modal de referencia se abre, ya tenga el ID de la empresa
   $('#estudianteEmpresaReferenciaEmpresaId').val(idEmpresa);
   console.log(
     'DEBUG: Value set for #estudianteEmpresaReferenciaEmpresaId (in loadCompanyProfileModalForStudent):',
@@ -155,7 +153,7 @@ $(document).on('submit', '#createReferenceFormEstudiante', function (event) {
   event.preventDefault();
   lastReferenceModalTriggerEstudiante = this; // Guardar el elemento que activó el modal
   // MODIFICADO: Obtener el companyId del atributo data-company-id del formulario
-  const companyId = $(this).attr('data-company-id');
+  const companyId = $(this).data('company-id'); // Usar .data() para leer
   const companyName = $(this).data('company-name');
   console.log(
     'DEBUG: Clic en "Crear Referencia". companyId del formulario:',
@@ -171,7 +169,7 @@ $(document).on('click', '.edit-reference-btn-estudiante', function () {
   const idReferencia = $(this).data('idReferencia');
   // Obtenemos el ID y nombre de la empresa del modal de perfil de empresa, ya que son necesarios
   // para el contexto de la referencia.
-  const companyId = $('#createReferenceFormEstudiante').attr('data-company-id'); // MODIFICADO: Obtener del data-attribute
+  const companyId = $('#createReferenceFormEstudiante').data('company-id'); // Usar .data() para leer
   const companyName = $('#createReferenceFormEstudiante').data('company-name');
   console.log(
     'DEBUG: Clic en "Editar Referencia". idReferencia:',
@@ -352,28 +350,27 @@ $(document).on('submit', '#estudianteEmpresaReferenciaForm', function (event) {
  */
 function saveReferenceEstudiante() {
   const empresaIdVal = $('#estudianteEmpresaReferenciaEmpresaId').val();
-  console.log(
-    'DEBUG: Valor de #estudianteEmpresaReferenciaEmpresaId antes de formData:',
-    empresaIdVal
-  ); // DEBUG
+  const estudianteIdVal = $('#estudianteEmpresaReferenciaEstudianteId').val();
+  const tipoReferenciaVal = $('#estudianteEmpresaTipoReferencia').val();
+  const puntuacionVal = $('#estudianteEmpresaPuntuacion').val();
+  const comentarioVal = $('#estudianteEmpresaComentario').val();
+
+  console.log('DEBUG: Datos a enviar para saveReferenceEstudiante:', {
+    estudiante_idEstudiante: estudianteIdVal,
+    empresa_idEmpresa: empresaIdVal,
+    tipo_referencia_id_tipo_referencia: tipoReferenciaVal,
+    puntuacion: puntuacionVal,
+    comentario: comentarioVal,
+  }); // DEBUG
 
   const formData = {
     action: 'crear_referencia',
-    estudiante_idEstudiante: $(
-      '#estudianteEmpresaReferenciaEstudianteId'
-    ).val(),
-    empresa_idEmpresa: empresaIdVal, // Usar el valor capturado
-    tipo_referencia_id_tipo_referencia: $(
-      '#estudianteEmpresaTipoReferencia'
-    ).val(), // Enviar el tipo de referencia
-    puntuacion: $('#estudianteEmpresaPuntuacion').val(),
-    comentario: $('#estudianteEmpresaComentario').val(),
+    estudiante_idEstudiante: estudianteIdVal,
+    empresa_idEmpresa: empresaIdVal,
+    tipo_referencia_id_tipo_referencia: tipoReferenciaVal, // Obtener del campo oculto
+    puntuacion: puntuacionVal,
+    comentario: comentarioVal,
   };
-
-  console.log(
-    'DEBUG: formData being sent for saveReferenceEstudiante:',
-    formData
-  ); // DEBUG
 
   Swal.fire({
     title: 'Guardando referencia...',
@@ -429,6 +426,9 @@ function updateReferenceEstudiante() {
   const formData = {
     action: 'actualizar_referencia',
     idReferencia: currentEditingReferenceIdEstudiante,
+    tipo_referencia_id_tipo_referencia: $(
+      '#estudianteEmpresaTipoReferencia'
+    ).val(), // Obtener del campo oculto
     puntuacion: $('#estudianteEmpresaPuntuacion').val(),
     comentario: $('#estudianteEmpresaComentario').val(),
   };
@@ -496,6 +496,7 @@ $('#estudianteEmpresaReferenciaModal').on('hidden.bs.modal', function () {
   currentEditingReferenceIdEstudiante = null;
   $('#estudianteEmpresaReferenciaForm')[0].reset(); // Limpiar el formulario
   $('#estudianteEmpresaCurrentEditingReferenceId').val(''); // Asegurarse de que el hidden input también se limpie
+  $('#estudianteEmpresaTipoReferencia').val('1'); // Resetear el tipo de referencia a 1
   // Devolver el foco al elemento que activó el modal si existe
   if (lastReferenceModalTriggerEstudiante) {
     $(lastReferenceModalTriggerEstudiante).focus();

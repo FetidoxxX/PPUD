@@ -705,6 +705,7 @@ function mostrarPerfilEmpresa() {
  * @param {HTMLElement} triggeringElement - El elemento que activó este modal.
  */
 function viewInterestedStudents(idOferta, triggeringElement) {
+  console.log('DEBUG: viewInterestedStudents called for idOferta:', idOferta); // DEBUG
   // Guardar el elemento que activó este modal para devolver el foco al cerrarlo
   lastFocusedElement = triggeringElement;
 
@@ -713,12 +714,19 @@ function viewInterestedStudents(idOferta, triggeringElement) {
     document.getElementById('ofertaModal')
   );
   if (ofertaModal) {
+    console.log('DEBUG: ofertaModal está abierto, ocultándolo.'); // DEBUG
     ofertaModal.hide();
     // Añadir un listener one-time para asegurar que el foco se maneje después de que el modal se oculte completamente
     $('#ofertaModal').one('hidden.bs.modal', function () {
+      console.log(
+        'DEBUG: ofertaModal oculto, llamando a showInterestedStudentsModal.'
+      ); // DEBUG
       showInterestedStudentsModal(idOferta);
     });
   } else {
+    console.log(
+      'DEBUG: ofertaModal no está abierto, llamando directamente a showInterestedStudentsModal.'
+    ); // DEBUG
     showInterestedStudentsModal(idOferta);
   }
 }
@@ -728,6 +736,10 @@ function viewInterestedStudents(idOferta, triggeringElement) {
  * @param {number} idOferta - El ID de la oferta.
  */
 function showInterestedStudentsModal(idOferta) {
+  console.log(
+    'DEBUG: showInterestedStudentsModal called for idOferta:',
+    idOferta
+  ); // DEBUG
   const interesadosList = $('#interesadosList');
   interesadosList.html(
     '<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Cargando interesados...</div>'
@@ -743,6 +755,10 @@ function showInterestedStudentsModal(idOferta) {
     },
     dataType: 'json',
     success: function (response) {
+      console.log(
+        'DEBUG: Response from render_interesados_list_html:',
+        response
+      ); // DEBUG
       if (response.success && response.html) {
         interesadosList.html(response.html);
         const interesadosModalElement =
@@ -762,7 +778,11 @@ function showInterestedStudentsModal(idOferta) {
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al obtener estudiantes interesados:', error);
+      console.error('ERROR: Error al obtener estudiantes interesados:', {
+        xhr,
+        status,
+        error,
+      }); // DEBUG
       interesadosList.html(
         '<li class="list-group-item text-center text-danger">Error de conexión al cargar interesados.</li>'
       );
@@ -776,6 +796,7 @@ function showInterestedStudentsModal(idOferta) {
 
   // Manejar el foco al cerrar el modal de interesados
   $('#interesadosModal').one('hidden.bs.modal', function () {
+    console.log('DEBUG: interesadosModal oculto, restaurando foco.'); // DEBUG
     if (lastFocusedElement) {
       lastFocusedElement.focus();
       lastFocusedElement = null;
@@ -790,6 +811,10 @@ function showInterestedStudentsModal(idOferta) {
  * @param {HTMLElement} triggeringElement - El elemento que activó este modal.
  */
 function viewStudentProfileForCompany(idEstudiante, triggeringElement) {
+  console.log(
+    'DEBUG: viewStudentProfileForCompany called for idEstudiante:',
+    idEstudiante
+  ); // DEBUG
   // Guardar el elemento que activó este modal para devolver el foco al cerrarlo
   lastFocusedElement = triggeringElement;
 
@@ -798,12 +823,19 @@ function viewStudentProfileForCompany(idEstudiante, triggeringElement) {
     document.getElementById('interesadosModal')
   );
   if (interesadosModal) {
+    console.log('DEBUG: interesadosModal está abierto, ocultándolo.'); // DEBUG
     interesadosModal.hide();
     // Añadir un listener one-time para asegurar que el foco se maneje después de que el modal se oculte completamente
     $('#interesadosModal').one('hidden.bs.modal', function () {
+      console.log(
+        'DEBUG: interesadosModal oculto, llamando a showStudentProfileModal.'
+      ); // DEBUG
       showStudentProfileModal(idEstudiante);
     });
   } else {
+    console.log(
+      'DEBUG: interesadosModal no está abierto, llamando directamente a showStudentProfileModal.'
+    ); // DEBUG
     showStudentProfileModal(idEstudiante);
   }
 }
@@ -813,7 +845,7 @@ function viewStudentProfileForCompany(idEstudiante, triggeringElement) {
  * @param {string} idEstudiante - El ID del estudiante.
  */
 function showStudentProfileModal(idEstudiante) {
-  console.log('Abriendo perfil de estudiante para ID:', idEstudiante);
+  console.log('DEBUG: showStudentProfileModal called for ID:', idEstudiante); // DEBUG
 
   const perfilEstudianteContent = $('#perfilEstudianteContent');
   const referenciasListContainer = $('#referenciasListContainer');
@@ -837,6 +869,10 @@ function showStudentProfileModal(idEstudiante) {
     },
     dataType: 'json',
     success: function (response) {
+      console.log(
+        'DEBUG: Response from render_perfil_estudiante_html:',
+        response
+      ); // DEBUG
       if (response.success && response.html) {
         const studentData = response.data;
         if (studentData) {
@@ -847,11 +883,6 @@ function showStudentProfileModal(idEstudiante) {
               ' ' +
               studentData.apellidos
           );
-          // Los atributos onclick del botón de crear referencia ya no son necesarios si usas delegación
-          // $('#btnCrearReferenciaEstudiante').attr(
-          //   'onclick',
-          //   `openCreateReferenceModal('${idEstudiante}', '${studentData.nombre} ${studentData.apellidos}', this)`
-          // );
         } else {
           const studentNameMatch = response.html.match(
             /Nombre:<\/strong>\s*([^<]+)/
@@ -862,11 +893,6 @@ function showStudentProfileModal(idEstudiante) {
           $('#perfilEstudianteModalLabel').text(
             'Perfil del Estudiante - ' + studentName
           );
-          // Los atributos onclick del botón de crear referencia ya no son necesarios si usas delegación
-          // $('#btnCrearReferenciaEstudiante').attr(
-          //   'onclick',
-          //   `openCreateReferenceModal('${idEstudiante}', '${studentName}', this)`
-          // );
         }
 
         perfilEstudianteContent.html(response.html);
@@ -898,7 +924,11 @@ function showStudentProfileModal(idEstudiante) {
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al obtener perfil del estudiante:', error);
+      console.error('ERROR: Error al obtener perfil del estudiante:', {
+        xhr,
+        status,
+        error,
+      }); // DEBUG
       perfilEstudianteContent.html(
         '<div class="text-center py-5 text-danger">Error de conexión al cargar el perfil del estudiante.</div>'
       );
@@ -912,6 +942,7 @@ function showStudentProfileModal(idEstudiante) {
 
   // Manejar el foco al cerrar el modal de perfil de estudiante
   $('#perfilEstudianteModal').one('hidden.bs.modal', function () {
+    console.log('DEBUG: perfilEstudianteModal oculto, restaurando foco.'); // DEBUG
     if (lastFocusedElement) {
       lastFocusedElement.focus();
       lastFocusedElement = null;
