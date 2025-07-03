@@ -4,6 +4,7 @@
  * Este archivo contiene las funciones JavaScript para gestionar el perfil del estudiante,
  * incluyendo la carga, visualización, edición y actualización de sus datos personales,
  * académicos y carreras de interés, así como el cambio de contraseña.
+ * También incluye la lógica para mostrar las referencias recibidas por el estudiante.
  */
 
 // Variables globales para almacenar los datos estáticos de los selectores
@@ -254,6 +255,56 @@ function loadStudentProfile() {
 }
 
 /**
+ * Carga las referencias recibidas por el estudiante desde el servidor
+ * y las muestra en la sección correspondiente del perfil.
+ * @param {string} studentId - El ID del estudiante cuyas referencias se cargarán.
+ */
+function loadStudentReferences(studentId) {
+  const referenciasListContainer = $('#referenciasEstudianteList');
+  referenciasListContainer.html(
+    '<p class="text-muted text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando referencias...</p>'
+  ); // Mensaje de carga
+
+  $.ajax({
+    url: '../CONTROLADOR/ajax_perfilE.php', // Usamos ajax_perfilE.php para obtener las referencias del estudiante
+    type: 'GET',
+    data: {
+      action: 'obtener_referencias_estudiante_perfil',
+      idEstudiante: studentId,
+    },
+    dataType: 'json',
+    success: function (response) {
+      console.log(
+        'Respuesta de AJAX (obtener_referencias_estudiante_perfil):',
+        response
+      );
+      if (response.success && response.html) {
+        referenciasListContainer.html(response.html);
+      } else {
+        referenciasListContainer.html(
+          '<p class="text-muted text-center py-3">No has recibido referencias aún.</p>'
+        );
+        // Opcional: Swal.fire('Error', response.message, 'error');
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error(
+        'Error al cargar referencias del estudiante (AJAX):',
+        error
+      );
+      referenciasListContainer.html(
+        '<p class="text-danger text-center py-3">Error de conexión al cargar tus referencias.</p>'
+      );
+      Swal.fire(
+        'Error de conexión',
+        'No se pudieron cargar tus referencias. Intente de nuevo.',
+        'error'
+      );
+    },
+  });
+}
+
+/**
  * Carga los datos maestros (tipos de documento, ciudades, carreras) desde el servidor.
  */
 function loadMasterData() {
@@ -313,6 +364,12 @@ function loadMasterData() {
 
       // Una vez que todos los datos maestros estén cargados, cargar el perfil del estudiante
       loadStudentProfile();
+
+      // NUEVO: Cargar las referencias del estudiante después de que el perfil y los datos maestros estén listos
+      const studentId = $('#idEstudiante').val();
+      if (studentId) {
+        loadStudentReferences(studentId);
+      }
     })
     .fail(function (xhr, status, error) {
       console.error('Error al cargar datos maestros:', { xhr, status, error });
@@ -369,6 +426,7 @@ $('#studentProfileForm').submit(function (event) {
       if (response.success) {
         Swal.fire('¡Éxito!', response.message, 'success').then(() => {
           loadStudentProfile(); // Recargar el perfil para mostrar los datos actualizados
+          loadStudentReferences($('#idEstudiante').val()); // Recargar también las referencias
         });
       } else {
         Swal.fire('Error', response.message, 'error');

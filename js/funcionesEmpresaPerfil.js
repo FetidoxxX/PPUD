@@ -92,6 +92,53 @@ function loadCompanyProfile() {
 }
 
 /**
+ * Carga las referencias recibidas por la empresa desde el servidor
+ * y las muestra en la sección correspondiente del perfil.
+ * @param {string} companyId - El ID de la empresa cuyas referencias se cargarán.
+ */
+function loadCompanyReferences(companyId) {
+  const referenciasListContainer = $('#referenciasEmpresaListContainer');
+  referenciasListContainer.html(
+    '<p class="text-muted text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando referencias...</p>'
+  ); // Mensaje de carga
+
+  $.ajax({
+    url: '../CONTROLADOR/ajax_Mempresa.php', // Usamos ajax_Mempresa.php para obtener las referencias de la empresa
+    type: 'GET',
+    data: {
+      action: 'obtener_referencias_empresa_perfil',
+      idEmpresa: companyId,
+    },
+    dataType: 'json',
+    success: function (response) {
+      console.log(
+        'Respuesta de AJAX (obtener_referencias_empresa_perfil):',
+        response
+      );
+      if (response.success && response.html) {
+        referenciasListContainer.html(response.html);
+      } else {
+        referenciasListContainer.html(
+          '<p class="text-muted text-center py-3">No has recibido referencias de estudiantes aún.</p>'
+        );
+        // Opcional: Swal.fire('Error', response.message, 'error');
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error('Error al cargar referencias de la empresa (AJAX):', error);
+      referenciasListContainer.html(
+        '<p class="text-danger text-center py-3">Error de conexión al cargar las referencias de estudiantes.</p>'
+      );
+      Swal.fire(
+        'Error de conexión',
+        'No se pudieron cargar las referencias de estudiantes. Intente de nuevo.',
+        'error'
+      );
+    },
+  });
+}
+
+/**
  * Guarda los cambios del perfil de la empresa enviándolos al servidor.
  */
 function saveCompanyProfile() {

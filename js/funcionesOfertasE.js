@@ -101,7 +101,7 @@ function renderOfertasAsCards(ofertas) {
                         <h6 class="card-subtitle mb-2 text-muted">
                           <a href="#" class="company-link" onclick="viewCompanyProfile('${
                             oferta.empresa_idEmpresa
-                          }')">
+                          }', '${encodeURIComponent(oferta.empresa_nombre)}')">
                             ${oferta.empresa_nombre}
                           </a>
                         </h6>
@@ -161,9 +161,15 @@ function viewOfferDetail(idOferta) {
         const oferta = response.data;
         // Llenar campos del modal
         $('#modal_titulo').text(oferta.titulo);
+        // MODIFICADO: Pasar el ID de la empresa y el nombre a la función viewCompanyProfile
         $('#modal_empresa_nombre')
           .text(oferta.empresa_nombre)
-          .attr('onclick', `viewCompanyProfile('${oferta.empresa_idEmpresa}')`);
+          .attr(
+            'onclick',
+            `viewCompanyProfile('${
+              oferta.empresa_idEmpresa
+            }', '${encodeURIComponent(oferta.empresa_nombre)}')`
+          );
         $('#modal_descripcion').text(oferta.descripcion);
         $('#modal_requisitos').text(oferta.requisitos);
         $('#modal_beneficios').text(oferta.beneficios || 'No especificado');
@@ -223,10 +229,11 @@ function viewOfferDetail(idOferta) {
 }
 
 /**
- * Muestra el perfil completo de la empresa en un modal.
+ * Abre el modal de perfil de empresa para estudiantes.
  * @param {string} idEmpresa - ID de la empresa.
+ * @param {string} empresaNombre - Nombre de la empresa.
  */
-function viewCompanyProfile(idEmpresa) {
+function viewCompanyProfile(idEmpresa, empresaNombre) {
   // Cerrar el modal de oferta si está abierto para evitar superposición
   const ofertaModal = bootstrap.Modal.getInstance(
     document.getElementById('detalleOfertaModal')
@@ -235,32 +242,12 @@ function viewCompanyProfile(idEmpresa) {
     ofertaModal.hide();
   }
 
-  $.ajax({
-    url: '../CONTROLADOR/ajax_ofertaE.php', // Usar el mismo AJAX para evitar problemas de sesión
-    type: 'GET',
-    data: {
-      action: 'obtener_perfil_empresa',
-      id: idEmpresa,
-    },
-    dataType: 'json',
-    success: function (response) {
-      if (response.success && response.html) {
-        $('#contenidoDetalleEmpresa').html(response.html);
-        new bootstrap.Modal(
-          document.getElementById('detalleEmpresaModal')
-        ).show();
-      } else {
-        Swal.fire('Error', response.message, 'error');
-      }
-    },
-    error: function (xhr, status, error) {
-      Swal.fire(
-        'Error de conexión',
-        'No se pudo cargar el perfil de la empresa. Intente de nuevo.',
-        'error'
-      );
-    },
-  });
+  // Llamar a la función en funcionesReferenciasEstudiante.js para cargar y mostrar el modal de perfil de empresa
+  // Se decodifica el nombre de la empresa por si contenía caracteres especiales codificados por encodeURIComponent
+  loadCompanyProfileModalForStudent(
+    idEmpresa,
+    decodeURIComponent(empresaNombre)
+  );
 }
 
 /**

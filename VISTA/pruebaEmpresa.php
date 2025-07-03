@@ -78,17 +78,17 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Style for card hover effect */
-    .card-hover-shadow {
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    }
+  /* Style for card hover effect */
+  .card-hover-shadow {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
 
-    .card-hover-shadow:hover {
-      transform: translateY(-5px);
-      /* Slightly lifts the card */
-      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .25) !important;
-      /* Larger shadow on hover */
-    }
+  .card-hover-shadow:hover {
+    transform: translateY(-5px);
+    /* Slightly lifts the card */
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .25) !important;
+    /* Larger shadow on hover */
+  }
   </style>
 </head>
 
@@ -112,6 +112,9 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
           </li>
           <li class="nav-item">
             <a class="nav-link" href="gestion_estudiantes_empresa.php">Gestionar Estudiantes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " href="perfil_empresa.php">Mi Perfil</a>
           </li>
         </ul>
 
