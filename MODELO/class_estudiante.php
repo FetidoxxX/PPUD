@@ -5,7 +5,7 @@ require_once 'class_referencia.php'; // Incluir la clase Referencia
 class Estudiante
 {
   private $conexion;
-
+  
   public function __construct()
   {
     try {
