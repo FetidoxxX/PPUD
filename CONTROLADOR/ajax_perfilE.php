@@ -115,6 +115,13 @@ switch ($action) {
           exit();
         }
 
+        // Obtener la ruta de la hoja de vida actual para eliminarla si existe
+        $current_hoja_vida_path = $estudianteObj->obtenerHojaVidaPath($idEstudiante);
+        if ($current_hoja_vida_path && file_exists($current_hoja_vida_path)) {
+          unlink($current_hoja_vida_path); // Eliminar el archivo anterior
+          error_log("DEBUG (ajax_perfilE): Hoja de vida anterior eliminada: " . $current_hoja_vida_path);
+        }
+
         // Generar un nombre de archivo único para evitar colisiones
         $new_file_name = uniqid('cv_') . '.' . $file_extension;
         $destination = $upload_dir . $new_file_name;
@@ -154,7 +161,7 @@ switch ($action) {
     try {
       $contrasenaActual = $_POST['current_password'] ?? '';
       $contrasenaNueva = $_POST['new_password'] ?? '';
-      $confirmarContrasena = $_POST['new_password_confirm'] ?? ''; // Corregido: el nombre del campo en el formulario es 'confirm_new_password'
+      $confirmarContrasena = $_POST['confirm_new_password'] ?? ''; // Corregido: el nombre del campo en el formulario es 'confirm_new_password'
 
       if (empty($contrasenaActual) || empty($contrasenaNueva) || empty($confirmarContrasena)) {
         echo json_encode(['success' => false, 'message' => 'Todos los campos de contraseña son requeridos.']);

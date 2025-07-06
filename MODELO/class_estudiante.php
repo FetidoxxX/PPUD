@@ -5,7 +5,7 @@ require_once 'class_referencia.php'; // Incluir la clase Referencia
 class Estudiante
 {
   private $conexion;
-  
+
   public function __construct()
   {
     try {
@@ -636,26 +636,47 @@ class Estudiante
     return $fila['count'] > 0;
   }
 
+  /**
+   * Cambia la contraseña de un estudiante.
+   * @param string $idEstudiante ID del estudiante.
+   * @param string $contrasenaActual Contraseña actual del estudiante.
+   * @param string $contrasenaNueva Nueva contraseña del estudiante.
+   * @return array Resultado de la operación (éxito/error, mensaje).
+   */
   public function cambiarContrasena($idEstudiante, $contrasenaActual, $contrasenaNueva)
   {
     try {
       if (!$this->conexion) {
         throw new Exception("Conexión a la base de datos no establecida para cambiar contraseña.");
       }
+
+      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+      $contrasenaActual = mysqli_real_escape_string($this->conexion, $contrasenaActual);
+      $contrasenaNueva = mysqli_real_escape_string($this->conexion, $contrasenaNueva);
+
       // Verificar contraseña actual
-      if (!$this->validarCredenciales($idEstudiante, $contrasenaActual)) {
+      // Se asume que la contraseña en la base de datos no está hasheada para esta comparación.
+      // Si estuviera hasheada, necesitarías usar password_verify().
+      $sql_check_password = "SELECT contrasena FROM estudiante WHERE idEstudiante='$idEstudiante'";
+      $resultado_check = mysqli_query($this->conexion, $sql_check_password);
+
+      if (!$resultado_check) {
+        error_log("ERROR DB (cambiarContrasena - check): " . mysqli_error($this->conexion) . " SQL: " . $sql_check_password);
+        throw new Exception("Error al verificar la contraseña actual.");
+      }
+
+      $fila = mysqli_fetch_assoc($resultado_check);
+      if (!$fila || $fila['contrasena'] !== $contrasenaActual) {
         throw new Exception("La contraseña actual es incorrecta.");
       }
 
-      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
-      $contrasenaNueva = mysqli_real_escape_string($this->conexion, $contrasenaNueva);
+      // Actualizar contraseña
+      $sql_update = "UPDATE estudiante SET contrasena='$contrasenaNueva', fecha_actualizacion=NOW() WHERE idEstudiante='$idEstudiante'";
 
-      $sql = "UPDATE estudiante SET contrasena='$contrasenaNueva' WHERE idEstudiante='$idEstudiante'";
-
-      if (mysqli_query($this->conexion, $sql)) {
+      if (mysqli_query($this->conexion, $sql_update)) {
         return ['success' => true, 'message' => 'Contraseña actualizada correctamente.'];
       } else {
-        error_log("ERROR DB (cambiarContrasena estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+        error_log("ERROR DB (cambiarContrasena estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql_update);
         throw new Exception("Error al actualizar contraseña: " . mysqli_error($this->conexion));
       }
 
@@ -736,5 +757,27 @@ class Estudiante
     }
 
     return $estudiante;
+  }
+
+  /**
+   * Obtiene la ruta de la hoja de vida de un estudiante.
+   * @param string $idEstudiante ID del estudiante.
+   * @return string|null La ruta de la hoja de vida o null si no existe.
+   */
+  public function obtenerHojaVidaPath($idEstudiante)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerHojaVidaPath.");
+      return null;
+    }
+    $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+    $sql = "SELECT hoja_vida_path FROM estudiante WHERE idEstudiante = '$idEstudiante'";
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerHojaVidaPath): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return null;
+    }
+    $fila = mysqli_fetch_assoc($resultado);
+    return $fila ? $fila['hoja_vida_path'] : null;
   }
 }

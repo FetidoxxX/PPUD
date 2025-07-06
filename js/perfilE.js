@@ -467,6 +467,7 @@ $('#studentProfileForm').submit(function (event) {
         Swal.fire('¡Éxito!', response.message, 'success').then(() => {
           loadStudentProfile(); // Recargar el perfil para mostrar los datos actualizados
           loadStudentReferences($('#idEstudiante').val()); // Recargar también las referencias
+          $('#hoja_vida_pdf').val(''); // Limpiar el campo de archivo de la hoja de vida
         });
       } else {
         Swal.fire('Error', response.message, 'error');
@@ -503,6 +504,21 @@ $('#changePasswordForm').submit(function (event) {
   const formData = new FormData(this);
   formData.append('action', 'cambiar_contrasena');
   formData.append('idEstudiante', $('#idEstudiante').val()); // Asegurar que el ID se envía explícitamente
+
+  // Obtener los valores de los campos de contraseña
+  const currentPassword = $('#current_password').val();
+  const newPassword = $('#new_password').val();
+  const confirmNewPassword = $('#confirm_new_password').val(); // Correcto: 'confirm_new_password'
+
+  // Validar que las nuevas contraseñas coincidan en el cliente
+  if (newPassword !== confirmNewPassword) {
+    Swal.fire(
+      'Error',
+      'La nueva contraseña y su confirmación no coinciden.',
+      'error'
+    );
+    return; // Detener el envío si no coinciden
+  }
 
   $.ajax({
     url: '../CONTROLADOR/ajax_perfilE.php',
