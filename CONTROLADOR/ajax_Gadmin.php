@@ -39,9 +39,8 @@ $id = $_GET['id'] ?? $_POST['id'] ?? null;
 switch ($action) {
   case 'listar':
     $busqueda = $_GET['busqueda'] ?? '';
-    // Por defecto, solo listar administradores activos, a menos que la búsqueda se realice
-    // Si hay búsqueda, se incluyen inactivos para permitir encontrarlos.
-    $incluirInactivos = !empty($busqueda);
+    // Siempre incluir administradores inactivos
+    $incluirInactivos = true;
     $administradores = $administradorObj->listarTodos($busqueda, $incluirInactivos);
 
     ob_start();
@@ -52,10 +51,10 @@ switch ($action) {
           <div class="text-muted">
             <div class="display-1">⚙️</div>
             <h5>
-              <?php echo empty($busqueda) ? 'No hay administradores activos registrados' : 'No se encontraron resultados'; ?>
+              <?php echo empty($busqueda) ? 'No hay administradores registrados en el sistema' : 'No se encontraron resultados para la búsqueda'; ?>
             </h5>
             <p class="mb-0">
-              <?php echo empty($busqueda) ? 'Aún no se han registrado administradores activos en el sistema' : 'Intenta con otros términos de búsqueda'; ?>
+              <?php echo empty($busqueda) ? 'Aún no se han registrado administradores en el sistema' : 'Intenta con otros términos de búsqueda'; ?>
             </p>
           </div>
         </td>
@@ -78,17 +77,19 @@ switch ($action) {
           <td>
             <div class="btn-group" role="group">
               <button class="btn btn-sm btn-outline-danger"
-                onclick="verDetalleAdministrador(<?php echo $admin['idAdministrador']; ?>)" title="Ver detalles">
+                onclick="verDetalleAdministrador('<?php echo $admin['idAdministrador']; ?>')" title="Ver detalles">
                 👁️
               </button>
               <button class="btn btn-sm btn-outline-warning"
-                onclick="editarAdministrador(<?php echo $admin['idAdministrador']; ?>)" title="Editar">
+                onclick="editarAdministrador('<?php echo $admin['idAdministrador']; ?>')" title="Editar">
                 ✏️
               </button>
-              <button class="btn btn-sm btn-outline-danger"
-                onclick="desactivarAdministrador(<?php echo $admin['idAdministrador']; ?>)" title="Desactivar">
-                🗑️
-              </button>
+              <?php if ($admin['estado_nombre'] == 'activo'): ?>
+                <button class="btn btn-sm btn-outline-danger"
+                  onclick="desactivarAdministrador('<?php echo $admin['idAdministrador']; ?>')" title="Desactivar">
+                  🗑️
+                </button>
+              <?php endif; ?>
             </div>
           </td>
         </tr>
@@ -207,12 +208,12 @@ switch ($action) {
     echo json_encode($resultado);
     break;
 
-  case 'desactivar': // Cambiar el nombre de 'eliminar' a 'desactivar' para mayor claridad
+  case 'desactivar':
     if (empty($id)) {
       echo json_encode(['success' => false, 'message' => 'ID de administrador no proporcionado para desactivar.']);
       exit();
     }
-    $resultado = $administradorObj->desactivar($id); // Llama al nuevo método de desactivación
+    $resultado = $administradorObj->desactivar($id);
     echo json_encode($resultado);
     break;
 

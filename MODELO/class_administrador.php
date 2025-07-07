@@ -404,7 +404,7 @@ class Administrador
       error_log("ERROR: Conexión a la base de datos no establecida en obtenerEstados (Administrador).");
       return [];
     }
-    $sql = "SELECT id_estado, nombre FROM estado ORDER BY nombre";
+    $sql = "SELECT id_estado, nombre FROM estado WHERE nombre IN ('activo', 'inactivo') ORDER BY nombre";
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB (obtenerEstados Administrador): " . mysqli_error($this->conexion) . " SQL: " . $sql);

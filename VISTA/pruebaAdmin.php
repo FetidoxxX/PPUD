@@ -154,6 +154,13 @@ if (isset($_SESSION['usuario_id'])) {
         <a href="gestion_varios.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
           Varios</a>
         <a href="gestion_reportes.php" class="list-group-item list-group-item-action bg-dark text-white">Reportes</a>
+        <!-- Nuevas opciones para Perfil y Cerrar Sesión en el menú lateral -->
+        <a href="#" class="list-group-item list-group-item-action bg-dark text-white" onclick="mostrarPerfil()">Mi
+          Perfil</a>
+        <form action="../salir.php" method="post" class="d-inline">
+          <button type="submit"
+            class="list-group-item list-group-item-action bg-dark text-danger w-100 text-start">Cerrar Sesión</button>
+        </form>
       </div>
     </div>
     <!-- /#sidebar-wrapper -->

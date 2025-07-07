@@ -153,7 +153,9 @@ function handleReportTypeChange(event) {
       $('#filtroLimiteTopOfertasContainer').show();
     }
   } else if (tabId === 'estudiantes-pane') {
-    if (selectedReportType === 'estudiantes_por_carrera') {
+    if (selectedReportType === 'estudiantes_registrados') {
+      // No hay filtros adicionales para este tipo de reporte
+    } else if (selectedReportType === 'estudiantes_por_carrera') {
       $('#filtroCarreraEstudiantesContainer').show();
     } else if (selectedReportType === 'estudiantes_por_estado') {
       $('#filtroEstadoEstudiantesContainer').show();
@@ -175,7 +177,7 @@ function handleReportTypeChange(event) {
       $('#filtroTipoReferenciaReferenciasContainer').show();
     } else if (selectedReportType === 'referencias_por_empresa') {
       $('#filtroEmpresaReferenciasContainer').show();
-    } else if (selectedReportType === 'referencias_por_estudiante') {
+    } else if (tipoReporte === 'referencias_por_estudiante') {
       $('#filtroEstudianteReferenciasContainer').show();
     }
   }
@@ -343,7 +345,7 @@ function generarReporte(tabId) {
 }
 
 /**
- * Descarga el reporte actual como un archivo PDF.
+ * Descarga el reporte actual como un archivo PDF con diseño moderno y estético.
  */
 function descargarPDF() {
   if (!currentReportData || currentReportData.length === 0) {
@@ -351,49 +353,250 @@ function descargarPDF() {
     return;
   }
 
-  const doc = new jspdf.jsPDF();
-  doc.setFontSize(18);
-  doc.text(currentReportTitle, 14, 22);
+  // Initialize jsPDF with landscape orientation and A4 size
+  const doc = new jspdf.jsPDF('l', 'mm', 'a4');
+  const pageWidth = doc.internal.pageSize.width;
+  const pageHeight = doc.internal.pageSize.height;
 
-  // Preparar los datos para autoTable
+  // --- MODERN HEADER WITH GRADIENT ---
+  // Blue color from pruebaAdmin.php: #0d6efd (RGB: 13, 110, 253)
+  const headerColor = [13, 110, 253];
+  const gradientHeight = 50;
+  const gradientSteps = 20;
+
+  for (let i = 0; i < gradientSteps; i++) {
+    const opacity = 1 - (i / gradientSteps) * 0.3;
+    // Use the base header color for the gradient
+    const r = Math.floor(headerColor[0] + (i / gradientSteps) * 20);
+    const g = Math.floor(headerColor[1] + (i / gradientSteps) * 30);
+    const b = Math.floor(headerColor[2] + (i / gradientSteps) * 0); // Keep blue
+
+    doc.setFillColor(r, g, b);
+    doc.setGState(new doc.GState({ opacity: opacity }));
+    doc.rect(
+      0,
+      i * (gradientHeight / gradientSteps),
+      pageWidth,
+      gradientHeight / gradientSteps,
+      'F'
+    );
+  }
+
+  // Reset opacity
+  doc.setGState(new doc.GState({ opacity: 1 }));
+
+  // --- LOGO AND HEADER INFORMATION ---
+  const logoSize = 35;
+  const logoX = 15;
+  const logoY = 8;
+
+  // Add logo
+  doc.addImage('../IMG/logoPPUD.png', 'PNG', logoX, logoY, logoSize, logoSize);
+
+  // Header texts with improved typography
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(36); // Increased font size for main title
+  doc.setTextColor(255, 255, 255);
+  doc.text('PPUD', pageWidth / 2, 20, { align: 'center' }); // Centered
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14); // Slightly larger for main subtitle
+  doc.text('Portal de Gestión de Prácticas y Pasantías', pageWidth / 2, 30, {
+    align: 'center',
+  }); // Centered
+  doc.setFontSize(12); // Slightly larger for secondary subtitle
+  doc.text(
+    'Universidad Distrital Francisco José de Caldas',
+    pageWidth / 2,
+    38,
+    { align: 'center' }
+  ); // Centered
+
+  // Date with modern style - Moved below the University name and centered
+  const now = new Date();
+  const date = now.toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  const time = now.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  doc.setFontSize(9);
+  doc.setTextColor(230, 230, 230);
+  doc.text(
+    `Reporte generado automáticamente el ${date} a las ${time}`,
+    pageWidth / 2,
+    43,
+    { align: 'center' }
+  ); // Centered
+
+  // --- DECORATIVE LINE (REMOVED) ---
+  // doc.setDrawColor(255, 255, 255);
+  // doc.setLineWidth(0.5);
+  // doc.line(15, 45, pageWidth - 15, 45);
+
+  // --- REPORT TITLE WITH MODERN STYLE (REMOVED AS SEPARATE TEXT) ---
+  // doc.setTextColor(44, 62, 80);
+  // doc.setFont('helvetica', 'bold');
+  // doc.setFontSize(20);
+  const titleY = 65; // Still used as a reference point for table start
+
+  // Decorative line under the title (REMOVED)
+  // doc.setDrawColor(52, 152, 219);
+  // doc.setLineWidth(3);
+  // doc.line(15, titleY + 5, 80, titleY + 5);
+
+  // Prepare user info
+  const userId =
+    typeof GLOBAL_USER_ID !== 'undefined' ? GLOBAL_USER_ID : 'ID_Desconocido';
+  const userName =
+    typeof GLOBAL_USER_NAME !== 'undefined'
+      ? GLOBAL_USER_NAME
+      : 'Nombre del Usuario Desconocido';
+
+  // --- REPORT METADATA TABLE ---
+  // Organized into two rows, two columns visually
+  const reportMetadata = [
+    ['Tipo de Informe', currentReportTitle, 'Generado por', 'Sistema PPUD'],
+    [
+      'Total de Registros',
+      currentReportData.length,
+      'Usuario',
+      `${userId} - ${userName}`,
+    ],
+  ];
+
+  doc.autoTable({
+    body: reportMetadata,
+    startY: 55, // Adjusted startY to place it closer to the main header
+    theme: 'plain', // Simple theme for a key-value list
+    styles: {
+      fontSize: 10,
+      cellPadding: 3, // Increased padding for better aesthetics
+      textColor: [50, 50, 50], // Slightly darker text for values
+      lineColor: [220, 220, 220], // Lighter lines for the internal grid
+      lineWidth: 0.1,
+    },
+    columnStyles: {
+      0: {
+        fontStyle: 'bold',
+        textColor: [44, 62, 80],
+        fillColor: [230, 240, 250],
+        cellWidth: 45,
+        halign: 'left',
+      }, // Key column 1 (left side)
+      1: { cellWidth: 'auto', halign: 'left' }, // Value column 1 (left side)
+      2: {
+        fontStyle: 'bold',
+        textColor: [44, 62, 80],
+        fillColor: [230, 240, 250],
+        cellWidth: 45,
+        halign: 'left',
+      }, // Key column 2 (right side)
+      3: { cellWidth: 'auto', halign: 'left' }, // Value column 2 (right side)
+    },
+    margin: { horizontal: 'auto' }, // Center the table horizontally
+    tableWidth: 'wrap', // Let autoTable determine the width
+    tableLineColor: [180, 180, 180], // Subtle border around the entire table
+    tableLineWidth: 0.2,
+  });
+
+  // --- PREPARE DATA FOR THE MAIN TABLE ---
   const headers = Object.keys(currentReportData[0]).map((key) => {
     // Formatear nombres de columnas para que sean más legibles en el PDF
+    // Eliminar caracteres no alfanuméricos y luego capitalizar cada palabra
     return key
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase());
+      .replace(/[^a-zA-Z0-9_ ]/g, '') // Eliminar caracteres no alfanuméricos (excepto guiones bajos y espacios)
+      .replace(/_/g, ' ') // Reemplazar guiones bajos por espacios
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   });
-  const data = currentReportData.map((row) => Object.values(row));
 
+  const data = currentReportData.map((row) =>
+    Object.values(row).map((value) => {
+      // Limpiar valores de datos para eliminar caracteres no procesables
+      return String(value).replace(/[^a-zA-Z0-9_ \-.,/():]/g, ''); // Permite letras, números, espacios, guiones, puntos, comas, barras, paréntesis, dos puntos
+    })
+  );
+
+  // --- TABLA CON DISEÑO ORIGINAL Y TONALIDADES AZULES ---
   doc.autoTable({
     head: [headers],
     body: data,
-    startY: 30,
-    theme: 'striped',
+    startY: doc.autoTable.previous.finalY + 10, // Start after the metadata table with some spacing
+    theme: 'striped', // Tema 'striped' para el aspecto original
     styles: {
       fontSize: 8,
       cellPadding: 2,
+      textColor: [0, 0, 0], // Texto negro estándar
+      lineColor: [180, 180, 180], // Líneas grises claras
+      lineWidth: 0.1,
     },
     headStyles: {
-      fillColor: [33, 37, 41], // Color bg-dark de Bootstrap
-      textColor: [255, 255, 255],
+      fillColor: [52, 152, 219], // Azul para el fondo del encabezado
+      textColor: [255, 255, 255], // Texto blanco en el encabezado
       fontStyle: 'bold',
+      fontSize: 9, // Ajustado a 9 para ser acorde al cuerpo de la tabla
+      cellPadding: 4, // Ajustado el padding para mejor estética
     },
     alternateRowStyles: {
-      fillColor: [248, 249, 250], // Color bg-light de Bootstrap
+      fillColor: [240, 248, 255], // AliceBlue para filas alternas (tonalidad azul)
     },
     didDrawPage: function (data) {
-      // Footer
-      let str = 'Página ' + doc.internal.getNumberOfPages();
-      doc.setFontSize(10);
-      doc.text(
-        str,
-        data.settings.margin.left,
-        doc.internal.pageSize.height - 10
-      );
+      // --- FOOTER MODERNO ---
+      const footerY = pageHeight - 20;
+
+      // Línea decorativa en el footer
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.5);
+      doc.line(15, footerY - 5, pageWidth - 15, footerY - 5);
+
+      // Información del footer
+      doc.setFontSize(8);
+      doc.setTextColor(108, 117, 125);
+      doc.setFont('helvetica', 'normal');
+
+      // Lado izquierdo del footer
+      doc.text('PPUD - Portal de Gestión Universitaria', 15, footerY);
+
+      // Lado derecho del footer - número de página
+      const pageNum = `Página ${doc.internal.getNumberOfPages()}`;
+      const pageNumWidth = doc.getTextWidth(pageNum);
+      doc.text(pageNum, pageWidth - 15 - pageNumWidth, footerY);
+
+      // URL o información adicional
+      doc.setFontSize(7);
+      doc.setTextColor(150, 150, 150);
+      doc.text('www.udistrital.edu.co', 15, footerY + 8);
     },
+    margin: { top: 10, right: 15, bottom: 30, left: 15 },
   });
 
-  doc.save(currentReportTitle.replace(/ /g, '_') + '.pdf');
+  // --- MARCA DE AGUA (OPCIONAL) ---
+  doc.setGState(new doc.GState({ opacity: 0.1 }));
+  doc.setFontSize(60);
+  doc.setTextColor(200, 200, 200);
+  doc.text('PPUD', pageWidth / 2 - 30, pageHeight / 2, {
+    angle: 45,
+    align: 'center',
+  });
+  doc.setGState(new doc.GState({ opacity: 1 }));
+
+  // --- GUARDAR ARCHIVO ---
+  const fileName = currentReportTitle
+    .replace(/ /g, '_')
+    .replace(/[^\w\s-]/g, '')
+    .toLowerCase();
+
+  const timestamp = new Date().toISOString().slice(0, 10);
+  doc.save(`${fileName}_${timestamp}.pdf`);
+
+  // Mostrar mensaje de éxito
+  console.log('✅ PDF generado exitosamente');
 }
 
 /**

@@ -44,8 +44,6 @@ if (!$_SESSION['usuario']) {
 
 // Incluir archivos necesarios
 include_once '../MODELO/class_administrador.php';
-// Reutilizamos la clase Administrador para obtener tipos de documento, estados y ciudades
-// No es necesario incluir class_empresa.php o class_oferta.php para estos datos si Administrador ya los tiene.
 
 // Crear instancias de las clases
 $administradorObj = new Administrador();
@@ -124,6 +122,13 @@ $ciudades = $administradorObj->obtenerCiudades();
         <a href="gestion_varios.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
           Varios</a>
         <a href="gestion_reportes.php" class="list-group-item list-group-item-action bg-dark text-white">Reportes</a>
+        <!-- Nuevas opciones para Perfil y Cerrar Sesión en el menú lateral -->
+        <a href="#" class="list-group-item list-group-item-action bg-dark text-white" onclick="mostrarPerfil()">Mi
+          Perfil</a>
+        <form action="../salir.php" method="post" class="d-inline">
+          <button type="submit"
+            class="list-group-item list-group-item-action bg-dark text-danger w-100 text-start">Cerrar Sesión</button>
+        </form>
       </div>
     </div>
     <!-- /#sidebar-wrapper -->
@@ -173,11 +178,13 @@ $ciudades = $administradorObj->obtenerCiudades();
               <div class="card-header">📊 Estadísticas</div>
               <div class="card-body">
                 <h4 class="card-title text-center" id="totalAdministradores">0</h4>
-                <p class="card-text text-center mb-0" id="textoEstadistica">Total de administradores activos</p>
+                <p class="card-text text-center mb-0" id="textoEstadistica">Total de administradores</p>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- El checkbox para mostrar inactivos ha sido eliminado según el requisito -->
 
         <!-- Botón para crear nuevo administrador - DESHABILITADO SEGÚN REQUERIMIENTO -->
         <!-- <div class="mb-3 text-end">
@@ -248,6 +255,7 @@ $ciudades = $administradorObj->obtenerCiudades();
   <script>
     // Pasar las variables PHP a la función de inicialización de JavaScript
     $(document).ready(function () {
+      // Se pasa 'true' para indicar que siempre se deben mostrar todos los administradores
       initializeGestionAdministradores(
         <?php echo json_encode($tipos_documento); ?>,
         <?php echo json_encode($estados); ?>,

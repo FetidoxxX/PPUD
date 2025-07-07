@@ -553,7 +553,7 @@ class Oferta
       error_log("ERROR: Conexión a la base de datos no establecida en obtenerEstados.");
       return [];
     }
-    $sql = "SELECT * FROM estado ORDER BY nombre";
+    $sql = "SELECT id_estado, nombre FROM estado WHERE nombre IN ('activo', 'inactivo', 'vencida') ORDER BY nombre";
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB: Fallo en obtenerEstados: " . mysqli_error($this->conexion) . " SQL: " . $sql);

@@ -17,7 +17,8 @@ function initializeGestionAdministradores(tipos_documento, estados, ciudades) {
   globalEstadosAdmin = estados;
   globalCiudadesAdmin = ciudades;
 
-  cargarAdministradores(); // Cargar administradores al iniciar la página
+  // Siempre cargar todos los administradores al iniciar la página
+  cargarAdministradores();
 
   // Búsqueda en tiempo real con debounce
   let timeoutBusquedaAdmin;
@@ -26,7 +27,7 @@ function initializeGestionAdministradores(tipos_documento, estados, ciudades) {
     clearTimeout(timeoutBusquedaAdmin);
     timeoutBusquedaAdmin = setTimeout(() => {
       busquedaActualAdmin = valor; // Actualizar la búsqueda actual
-      cargarAdministradores(busquedaActualAdmin);
+      cargarAdministradores(busquedaActualAdmin); // Ya no se pasa 'mostrarTodos'
     }, 300);
   });
 
@@ -44,13 +45,14 @@ function initializeGestionAdministradores(tipos_documento, estados, ciudades) {
 
 /**
  * Carga los administradores desde el servidor y los muestra en la tabla.
+ * Siempre incluye administradores inactivos.
  * @param {string} busqueda - Término de búsqueda (opcional).
  */
 function cargarAdministradores(busqueda = '') {
-  // La lógica para incluir inactivos en la búsqueda se maneja en el backend (ajax_Gadmin.php)
+  // Siempre se envía 'mostrarTodos=true' para incluir inactivos
   const url = `../CONTROLADOR/ajax_Gadmin.php?action=listar&busqueda=${encodeURIComponent(
     busqueda
-  )}`;
+  )}&mostrarTodos=true`;
 
   $.ajax({
     url: url,
@@ -60,11 +62,9 @@ function cargarAdministradores(busqueda = '') {
       if (response.success) {
         $('#tablaAdministradores').html(response.html);
         $('#totalAdministradores').text(response.total);
-        // Actualizar el texto de la estadística basado en si hay una búsqueda
+        // El texto de la estadística siempre será "Total de administradores"
         $('#textoEstadistica').text(
-          busqueda
-            ? 'Resultados encontrados'
-            : 'Total de administradores activos'
+          busqueda ? 'Resultados encontrados' : 'Total de administradores'
         );
       } else {
         mostrarError(response.message);
@@ -89,51 +89,13 @@ function cargarAdministradores(busqueda = '') {
 function limpiarBusqueda() {
   $('#busquedaInput').val('');
   busquedaActualAdmin = '';
+  // Recargar administradores, siempre mostrando todos
   cargarAdministradores();
 }
 
 /**
- * Función para crear administrador (deshabilitada según requerimiento).
- * Muestra un mensaje de advertencia.
- */
-/*
-function crearAdministrador() {
-  mostrarError('La creación de administradores no está permitida desde este módulo.');
-  // Si en el futuro se habilita, se podría usar la siguiente lógica:
-  // resetAdministradorForm();
-  // $('#administradorModalLabel').text('Crear Nuevo Administrador');
-  // $('#btnGuardarAdministrador')
-  //   .text('Guardar Administrador')
-  //   .removeClass('btn-warning')
-  //   .addClass('btn-primary');
-  // $('#adminId').prop('disabled', false); // Habilitar ID para creación
-  // $('#contrasena').prop('required', true); // Contraseña es requerida para creación
-  // $('#password_required_star').show(); // Mostrar asterisco de requerido
-
-  // // Cargar opciones de selectores
-  // renderSelectOptions(
-  //   globalTiposDocumentoAdmin,
-  //   'tipo_documento_id_tipo',
-  //   'id_tipo'
-  // );
-  // renderSelectOptions(globalEstadosAdmin, 'estado_id_estado', 'id_estado');
-  // renderSelectOptions(globalCiudadesAdmin, 'ciudad_id_ciudad', 'id_ciudad');
-
-  // // Seleccionar estado "activo" por defecto (asumiendo que ID 1 es activo)
-  // const estadoActivo = globalEstadosAdmin.find(
-  //   (estado) => estado.nombre.toLowerCase() === 'activo'
-  // );
-  // if (estadoActivo) {
-  //   $('#estado_id_estado').val(estadoActivo.id_estado);
-  // }
-
-  // $('#administradorModal').modal('show');
-}
-*/
-
-/**
  * Abre el modal para editar un administrador existente.
- * @param {number} idAdministrador - El ID del administrador a editar.
+ * @param {string} idAdministrador - El ID del administrador a editar.
  */
 function editarAdministrador(idAdministrador) {
   resetAdministradorForm(); // Limpiar el formulario primero
@@ -141,9 +103,9 @@ function editarAdministrador(idAdministrador) {
   $('#btnGuardarAdministrador')
     .text('Actualizar Administrador')
     .removeClass('btn-primary')
-    .addClass('btn-danger'); // Cambiado a btn-danger
+    .addClass('btn-danger');
   $('#adminId').val(idAdministrador).prop('disabled', true); // Deshabilitar ID para edición
-  // Se ha removido la lógica de contraseña ya que no se permite cambiar desde este módulo.
+  // La contraseña no se edita desde aquí, así que no se muestra el campo de contraseña.
 
   $.ajax({
     url: '../CONTROLADOR/ajax_Gadmin.php',
@@ -172,7 +134,7 @@ function editarAdministrador(idAdministrador) {
           'estado_id_estado',
           'id_estado',
           admin.estado_id_estado
-        );
+        ); // Ahora se puede cambiar el estado
         renderSelectOptions(
           globalCiudadesAdmin,
           'ciudad_id_ciudad',
@@ -212,15 +174,11 @@ function resetAdministradorForm() {
  */
 function saveAdministrador() {
   const idAdministrador = $('#adminId').val();
-  // En este módulo, solo permitimos la acción de 'actualizar'
-  const action = 'actualizar';
+  const action = 'actualizar'; // Solo permitimos la acción de 'actualizar'
 
   const formData = new FormData($('#administradorForm')[0]);
   formData.append('action', action);
-
-  // Asegurarse de que el ID de administrador se envíe
   formData.append('id', idAdministrador);
-  // Se ha removido la lógica de contraseña ya que no se permite cambiar desde este módulo.
   formData.delete('contrasena'); // Asegurarse de que no se envíe el campo de contraseña
 
   // Validaciones del lado del cliente
@@ -229,7 +187,7 @@ function saveAdministrador() {
   const correo = $('#correo').val().trim();
   const n_doc = $('#n_doc').val().trim();
   const tipoDocumento = $('#tipo_documento_id_tipo').val();
-  const estado = $('#estado_id_estado').val();
+  const estado = $('#estado_id_estado').val(); // Obtener el valor del estado
 
   if (
     !nombres ||
@@ -237,7 +195,7 @@ function saveAdministrador() {
     !correo ||
     !n_doc ||
     !tipoDocumento ||
-    !estado
+    !estado // Validar el estado
   ) {
     mostrarError('Por favor, complete todos los campos obligatorios (*).');
     return;
@@ -261,7 +219,7 @@ function saveAdministrador() {
       if (response.success) {
         mostrarExito(response.message);
         $('#administradorModal').modal('hide');
-        cargarAdministradores(busquedaActualAdmin); // Recargar la tabla
+        cargarAdministradores(busquedaActualAdmin); // Recargar la tabla, siempre mostrando todos
       } else {
         mostrarError(response.message);
       }
@@ -275,12 +233,12 @@ function saveAdministrador() {
 
 /**
  * Desactiva un administrador (cambia su estado a inactivo).
- * @param {number} idAdministrador - El ID del administrador a desactivar.
+ * @param {string} idAdministrador - El ID del administrador a desactivar.
  */
 function desactivarAdministrador(idAdministrador) {
   Swal.fire({
     title: '¿Está seguro de desactivar este administrador?',
-    text: 'El administrador cambiará a estado "Inactivo" y ya no será visible en la lista principal.',
+    text: 'El administrador cambiará a estado "Inactivo".',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -303,7 +261,7 @@ function desactivarAdministrador(idAdministrador) {
         success: function (response) {
           if (response.success) {
             mostrarExito(response.message);
-            cargarAdministradores(busquedaActualAdmin); // Recargar la tabla
+            cargarAdministradores(busquedaActualAdmin); // Recargar la tabla, siempre mostrando todos
           } else {
             mostrarError(response.message);
           }
@@ -319,7 +277,7 @@ function desactivarAdministrador(idAdministrador) {
 
 /**
  * Muestra el detalle de un administrador en un modal de Bootstrap.
- * @param {number} idAdministrador - El ID del administrador.
+ * @param {string} idAdministrador - El ID del administrador.
  */
 function verDetalleAdministrador(idAdministrador) {
   $.ajax({

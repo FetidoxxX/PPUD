@@ -170,6 +170,13 @@ $estudiantes = $estudianteObj->obtenerTodos(); // Obtener todos los estudiantes
           Varios</a>
         <a href="gestion_reportes.php"
           class="list-group-item list-group-item-action bg-dark text-white active">Reportes</a>
+        <!-- Nuevas opciones para Perfil y Cerrar Sesión en el menú lateral -->
+        <a href="#" class="list-group-item list-group-item-action bg-dark text-white" onclick="mostrarPerfil()">Mi
+          Perfil</a>
+        <form action="../salir.php" method="post" class="d-inline">
+          <button type="submit"
+            class="list-group-item list-group-item-action bg-dark text-danger w-100 text-start">Cerrar Sesión</button>
+        </form>
       </div>
     </div>
     <!-- /#sidebar-wrapper -->
@@ -530,6 +537,10 @@ $estudiantes = $estudianteObj->obtenerTodos(); // Obtener todos los estudiantes
     const GLOBAL_TIPOS_OFERTA = <?php echo json_encode($tipos_oferta); ?>;
     const GLOBAL_TIPOS_REFERENCIA = <?php echo json_encode($tipos_referencia); ?>;
     const GLOBAL_ESTUDIANTES = <?php echo json_encode($estudiantes); ?>;
+    const GLOBAL_USER_ID =
+      <?php echo json_encode($_SESSION['usuario_id'] ?? 'ID_Desconocido'); ?>; // Asume que 'usuario_id' es la clave para el ID
+    const GLOBAL_USER_NAME =
+      <?php echo json_encode($_SESSION['usuario_nombre_completo'] ?? $_SESSION['usuario'] ?? 'Nombre del Usuario Desconocido'); ?>; // Asume una clave para el nombre completo, o usa 'usuario'
 
 
     $(document).ready(function () {
