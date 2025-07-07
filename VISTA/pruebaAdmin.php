@@ -41,6 +41,49 @@ if (!$_SESSION['usuario']) {
   <?php
   exit();
 }
+
+// INICIO DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+include_once '../MODELO/class_administrador.php';
+$administradorObj = new Administrador();
+
+if (isset($_SESSION['usuario_id'])) {
+  $admin_id = $_SESSION['usuario_id'];
+  $admin_data = $administradorObj->obtenerPorId($admin_id);
+  $inactivo_id = $administradorObj->getIdEstadoPorNombre('inactivo');
+
+  if ($admin_data && $inactivo_id !== false && $admin_data['estado_id_estado'] == $inactivo_id) {
+    session_destroy();
+    ?>
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+      <meta charset='utf-8'>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
+    </head>
+
+    <body>
+      <script type='text/javascript'>
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Su cuenta ha sido desactivada. Por favor, contacte al administrador.'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location = '../index.php';
+          }
+        });
+      </script>
+    </body>
+
+    </html>
+    <?php
+    exit();
+  }
+}
+// FIN DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+
 ?>
 
 <!DOCTYPE html>
@@ -52,6 +95,7 @@ if (!$_SESSION['usuario']) {
   <title>Panel de Administración</title>
   <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 
 <body>
@@ -80,6 +124,13 @@ if (!$_SESSION['usuario']) {
           </li>
           <li class="nav-item">
             <a class="nav-link" href="gestion_referencias.php">Gestión Referencias</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_admin.php">Gestión Administradores</a>
+          </li>
+          <!-- Nuevo módulo: Gestión Varios -->
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_varios.php">Gestión Varios</a>
           </li>
         </ul>
 
@@ -182,6 +233,34 @@ if (!$_SESSION['usuario']) {
           </div>
           <div class="card-footer bg-transparent">
             <a href="gestion_referencias.php" class="btn btn-info w-100">Acceder</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gestión de Administradores (Nuevo Módulo) -->
+      <div class="col-lg-3 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <div class="display-1 text-danger mb-3">⚙️</div>
+            <h5 class="card-title">Gestión de Administradores</h5>
+            <p class="card-text">Administrar usuarios con permisos de administrador</p>
+          </div>
+          <div class="card-footer bg-transparent">
+            <a href="gestion_admin.php" class="btn btn-danger w-100">Acceder</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nuevo módulo: Gestión Varios -->
+      <div class="col-lg-3 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body text-center">
+            <div class="display-1 text-secondary mb-3">🗄️</div>
+            <h5 class="card-title">Gestión de Varios</h5>
+            <p class="card-text">Administra los catálogos y datos auxiliares del sistema.</p>
+          </div>
+          <div class="card-footer bg-transparent">
+            <a href="gestion_varios.php" class="btn btn-secondary w-100">Acceder</a>
           </div>
         </div>
       </div>

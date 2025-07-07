@@ -79,7 +79,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link" href="pruebaAdmin.php">Inicio</a>
+            <a class="nav-link " href="pruebaAdmin.php">Inicio</a>
           </li>
           <li class="nav-item">
             <a class="nav-link active" href="gestion_estudiantes.php">Gestión Estudiantes</a>
@@ -93,7 +93,15 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
           <li class="nav-item">
             <a class="nav-link" href="gestion_referencias.php">Gestión Referencias</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_admin.php">Gestión Administradores</a>
+          </li>
+          <!-- Nuevo módulo: Gestión Varios -->
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_varios.php">Gestión Varios</a>
+          </li>
         </ul>
+        `
 
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
