@@ -187,7 +187,6 @@ switch ($action) {
     echo json_encode(['success' => true, 'html' => $html]);
     break;
 
-
   case 'actualizar':
     if (empty($id)) {
       echo json_encode(['success' => false, 'message' => 'ID de administrador no proporcionado para actualizar.']);
