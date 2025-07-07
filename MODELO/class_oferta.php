@@ -832,4 +832,154 @@ class Oferta
     }
     return $ofertas;
   }
+
+  /**
+   * Obtiene ofertas filtradas por modalidad.
+   *
+   * @param int|null $idModalidad ID de la modalidad para filtrar, o null para todas las modalidades.
+   * @return array Un array de arrays asociativos con los datos de las ofertas.
+   */
+  public function obtenerOfertasPorModalidad($idModalidad = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerOfertasPorModalidad.");
+      return [];
+    }
+    $sql = "SELECT
+                o.idOferta,
+                o.titulo,
+                o.descripcion,
+                o.fecha_creacion AS fecha_publicacion,
+                o.fecha_vencimiento,
+                e.nombre AS empresa_nombre,
+                m.nombre AS modalidad_nombre,
+                toferta.nombre AS tipo_oferta_nombre,
+                est.nombre AS estado_nombre
+            FROM
+                oferta o
+            JOIN
+                empresa e ON o.empresa_idEmpresa = e.idEmpresa
+            LEFT JOIN
+                modalidad m ON o.modalidad_id_modalidad = m.id_modalidad
+            LEFT JOIN
+                tipo_oferta toferta ON o.tipo_oferta_id_tipo_oferta = toferta.id_tipo_oferta
+            LEFT JOIN
+                estado est ON o.estado_id_estado = est.id_estado";
+    if (!empty($idModalidad)) {
+      $idModalidad = (int) mysqli_real_escape_string($this->conexion, $idModalidad);
+      $sql .= " WHERE o.modalidad_id_modalidad = $idModalidad";
+    }
+    $sql .= " ORDER BY m.nombre, o.titulo";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerOfertasPorModalidad): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $ofertas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $ofertas[] = $fila;
+    }
+    return $ofertas;
+  }
+
+  /**
+   * Obtiene ofertas filtradas por empresa para reportes.
+   *
+   * @param int|null $idEmpresa ID de la empresa para filtrar, o null para todas las empresas.
+   * @return array Un array de arrays asociativos con los datos de las ofertas.
+   */
+  public function obtenerOfertasPorEmpresaReporte($idEmpresa = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerOfertasPorEmpresaReporte.");
+      return [];
+    }
+    $sql = "SELECT
+                o.idOferta,
+                o.titulo,
+                o.descripcion,
+                o.fecha_creacion AS fecha_publicacion,
+                o.fecha_vencimiento,
+                e.nombre AS empresa_nombre,
+                m.nombre AS modalidad_nombre,
+                toferta.nombre AS tipo_oferta_nombre,
+                est.nombre AS estado_nombre
+            FROM
+                oferta o
+            JOIN
+                empresa e ON o.empresa_idEmpresa = e.idEmpresa
+            LEFT JOIN
+                modalidad m ON o.modalidad_id_modalidad = m.id_modalidad
+            LEFT JOIN
+                tipo_oferta toferta ON o.tipo_oferta_id_tipo_oferta = toferta.id_tipo_oferta
+            LEFT JOIN
+                estado est ON o.estado_id_estado = est.id_estado";
+    if (!empty($idEmpresa)) {
+      $idEmpresa = (int) mysqli_real_escape_string($this->conexion, $idEmpresa);
+      $sql .= " WHERE o.empresa_idEmpresa = $idEmpresa";
+    }
+    $sql .= " ORDER BY e.nombre, o.titulo";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerOfertasPorEmpresaReporte): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $ofertas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $ofertas[] = $fila;
+    }
+    return $ofertas;
+  }
+
+  /**
+   * Obtiene ofertas filtradas por estado de oferta para reportes.
+   *
+   * @param int|null $idEstado ID del estado para filtrar, o null para todos los estados.
+   * @return array Un array de arrays asociativos con los datos de las ofertas.
+   */
+  public function obtenerOfertasPorEstadoReporte($idEstado = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerOfertasPorEstadoReporte.");
+      return [];
+    }
+    $sql = "SELECT
+                o.idOferta,
+                o.titulo,
+                o.descripcion,
+                o.fecha_creacion AS fecha_publicacion,
+                o.fecha_vencimiento,
+                e.nombre AS empresa_nombre,
+                m.nombre AS modalidad_nombre,
+                toferta.nombre AS tipo_oferta_nombre,
+                est.nombre AS estado_nombre
+            FROM
+                oferta o
+            JOIN
+                empresa e ON o.empresa_idEmpresa = e.idEmpresa
+            LEFT JOIN
+                modalidad m ON o.modalidad_id_modalidad = m.id_modalidad
+            LEFT JOIN
+                tipo_oferta toferta ON o.tipo_oferta_id_tipo_oferta = toferta.id_tipo_oferta
+            LEFT JOIN
+                estado est ON o.estado_id_estado = est.id_estado";
+    if (!empty($idEstado)) {
+      $idEstado = (int) mysqli_real_escape_string($this->conexion, $idEstado);
+      $sql .= " WHERE o.estado_id_estado = $idEstado";
+    }
+    $sql .= " ORDER BY est.nombre, o.titulo";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerOfertasPorEstadoReporte): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $ofertas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $ofertas[] = $fila;
+    }
+    return $ofertas;
+  }
 }

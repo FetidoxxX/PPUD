@@ -1,150 +1,326 @@
-let datosReporteActual = [];
-let tituloReporteActual = '';
+let currentReportData = null; // Almacena los datos del reporte actual para PDF
+let currentReportTitle = ''; // Almacena el título del reporte actual para PDF
+let activeTabId = 'ofertas-pane'; // Pestaña activa por defecto
+
+// Las variables globales son inicializadas en gestion_reportes.php con 'const'.
+// Por lo tanto, no se deben declarar aquí con 'let' para evitar el SyntaxError.
+// Simplemente se usarán como variables globales disponibles.
 
 /**
- * Inicializa el módulo de reportes, configurando eventos y filtros.
+ * Inicializa la lógica de la página de reportes.
  */
 function inicializarReportes() {
-  // Ocultar todos los filtros al inicio
-  $('#filtroFechaInicio').hide();
-  $('#filtroFechaFin').hide();
-  $('#filtroCarrera').hide();
-  $('#filtroEstado').hide();
-  $('#contenedorReporte').hide();
-  $('#btnDescargarPDF').hide();
+  // Eventos para los selectores de tipo de reporte en cada pestaña
+  $('#tipoReporteOfertas').on('change', handleReportTypeChange);
+  $('#tipoReporteEstudiantes').on('change', handleReportTypeChange);
+  $('#tipoReporteEmpresas').on('change', handleReportTypeChange);
+  $('#tipoReporteReferencias').on('change', handleReportTypeChange);
 
-  // Evento para el cambio de tipo de reporte
-  $('#tipoReporte').on('change', function () {
-    const tipoSeleccionado = $(this).val();
-    mostrarOcultarFiltros(tipoSeleccionado);
+  // Eventos para los botones de generar reporte en cada pestaña
+  $('#btnGenerarReporteOfertas').on('click', function () {
+    generarReporte('ofertas-pane');
   });
-
-  // Evento para el botón de generar reporte
-  $('#btnGenerarReporte').on('click', function () {
-    generarReporte();
+  $('#btnGenerarReporteEstudiantes').on('click', function () {
+    generarReporte('estudiantes-pane');
+  });
+  $('#btnGenerarReporteEmpresas').on('click', function () {
+    generarReporte('empresas-pane');
+  });
+  $('#btnGenerarReporteReferencias').on('click', function () {
+    generarReporte('referencias-pane');
   });
 
   // Evento para el botón de descargar PDF
-  $('#btnDescargarPDF').on('click', function () {
-    descargarPDF();
+  $('#btnDescargarPDF').on('click', descargarPDF);
+
+  // Manejar el cambio de pestaña para resetear los filtros y el reporte
+  $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+    activeTabId = $(e.target).attr('data-bs-target').substring(1); // Elimina el '#'
+    resetReportDisplay();
+    // Ocultar todos los filtros al cambiar de pestaña
+    $('.filtro-container').hide();
+    // Resetear selectores a la opción por defecto
+    $('.report-type-select').val('');
+    $('.filter-select').val('');
+    $('.filter-input').val('');
   });
-}
 
-/**
- * Muestra u oculta los campos de filtro según el tipo de reporte seleccionado.
- * @param {string} tipoReporte - El valor del tipo de reporte seleccionado.
- */
-function mostrarOcultarFiltros(tipoReporte) {
-  // Ocultar todos los filtros primero
-  $('#filtroFechaInicio').hide();
-  $('#fechaInicio').val('');
-  $('#filtroFechaFin').hide();
-  $('#fechaFin').val('');
-  $('#filtroCarrera').hide();
-  $('#idCarrera').val('');
-  $('#filtroEstado').hide();
-  $('#idEstado').val('');
-
-  // Mostrar filtros específicos
-  switch (tipoReporte) {
-    case 'ofertas_por_fecha':
-      $('#filtroFechaInicio').show();
-      $('#filtroFechaFin').show();
-      break;
-    case 'estudiantes_por_carrera':
-      $('#filtroCarrera').show();
-      break;
-    case 'empresas_por_estado':
-    case 'referencias_por_estado':
-      $('#filtroEstado').show();
-      break;
-    // Otros casos si se añaden más reportes con filtros específicos
-  }
-  // Ocultar el contenedor del reporte y el botón de descarga al cambiar el tipo de reporte
-  $('#contenedorReporte').hide();
-  $('#btnDescargarPDF').hide();
-  $('#areaReporte').html(
-    '<p class="text-muted text-center py-5">Seleccione un tipo de reporte y genere para visualizarlo aquí.</p>'
+  // Inicializar tooltips de Bootstrap
+  var tooltipTriggerList = [].slice.call(
+    document.querySelectorAll('[data-bs-toggle="tooltip"]')
   );
+  var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+  });
+
+  // Cargar las opciones iniciales para los filtros (si ya hay datos globales)
+  // Ofertas
+  if (typeof GLOBAL_MODALIDADES !== 'undefined') {
+    populateSelect(
+      'idModalidadOfertas',
+      GLOBAL_MODALIDADES,
+      'id_modalidad',
+      ''
+    );
+  }
+  if (typeof GLOBAL_EMPRESAS !== 'undefined') {
+    populateSelect('idEmpresaOfertas', GLOBAL_EMPRESAS, 'idEmpresa', '');
+  }
+  // Filtrar estados para Ofertas: activo, inactivo, vencido
+  if (typeof GLOBAL_ESTADOS !== 'undefined') {
+    const estadosOfertas = GLOBAL_ESTADOS.filter((estado) =>
+      ['activo', 'inactivo', 'vencida'].includes(estado.nombre.toLowerCase())
+    );
+    populateSelect('idEstadoOfertas', estadosOfertas, 'id_estado', '');
+  }
+
+  // Estudiantes
+  if (typeof GLOBAL_CARRERAS !== 'undefined') {
+    populateSelect('idCarreraEstudiantes', GLOBAL_CARRERAS, 'id_carrera', '');
+  }
+  // Filtrar estados para Estudiantes: activo, inactivo
+  if (typeof GLOBAL_ESTADOS !== 'undefined') {
+    const estadosEstudiantes = GLOBAL_ESTADOS.filter((estado) =>
+      ['activo', 'inactivo'].includes(estado.nombre.toLowerCase())
+    );
+    populateSelect('idEstadoEstudiantes', estadosEstudiantes, 'id_estado', '');
+  }
+
+  // Empresas
+  // Filtrar estados para Empresas: activo, inactivo
+  if (typeof GLOBAL_ESTADOS !== 'undefined') {
+    const estadosEmpresas = GLOBAL_ESTADOS.filter((estado) =>
+      ['activo', 'inactivo'].includes(estado.nombre.toLowerCase())
+    );
+    populateSelect('idEstadoEmpresas', estadosEmpresas, 'id_estado', '');
+  }
+
+  // Referencias
+  if (typeof GLOBAL_TIPOS_REFERENCIA !== 'undefined') {
+    populateSelect(
+      'idTipoReferenciaReferencias',
+      GLOBAL_TIPOS_REFERENCIA,
+      'id_tipo_referencia',
+      ''
+    );
+  }
+  // Filtrar estados para Referencias: activo, inactivo
+  if (typeof GLOBAL_ESTADOS !== 'undefined') {
+    const estadosReferencias = GLOBAL_ESTADOS.filter((estado) =>
+      ['activo', 'inactivo'].includes(estado.nombre.toLowerCase())
+    );
+    populateSelect('idEstadoReferencias', estadosReferencias, 'id_estado', '');
+  }
+  if (typeof GLOBAL_EMPRESAS !== 'undefined') {
+    populateSelect('idEmpresaReferencias', GLOBAL_EMPRESAS, 'idEmpresa', '');
+  }
+  if (typeof GLOBAL_ESTUDIANTES !== 'undefined') {
+    populateSelect(
+      'idEstudianteReferencias',
+      GLOBAL_ESTUDIANTES,
+      'idEstudiante',
+      ''
+    );
+  }
 }
 
 /**
- * Recopila los parámetros y genera el reporte mediante una llamada AJAX.
+ * Maneja el evento change de los selectores de tipo de reporte.
+ * Muestra/oculta los filtros adicionales según el tipo de reporte seleccionado.
  */
-function generarReporte() {
-  const tipoReporte = $('#tipoReporte').val();
-  if (!tipoReporte) {
-    mostrarError('Por favor, seleccione un tipo de reporte.');
+function handleReportTypeChange(event) {
+  const selectedReportType = $(event.target).val();
+  const tabId = $(event.target).closest('.tab-pane').attr('id');
+
+  // Ocultar todos los filtros de la pestaña actual primero
+  $(`#${tabId} .filtro-container`).hide();
+  // Resetear valores de los filtros
+  $(`#${tabId} .filter-select`).val('');
+  $(`#${tabId} .filter-input`).val('');
+
+  // Mostrar los filtros relevantes
+  if (tabId === 'ofertas-pane') {
+    if (selectedReportType === 'ofertas_por_fecha') {
+      $('#filtroFechaInicioOfertasContainer').show();
+      $('#filtroFechaFinOfertasContainer').show();
+    } else if (selectedReportType === 'ofertas_por_modalidad') {
+      $('#filtroModalidadOfertasContainer').show();
+    } else if (selectedReportType === 'ofertas_por_empresa') {
+      $('#filtroEmpresaOfertasContainer').show();
+    } else if (selectedReportType === 'ofertas_por_estado_oferta') {
+      $('#filtroEstadoOfertasContainer').show();
+    } else if (selectedReportType === 'top_ofertas_interes') {
+      $('#filtroLimiteTopOfertasContainer').show();
+    }
+  } else if (tabId === 'estudiantes-pane') {
+    if (selectedReportType === 'estudiantes_por_carrera') {
+      $('#filtroCarreraEstudiantesContainer').show();
+    } else if (selectedReportType === 'estudiantes_por_estado') {
+      $('#filtroEstadoEstudiantesContainer').show();
+    } else if (selectedReportType === 'top_estudiantes_interesados_ofertas') {
+      $('#filtroLimiteTopEstudiantesContainer').show();
+    }
+  } else if (tabId === 'empresas-pane') {
+    if (selectedReportType === 'empresas_por_estado') {
+      $('#filtroEstadoEmpresasContainer').show();
+    } else if (selectedReportType === 'empresas_con_mas_ofertas') {
+      $('#filtroLimiteTopEmpresasOfertasContainer').show();
+    } else if (selectedReportType === 'empresas_con_mas_referencias_emitidas') {
+      $('#filtroLimiteTopEmpresasReferenciasContainer').show();
+    }
+  } else if (tabId === 'referencias-pane') {
+    if (selectedReportType === 'referencias_por_estado') {
+      $('#filtroEstadoReferenciasContainer').show();
+    } else if (selectedReportType === 'referencias_por_tipo') {
+      $('#filtroTipoReferenciaReferenciasContainer').show();
+    } else if (selectedReportType === 'referencias_por_empresa') {
+      $('#filtroEmpresaReferenciasContainer').show();
+    } else if (selectedReportType === 'referencias_por_estudiante') {
+      $('#filtroEstudianteReferenciasContainer').show();
+    }
+  }
+}
+
+/**
+ * Genera el reporte según la pestaña activa y los filtros seleccionados.
+ * @param {string} tabId - El ID de la pestaña activa (e.g., 'ofertas-pane').
+ */
+function generarReporte(tabId) {
+  let tipoReporte = '';
+  let params = {
+    action: 'generar_reporte',
+  };
+  let isValid = true;
+
+  // Determinar el tipo de reporte y los parámetros específicos de la pestaña
+  if (tabId === 'ofertas-pane') {
+    tipoReporte = $('#tipoReporteOfertas').val();
+    params.tipo_reporte = tipoReporte;
+
+    if (!tipoReporte) {
+      isValid = false;
+    } else if (tipoReporte === 'ofertas_por_fecha') {
+      const fechaInicio = $('#fechaInicioOfertas').val();
+      const fechaFin = $('#fechaFinOfertas').val();
+      if (!fechaInicio || !fechaFin) {
+        mostrarError(
+          'Por favor, ingrese ambas fechas para el reporte por fecha.'
+        );
+        isValid = false;
+      } else {
+        params.fecha_inicio = fechaInicio;
+        params.fecha_fin = fechaFin;
+      }
+    } else if (tipoReporte === 'ofertas_por_modalidad') {
+      const idModalidad = $('#idModalidadOfertas').val();
+      if (idModalidad) params.id_modalidad = idModalidad;
+    } else if (tipoReporte === 'ofertas_por_empresa') {
+      const idEmpresa = $('#idEmpresaOfertas').val();
+      if (idEmpresa) params.id_empresa = idEmpresa;
+    } else if (tipoReporte === 'ofertas_por_estado_oferta') {
+      const idEstadoOferta = $('#idEstadoOfertas').val();
+      if (idEstadoOferta) params.id_estado_oferta = idEstadoOferta;
+    } else if (tipoReporte === 'top_ofertas_interes') {
+      const limiteTop = $('#limiteTopOfertas').val();
+      if (limiteTop) params.limite_top = limiteTop;
+    }
+  } else if (tabId === 'estudiantes-pane') {
+    tipoReporte = $('#tipoReporteEstudiantes').val();
+    params.tipo_reporte = tipoReporte;
+
+    if (!tipoReporte) {
+      isValid = false;
+    } else if (tipoReporte === 'estudiantes_por_carrera') {
+      const idCarrera = $('#idCarreraEstudiantes').val();
+      if (idCarrera) params.id_carrera = idCarrera;
+    } else if (tipoReporte === 'estudiantes_por_estado') {
+      const idEstadoEstudiante = $('#idEstadoEstudiantes').val();
+      if (idEstadoEstudiante) params.id_estado_estudiante = idEstadoEstudiante;
+    } else if (tipoReporte === 'top_estudiantes_interesados_ofertas') {
+      const limiteTop = $('#limiteTopEstudiantes').val();
+      if (limiteTop) params.limite_top = limiteTop;
+    }
+  } else if (tabId === 'empresas-pane') {
+    tipoReporte = $('#tipoReporteEmpresas').val();
+    params.tipo_reporte = tipoReporte;
+
+    if (!tipoReporte) {
+      isValid = false;
+    } else if (tipoReporte === 'empresas_por_estado') {
+      const idEstado = $('#idEstadoEmpresas').val();
+      if (idEstado) params.id_estado = idEstado;
+    } else if (tipoReporte === 'empresas_con_mas_ofertas') {
+      const limiteTop = $('#limiteTopEmpresasOfertas').val();
+      if (limiteTop) params.limite_top = limiteTop;
+    } else if (tipoReporte === 'empresas_con_mas_referencias_emitidas') {
+      const limiteTop = $('#limiteTopEmpresasReferencias').val();
+      if (limiteTop) params.limite_top = limiteTop;
+    }
+  } else if (tabId === 'referencias-pane') {
+    tipoReporte = $('#tipoReporteReferencias').val(); // <--- Captura el valor del selector principal
+    params.tipo_reporte = tipoReporte;
+
+    if (!tipoReporte) {
+      isValid = false;
+    } else if (tipoReporte === 'referencias_por_estado') {
+      const idEstado = $('#idEstadoReferencias').val();
+      if (idEstado) params.id_estado = idEstado;
+    } else if (tipoReporte === 'referencias_por_tipo') {
+      const idTipoReferencia = $('#idTipoReferenciaReferencias').val(); // <--- Captura el valor del filtro dependiente
+      if (idTipoReferencia) params.id_tipo_referencia = idTipoReferencia;
+    } else if (tipoReporte === 'referencias_por_empresa') {
+      const idEmpresa = $('#idEmpresaReferencias').val(); // Usar el ID correcto
+      if (idEmpresa) params.id_empresa = idEmpresa;
+    } else if (tipoReporte === 'referencias_por_estudiante') {
+      const idEstudiante = $('#idEstudianteReferencias').val(); // Usar el ID correcto
+      if (idEstudiante) params.id_estudiante = idEstudiante;
+    }
+  }
+
+  if (!isValid) {
+    mostrarError(
+      'Por favor, seleccione un tipo de reporte y complete los filtros necesarios.'
+    );
     return;
   }
 
-  const parametros = {
-    action: 'generar_reporte',
-    tipo_reporte: tipoReporte,
-  };
-
-  // Añadir parámetros específicos según el tipo de reporte
-  switch (tipoReporte) {
-    case 'ofertas_por_fecha':
-      const fechaInicio = $('#fechaInicio').val();
-      const fechaFin = $('#fechaFin').val();
-      if (!fechaInicio || !fechaFin) {
-        mostrarError('Por favor, seleccione un rango de fechas.');
-        return;
-      }
-      parametros.fecha_inicio = fechaInicio;
-      parametros.fecha_fin = fechaFin;
-      break;
-    case 'estudiantes_por_carrera':
-      const idCarrera = $('#idCarrera').val();
-      if (idCarrera) {
-        parametros.id_carrera = idCarrera;
-      }
-      break;
-    case 'empresas_por_estado':
-    case 'referencias_por_estado':
-      const idEstado = $('#idEstado').val();
-      if (idEstado) {
-        parametros.id_estado = idEstado;
-      }
-      break;
-  }
-
-  // Mostrar spinner o indicador de carga
-  $('#areaReporte').html(
-    '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Generando reporte...</p></div>'
+  // Mostrar spinner de carga
+  $('#reporteResultadosContainer').html(
+    '<div class="text-center my-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Generando reporte...</p></div>'
   );
-  $('#contenedorReporte').show();
-  $('#btnDescargarPDF').hide(); // Ocultar mientras se genera
+  $('#contenedorReporte').show(); // Mostrar el contenedor del reporte
 
   $.ajax({
     url: '../CONTROLADOR/ajax_reportes.php',
-    type: 'GET',
-    data: parametros,
+    type: 'GET', // Usamos GET ya que son solicitudes de datos
+    data: params,
     dataType: 'json',
     success: function (respuesta) {
       if (respuesta.success) {
-        $('#areaReporte').html(respuesta.html);
-        datosReporteActual = respuesta.datos; // Guardar datos para el PDF
-        tituloReporteActual = respuesta.titulo; // Guardar título para el PDF
-        $('#btnDescargarPDF').show();
+        currentReportData = respuesta.datos;
+        currentReportTitle = respuesta.titulo;
+        $('#reporteResultadosContainer').html(respuesta.html);
+        $('#tituloReporteDisplay').text(respuesta.titulo); // Actualizar el título del reporte
+        $('#btnDescargarPDF').show(); // Mostrar botón de descarga
         mostrarExito(respuesta.message);
       } else {
-        $('#areaReporte').html(
-          '<p class="text-muted text-center py-5">Error al generar el reporte: ' +
-            respuesta.message +
-            '</p>'
+        mostrarError(respuesta.message || 'Error al generar el reporte.');
+        $('#reporteResultadosContainer').html(
+          '<div class="alert alert-warning">No se pudo generar el reporte: ' +
+            (respuesta.message || 'Error desconocido') +
+            '</div>'
         );
-        mostrarError(respuesta.message);
+        $('#tituloReporteDisplay').text('📄 Resultado del Reporte'); // Resetear el título
         $('#btnDescargarPDF').hide();
       }
     },
     error: function (xhr, status, error) {
       console.error('Error AJAX al generar reporte:', error);
-      $('#areaReporte').html(
-        '<p class="text-muted text-center py-5">Error de conexión al generar el reporte.</p>'
+      mostrarError('Error de conexión al servidor al generar el reporte.');
+      $('#reporteResultadosContainer').html(
+        '<div class="alert alert-danger">Error al cargar el reporte. Por favor, intente de nuevo.</div>'
       );
-      mostrarError('Error de conexión al generar el reporte.');
+      $('#tituloReporteDisplay').text('📄 Resultado del Reporte'); // Resetear el título
       $('#btnDescargarPDF').hide();
     },
   });
@@ -154,136 +330,66 @@ function generarReporte() {
  * Descarga el reporte actual como un archivo PDF.
  */
 function descargarPDF() {
-  if (datosReporteActual.length === 0) {
-    mostrarError('No hay datos para generar el PDF.');
+  if (!currentReportData || currentReportData.length === 0) {
+    mostrarError('No hay datos de reporte para descargar.');
     return;
   }
 
   const doc = new jspdf.jsPDF();
-  let y = 10; // Posición inicial Y
+  doc.setFontSize(18);
+  doc.text(currentReportTitle, 14, 22);
 
-  doc.setFontSize(16);
-  doc.text(tituloReporteActual, 10, y);
-  y += 10;
-
-  doc.setFontSize(10);
-  doc.text(`Fecha de Generación: ${new Date().toLocaleDateString()}`, 10, y);
-  y += 10;
-
-  // Obtener las cabeceras de la tabla del HTML generado para el PDF
-  const headers = [];
-  $('#areaReporte table thead th').each(function () {
-    headers.push($(this).text());
+  // Preparar los datos para autoTable
+  const headers = Object.keys(currentReportData[0]).map((key) => {
+    // Formatear nombres de columnas para que sean más legibles en el PDF
+    return key
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   });
+  const data = currentReportData.map((row) => Object.values(row));
 
-  // Convertir los datos a un formato de array de arrays para autoTable
-  const data = datosReporteActual.map((row) => {
-    const rowData = [];
-    // Iterar sobre las cabeceras para asegurar el orden y la inclusión de datos
-    headers.forEach((header) => {
-      // Mapear el texto de la cabecera a la clave de datos
-      let value = '';
-      switch (header) {
-        case 'ID':
-          // Para ID, necesitamos el nombre de la columna real, que varía.
-          // Asumimos que el primer campo de datosReporteActual es el ID.
-          // Esto puede necesitar un mapeo más robusto si los IDs no son el primer campo.
-          if (row.idOferta) value = row.idOferta;
-          else if (row.idEstudiante) value = row.idEstudiante;
-          else if (row.idEmpresa) value = row.idEmpresa;
-          else if (row.idReferencia) value = row.idReferencia;
-          break;
-        case 'Título':
-          value = row.titulo;
-          break;
-        case 'Empresa':
-          value = row.empresa_nombre;
-          break;
-        case 'Modalidad':
-          value = row.modalidad_nombre;
-          break;
-        case 'Tipo':
-          value = row.tipo_oferta_nombre;
-          break;
-        case 'Publicación':
-          value = row.fecha_publicacion;
-          break;
-        case 'Vencimiento':
-          value = row.fecha_vencimiento;
-          break;
-        case 'Estado':
-          value = row.estado_nombre;
-          break;
-        case 'Nombre Completo':
-          value = `${row.nombre || ''} ${row.apellidos || ''}`.trim();
-          break;
-        case 'Documento':
-          value = row.n_doc;
-          break;
-        case 'Carrera':
-          value = row.carrera_nombre;
-          break;
-        case 'Fecha Registro':
-          value = row.fecha_registro;
-          break;
-        case 'Teléfono':
-          value = row.telefono;
-          break;
-        case 'Correo':
-          value = row.correo;
-          break;
-        case 'Interesados':
-          value = row.total_interesados;
-          break;
-        case 'ID Oferta':
-          value = row.idOferta;
-          break; // Para Top Ofertas
-        case 'Estudiante':
-          value = `${row.estudiante_nombre || ''} ${
-            row.estudiante_apellidos || ''
-          }`.trim();
-          break;
-        case 'Tipo Referencia':
-          value = row.tipo_referencia_nombre;
-          break;
-        case 'Fecha Solicitud':
-          value = row.fecha_solicitud;
-          break;
-        // Añadir más casos según las columnas de tus reportes
-        default:
-          value = '';
-          break;
-      }
-      rowData.push(value);
-    });
-    return rowData;
-  });
-
-  // Usar jspdf-autotable para generar la tabla
   doc.autoTable({
-    startY: y + 5,
     head: [headers],
     body: data,
+    startY: 30,
     theme: 'striped',
-    styles: { fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
-    headStyles: { fillColor: [33, 37, 41], textColor: 255 }, // bg-dark
-    alternateRowStyles: { fillColor: [248, 249, 250] }, // table-striped
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+    },
+    headStyles: {
+      fillColor: [33, 37, 41], // Color bg-dark de Bootstrap
+      textColor: [255, 255, 255],
+      fontStyle: 'bold',
+    },
+    alternateRowStyles: {
+      fillColor: [248, 249, 250], // Color bg-light de Bootstrap
+    },
     didDrawPage: function (data) {
-      // Footer con número de página
-      doc.setFontSize(8);
+      // Footer
+      let str = 'Página ' + doc.internal.getNumberOfPages();
+      doc.setFontSize(10);
       doc.text(
-        'Página ' + doc.internal.getNumberOfPages(),
+        str,
         data.settings.margin.left,
         doc.internal.pageSize.height - 10
       );
     },
   });
 
-  doc.save(
-    `${tituloReporteActual.replace(/ /g, '_')}_${new Date()
-      .toISOString()
-      .slice(0, 10)}.pdf`
-  );
+  doc.save(currentReportTitle.replace(/ /g, '_') + '.pdf');
+}
+
+/**
+ * Resetea la visualización del reporte y oculta el botón de descarga.
+ */
+function resetReportDisplay() {
+  $('#reporteResultadosContainer').empty();
+  $('#btnDescargarPDF').hide();
+  currentReportData = null;
+  currentReportTitle = '';
+  $('#tituloReporteDisplay').text('📄 Resultado del Reporte'); // Resetear el título
+  $('#contenedorReporte').hide(); // Ocultar el contenedor del reporte
 }
 
 /**
@@ -304,5 +410,32 @@ function mostrarError(mensaje) {
     icon: 'error',
     title: 'Error',
     text: mensaje,
+  });
+}
+
+/**
+ * Rellena un elemento <select> con datos.
+ * @param {string} selectId - El ID del elemento select.
+ * @param {Array} data - Array de objetos con 'id' y 'nombre'.
+ * @param {string} idKey - La clave del ID en los objetos de datos (ej. 'id_estado', 'idEmpresa').
+ * @param {string} selectedValue - El valor que debe estar seleccionado por defecto.
+ */
+function populateSelect(selectId, data, idKey, selectedValue = '') {
+  const selectElement = $(`#${selectId}`);
+  selectElement.empty();
+  selectElement.append('<option value="">Seleccione...</option>'); // Opción por defecto
+  data.forEach((item) => {
+    const isSelected = item[idKey] == selectedValue ? 'selected' : '';
+    // Asegurarse de que 'nombre' es la propiedad correcta para mostrar
+    const displayValue =
+      item.nombre ||
+      item.titulo ||
+      item.nombres ||
+      (item.nombre && item.apellidos ? item.nombre + ' ' + item.apellidos : ''); // Adaptar según la estructura del dato
+    if (displayValue) {
+      selectElement.append(
+        `<option value="${item[idKey]}" ${isSelected}>${displayValue}</option>`
+      );
+    }
   });
 }

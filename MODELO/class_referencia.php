@@ -158,6 +158,7 @@ class Referencia
     }
   }
 
+
   /**
    * Actualiza los datos de una referencia existente, con validaciones específicas para el estudiante.
    * Incluye verificación de propiedad y restricción de 24 horas.
@@ -266,14 +267,14 @@ class Referencia
    * Obtiene todas las referencias, opcionalmente filtradas por empresa y/o estudiante y por estado.
    *
    * @param int|null $idEmpresa ID de la empresa para filtrar.
-   * @param int|null $idEstudiante ID del estudiante para filtrar.
+   * @param string|null $idEstudiante ID del estudiante para filtrar.
    * @param int|null $tipoReferenciaIdToInclude ID del tipo de referencia a incluir.
    * @param int $limit Límite de resultados.
    * @param int $offset Desplazamiento de resultados.
-   * @param int $estado_id_estado ID del estado para filtrar (por defecto, 1 para activas).
+   * @param int|null $estado_id_estado ID del estado para filtrar (por defecto, 1 para activas).
    * @return array Un array de arrays asociativos con los datos de las referencias.
    */
-  public function obtenerTodas($idEmpresa = null, $idEstudiante = null, $tipoReferenciaIdToInclude = null, $limit = 10, $offset = 0, $estado_id_estado = 1)
+  public function obtenerTodas($idEmpresa = null, $idEstudiante = null, $tipoReferenciaIdToInclude = null, $limit = 10, $offset = 0, $estado_id_estado = null)
   {
     if (!$this->conexion) {
       error_log("ERROR: Conexión a la base de datos no establecida en obtenerTodas (Referencia).");
@@ -294,21 +295,13 @@ class Referencia
     }
     if ($idEstudiante !== null) {
       $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
-      // La columna 'estudiante_idEstudiante' se usa para el estudiante INVOLUCRADO en la referencia.
-      // Si el tipo de referencia es 'empresa_a_estudiante' (ID 2), este estudiante es el RECEPTOR.
-      // Si el tipo de referencia es 'estudiante_a_empresa' (ID 1), este estudiante es el CREADOR.
-      // Para el perfil del estudiante, queremos las referencias RECIBIDAS, que son de tipo 2.
-      // Por lo tanto, el filtro de estudiante debe aplicarse SOLO cuando el tipo de referencia sea 2.
-      // Si el tipo de referencia es 1, el estudiante_idEstudiante es el creador, no el receptor.
-      // Sin embargo, la llamada desde ajax_perfilE.php ya pasa el tipo 2, así que este filtro es correcto
-      // para identificar al estudiante como RECEPTOR.
       $conditions[] = "r.estudiante_idEstudiante = '$idEstudiante'";
     }
     if ($tipoReferenciaIdToInclude !== null) {
       $tipoReferenciaIdToInclude = (int) $tipoReferenciaIdToInclude;
       $conditions[] = "r.tipo_referencia_id_tipo_referencia = $tipoReferenciaIdToInclude";
     }
-    // Añadir el filtro de estado
+    // Añadir el filtro de estado si no es nulo
     if ($estado_id_estado !== null) {
       $estado_id_estado = (int) $estado_id_estado;
       $conditions[] = "r.estado_id_estado = $estado_id_estado";
@@ -339,12 +332,12 @@ class Referencia
    * Obtiene la cantidad total de referencias, opcionalmente filtradas por empresa y/o estudiante.
    *
    * @param int|null $idEmpresa ID de la empresa para filtrar.
-   * @param int|null $idEstudiante ID del estudiante para filtrar.
+   * @param string|null $idEstudiante ID del estudiante para filtrar.
    * @param int|null $tipoReferenciaIdToInclude ID del tipo de referencia a incluir.
-   * @param int $estado_id_estado ID del estado para filtrar (por defecto, 1 para activas).
+   * @param int|null $estado_id_estado ID del estado para filtrar (por defecto, 1 para activas).
    * @return int El número total de referencias.
    */
-  public function contarReferencias($idEmpresa = null, $idEstudiante = null, $tipoReferenciaIdToInclude = null, $estado_id_estado = 1)
+  public function contarReferencias($idEmpresa = null, $idEstudiante = null, $tipoReferenciaIdToInclude = null, $estado_id_estado = null)
   {
     if (!$this->conexion) {
       error_log("ERROR: Conexión a la base de datos no establecida en contarReferencias (Referencia).");
@@ -366,7 +359,7 @@ class Referencia
       $tipoReferenciaIdToInclude = (int) $tipoReferenciaIdToInclude;
       $conditions[] = "r.tipo_referencia_id_tipo_referencia = $tipoReferenciaIdToInclude";
     }
-    // Añadir el filtro de estado
+    // Añadir el filtro de estado si no es nulo
     if ($estado_id_estado !== null) {
       $estado_id_estado = (int) $estado_id_estado;
       $conditions[] = "r.estado_id_estado = $estado_id_estado";
@@ -473,6 +466,150 @@ class Referencia
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB (obtenerReferenciasPorEstado): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $referencias = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $referencias[] = $fila;
+    }
+    return $referencias;
+  }
+
+  /**
+   * Obtiene referencias filtradas por tipo de referencia.
+   *
+   * @param int|null $idTipoReferencia ID del tipo de referencia para filtrar, o null para todos los tipos.
+   * @return array Un array de arrays asociativos con los datos de las referencias.
+   */
+  public function obtenerReferenciasPorTipo($idTipoReferencia = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerReferenciasPorTipo.");
+      return [];
+    }
+    $sql = "SELECT
+                r.idReferencia,
+                e.nombre AS estudiante_nombre,
+                e.apellidos AS estudiante_apellidos,
+                emp.nombre AS empresa_nombre,
+                tr.nombre AS tipo_referencia_nombre,
+                est.nombre AS estado_nombre,
+                r.fecha_creacion AS fecha_solicitud
+            FROM
+                referencia r
+            JOIN
+                estudiante e ON r.estudiante_idEstudiante = e.idEstudiante
+            JOIN
+                empresa emp ON r.empresa_idEmpresa = emp.idEmpresa
+            LEFT JOIN
+                tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
+            LEFT JOIN
+                estado est ON r.estado_id_estado = est.id_estado";
+    if (!empty($idTipoReferencia)) {
+      $idTipoReferencia = (int) mysqli_real_escape_string($this->conexion, $idTipoReferencia);
+      $sql .= " WHERE r.tipo_referencia_id_tipo_referencia = $idTipoReferencia";
+    }
+    $sql .= " ORDER BY tr.nombre, r.fecha_creacion DESC";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerReferenciasPorTipo): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $referencias = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $referencias[] = $fila;
+    }
+    return $referencias;
+  }
+
+  /**
+   * Obtiene referencias filtradas por empresa para reportes.
+   *
+   * @param int|null $idEmpresa ID de la empresa para filtrar, o null para todas las empresas.
+   * @return array Un array de arrays asociativos con los datos de las referencias.
+   */
+  public function obtenerReferenciasPorEmpresaReporte($idEmpresa = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerReferenciasPorEmpresaReporte.");
+      return [];
+    }
+    $sql = "SELECT
+                r.idReferencia,
+                e.nombre AS estudiante_nombre,
+                e.apellidos AS estudiante_apellidos,
+                emp.nombre AS empresa_nombre,
+                tr.nombre AS tipo_referencia_nombre,
+                est.nombre AS estado_nombre,
+                r.fecha_creacion AS fecha_solicitud
+            FROM
+                referencia r
+            JOIN
+                estudiante e ON r.estudiante_idEstudiante = e.idEstudiante
+            JOIN
+                empresa emp ON r.empresa_idEmpresa = emp.idEmpresa
+            LEFT JOIN
+                tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
+            LEFT JOIN
+                estado est ON r.estado_id_estado = est.id_estado";
+    if (!empty($idEmpresa)) {
+      $idEmpresa = (int) mysqli_real_escape_string($this->conexion, $idEmpresa);
+      $sql .= " WHERE r.empresa_idEmpresa = $idEmpresa";
+    }
+    $sql .= " ORDER BY emp.nombre, r.fecha_creacion DESC";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerReferenciasPorEmpresaReporte): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $referencias = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $referencias[] = $fila;
+    }
+    return $referencias;
+  }
+
+  /**
+   * Obtiene referencias filtradas por estudiante para reportes.
+   *
+   * @param string|null $idEstudiante ID del estudiante para filtrar, o null para todos los estudiantes.
+   * @return array Un array de arrays asociativos con los datos de las referencias.
+   */
+  public function obtenerReferenciasPorEstudianteReporte($idEstudiante = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerReferenciasPorEstudianteReporte.");
+      return [];
+    }
+    $sql = "SELECT
+                r.idReferencia,
+                e.nombre AS estudiante_nombre,
+                e.apellidos AS estudiante_apellidos,
+                emp.nombre AS empresa_nombre,
+                tr.nombre AS tipo_referencia_nombre,
+                est.nombre AS estado_nombre,
+                r.fecha_creacion AS fecha_solicitud
+            FROM
+                referencia r
+            JOIN
+                estudiante e ON r.estudiante_idEstudiante = e.idEstudiante
+            JOIN
+                empresa emp ON r.empresa_idEmpresa = emp.idEmpresa
+            LEFT JOIN
+                tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
+            LEFT JOIN
+                estado est ON r.estado_id_estado = est.id_estado";
+    if (!empty($idEstudiante)) {
+      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+      $sql .= " WHERE r.estudiante_idEstudiante = '$idEstudiante'";
+    }
+    $sql .= " ORDER BY e.nombre, r.fecha_creacion DESC";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerReferenciasPorEstudianteReporte): " . mysqli_error($this->conexion) . " SQL: " . $sql);
       return [];
     }
     $referencias = [];

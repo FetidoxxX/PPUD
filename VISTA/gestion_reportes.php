@@ -45,8 +45,13 @@ if (!$_SESSION['usuario']) {
 // Validación de estado de administrador
 include_once '../MODELO/class_administrador.php';
 include_once '../MODELO/class_catalogo.php'; // Para obtener datos de catálogos
+include_once '../MODELO/class_empresa.php'; // Para obtener empresas
+include_once '../MODELO/class_estudiante.php'; // Para obtener estudiantes
 $administradorObj = new Administrador();
 $catalogoObj = new Catalogo();
+$empresaObj = new Empresa();
+$estudianteObj = new Estudiante();
+
 
 if (isset($_SESSION['usuario_id'])) {
   $admin_id = $_SESSION['usuario_id'];
@@ -88,9 +93,11 @@ if (isset($_SESSION['usuario_id'])) {
 // Obtener datos para filtros dinámicos
 $estados = $catalogoObj->listarTodos('estado');
 $carreras = $catalogoObj->listarTodos('carrera');
-$empresas = $catalogoObj->listarTodos('empresa'); // Asumiendo que existe un listarTodos en Empresa o se adapta Catalogo
+$empresas = $empresaObj->obtenerTodos(); // Usar el método de Empresa para obtener todas las empresas
+$modalidades = $catalogoObj->listarTodos('modalidad');
 $tipos_oferta = $catalogoObj->listarTodos('tipo_oferta');
 $tipos_referencia = $catalogoObj->listarTodos('tipo_referencia');
+$estudiantes = $estudianteObj->obtenerTodos(); // Obtener todos los estudiantes
 
 ?>
 
@@ -193,71 +200,287 @@ $tipos_referencia = $catalogoObj->listarTodos('tipo_referencia');
         <h5 class="card-title mb-0">⚙️ Opciones de Reporte</h5>
       </div>
       <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="tipoReporte" class="form-label">Tipo de Reporte:</label>
-            <select class="form-select" id="tipoReporte">
-              <option value="">Seleccione un tipo de reporte...</option>
-              <option value="ofertas_por_fecha">Ofertas por Rango de Fechas</option>
-              <option value="estudiantes_registrados">Estudiantes Registrados (General)</option>
-              <option value="estudiantes_por_carrera">Estudiantes por Carrera</option>
-              <option value="empresas_por_estado">Empresas por Estado</option>
-              <option value="top_ofertas_interes">Top 5 Ofertas con Más Interesados</option>
-              <option value="referencias_por_estado">Referencias por Estado</option>
-            </select>
+        <!-- Navegación por pestañas para los tipos de reportes -->
+        <ul class="nav nav-tabs mb-3" id="reportTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="ofertas-tab" data-bs-toggle="tab" data-bs-target="#ofertas-pane"
+              type="button" role="tab" aria-controls="ofertas-pane" aria-selected="true">Ofertas</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="estudiantes-tab" data-bs-toggle="tab" data-bs-target="#estudiantes-pane"
+              type="button" role="tab" aria-controls="estudiantes-pane" aria-selected="false">Estudiantes</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="empresas-tab" data-bs-toggle="tab" data-bs-target="#empresas-pane"
+              type="button" role="tab" aria-controls="empresas-pane" aria-selected="false">Empresas</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="referencias-tab" data-bs-toggle="tab" data-bs-target="#referencias-pane"
+              type="button" role="tab" aria-controls="referencias-pane" aria-selected="false">Referencias</button>
+          </li>
+        </ul>
+
+        <!-- Contenido de las pestañas -->
+        <div class="tab-content" id="reportTabContent">
+          <!-- Pestaña de Ofertas -->
+          <div class="tab-pane fade show active" id="ofertas-pane" role="tabpanel" aria-labelledby="ofertas-tab">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="tipoReporteOfertas" class="form-label">Tipo de Reporte de Ofertas:</label>
+                <select class="form-select report-type-select" id="tipoReporteOfertas">
+                  <option value="">Seleccione un tipo de reporte...</option>
+                  <option value="ofertas_por_fecha">Ofertas por Rango de Fechas</option>
+                  <option value="ofertas_por_modalidad">Ofertas por Modalidad</option>
+                  <option value="ofertas_por_empresa">Ofertas por Empresa</option>
+                  <option value="ofertas_por_estado_oferta">Ofertas por Estado</option>
+                  <option value="top_ofertas_interes">Top N Ofertas con Más Interesados</option>
+                </select>
+              </div>
+
+              <div class="col-md-3 filtro-container" id="filtroFechaInicioOfertasContainer" style="display: none;">
+                <label for="fechaInicioOfertas" class="form-label">Fecha Inicio:</label>
+                <input type="date" class="form-control filter-input" id="fechaInicioOfertas">
+              </div>
+              <div class="col-md-3 filtro-container" id="filtroFechaFinOfertasContainer" style="display: none;">
+                <label for="fechaFinOfertas" class="form-label">Fecha Fin:</label>
+                <input type="date" class="form-control filter-input" id="fechaFinOfertas">
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroModalidadOfertasContainer" style="display: none;">
+                <label for="idModalidadOfertas" class="form-label">Modalidad:</label>
+                <select class="form-select filter-select" id="idModalidadOfertas">
+                  <option value="">Todas las Modalidades</option>
+                  <?php foreach ($modalidades as $modalidad): ?>
+                    <option value="<?php echo htmlspecialchars($modalidad['id_modalidad']); ?>">
+                      <?php echo htmlspecialchars($modalidad['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroEmpresaOfertasContainer" style="display: none;">
+                <label for="idEmpresaOfertas" class="form-label">Empresa:</label>
+                <select class="form-select filter-select" id="idEmpresaOfertas">
+                  <option value="">Todas las Empresas</option>
+                  <?php foreach ($empresas as $empresa): ?>
+                    <option value="<?php echo htmlspecialchars($empresa['idEmpresa']); ?>">
+                      <?php echo htmlspecialchars($empresa['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroEstadoOfertasContainer" style="display: none;">
+                <label for="idEstadoOfertas" class="form-label">Estado de Oferta:</label>
+                <select class="form-select filter-select" id="idEstadoOfertas">
+                  <option value="">Todos los Estados</option>
+                  <?php foreach ($estados as $estado): ?>
+                    <option value="<?php echo htmlspecialchars($estado['id_estado']); ?>">
+                      <?php echo htmlspecialchars($estado['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-3 filtro-container" id="filtroLimiteTopOfertasContainer" style="display: none;">
+                <label for="limiteTopOfertas" class="form-label">Límite (N):</label>
+                <input type="number" class="form-control filter-input" id="limiteTopOfertas" value="5" min="1">
+              </div>
+
+              <div class="col-12 text-end">
+                <button class="btn btn-primary px-4 rounded-pill" id="btnGenerarReporteOfertas">
+                  <i class="fas fa-file-alt me-2"></i>Generar Reporte
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="col-md-3" id="filtroFechaInicio" style="display: none;">
-            <label for="fechaInicio" class="form-label">Fecha Inicio:</label>
-            <input type="date" class="form-control" id="fechaInicio">
-          </div>
-          <div class="col-md-3" id="filtroFechaFin" style="display: none;">
-            <label for="fechaFin" class="form-label">Fecha Fin:</label>
-            <input type="date" class="form-control" id="fechaFin">
+          <!-- Pestaña de Estudiantes -->
+          <div class="tab-pane fade" id="estudiantes-pane" role="tabpanel" aria-labelledby="estudiantes-tab">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="tipoReporteEstudiantes" class="form-label">Tipo de Reporte de Estudiantes:</label>
+                <select class="form-select report-type-select" id="tipoReporteEstudiantes">
+                  <option value="">Seleccione un tipo de reporte...</option>
+                  <option value="estudiantes_registrados">Estudiantes Registrados (General)</option>
+                  <option value="estudiantes_por_carrera">Estudiantes por Carrera</option>
+                  <option value="estudiantes_por_estado">Estudiantes por Estado</option>
+                  <option value="top_estudiantes_interesados_ofertas">Top N Estudiantes con Más Intereses</option>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroCarreraEstudiantesContainer" style="display: none;">
+                <label for="idCarreraEstudiantes" class="form-label">Carrera:</label>
+                <select class="form-select filter-select" id="idCarreraEstudiantes">
+                  <option value="">Todas las Carreras</option>
+                  <?php foreach ($carreras as $carrera): ?>
+                    <option value="<?php echo htmlspecialchars($carrera['id_carrera']); ?>">
+                      <?php echo htmlspecialchars($carrera['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroEstadoEstudiantesContainer" style="display: none;">
+                <label for="idEstadoEstudiantes" class="form-label">Estado de Estudiante:</label>
+                <select class="form-select filter-select" id="idEstadoEstudiantes">
+                  <option value="">Todos los Estados</option>
+                  <?php foreach ($estados as $estado): ?>
+                    <option value="<?php echo htmlspecialchars($estado['id_estado']); ?>">
+                      <?php echo htmlspecialchars($estado['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-3 filtro-container" id="filtroLimiteTopEstudiantesContainer" style="display: none;">
+                <label for="limiteTopEstudiantes" class="form-label">Límite (N):</label>
+                <input type="number" class="form-control filter-input" id="limiteTopEstudiantes" value="5" min="1">
+              </div>
+
+              <div class="col-12 text-end">
+                <button class="btn btn-primary px-4 rounded-pill" id="btnGenerarReporteEstudiantes">
+                  <i class="fas fa-file-alt me-2"></i>Generar Reporte
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="col-md-6" id="filtroCarrera" style="display: none;">
-            <label for="idCarrera" class="form-label">Carrera:</label>
-            <select class="form-select" id="idCarrera">
-              <option value="">Todas las Carreras</option>
-              <?php foreach ($carreras as $carrera): ?>
-                <option value="<?php echo htmlspecialchars($carrera['id_carrera']); ?>">
-                  <?php echo htmlspecialchars($carrera['nombre']); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+          <!-- Pestaña de Empresas -->
+          <div class="tab-pane fade" id="empresas-pane" role="tabpanel" aria-labelledby="empresas-tab">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="tipoReporteEmpresas" class="form-label">Tipo de Reporte de Empresas:</label>
+                <select class="form-select report-type-select" id="tipoReporteEmpresas">
+                  <option value="">Seleccione un tipo de reporte...</option>
+                  <option value="empresas_por_estado">Empresas por Estado</option>
+                  <option value="empresas_con_mas_ofertas">Top N Empresas con Más Ofertas</option>
+                  <option value="empresas_con_mas_referencias_emitidas">Top N Empresas con Más Referencias</option>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroEstadoEmpresasContainer" style="display: none;">
+                <label for="idEstadoEmpresas" class="form-label">Estado de Empresa:</label>
+                <select class="form-select filter-select" id="idEstadoEmpresas">
+                  <option value="">Todos los Estados</option>
+                  <?php foreach ($estados as $estado): ?>
+                    <option value="<?php echo htmlspecialchars($estado['id_estado']); ?>">
+                      <?php echo htmlspecialchars($estado['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-3 filtro-container" id="filtroLimiteTopEmpresasOfertasContainer"
+                style="display: none;">
+                <label for="limiteTopEmpresasOfertas" class="form-label">Límite (N):</label>
+                <input type="number" class="form-control filter-input" id="limiteTopEmpresasOfertas" value="5" min="1">
+              </div>
+
+              <div class="col-md-3 filtro-container" id="filtroLimiteTopEmpresasReferenciasContainer"
+                style="display: none;">
+                <label for="limiteTopEmpresasReferencias" class="form-label">Límite (N):</label>
+                <input type="number" class="form-control filter-input" id="limiteTopEmpresasReferencias" value="5"
+                  min="1">
+              </div>
+
+              <div class="col-12 text-end">
+                <button class="btn btn-primary px-4 rounded-pill" id="btnGenerarReporteEmpresas">
+                  <i class="fas fa-file-alt me-2"></i>Generar Reporte
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div class="col-md-6" id="filtroEstado" style="display: none;">
-            <label for="idEstado" class="form-label">Estado:</label>
-            <select class="form-select" id="idEstado">
-              <option value="">Todos los Estados</option>
-              <?php foreach ($estados as $estado): ?>
-                <option value="<?php echo htmlspecialchars($estado['id_estado']); ?>">
-                  <?php echo htmlspecialchars($estado['nombre']); ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-          </div>
+          <!-- Pestaña de Referencias -->
+          <div class="tab-pane fade" id="referencias-pane" role="tabpanel" aria-labelledby="referencias-tab">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="tipoReporteReferencias" class="form-label">Tipo de Reporte de Referencias:</label>
+                <select class="form-select report-type-select" id="tipoReporteReferencias">
+                  <option value="">Seleccione un tipo de reporte...</option>
+                  <option value="referencias_por_estado">Referencias por Estado</option>
+                  <option value="referencias_por_tipo">Referencias por Tipo</option>
+                  <option value="referencias_por_empresa">Referencias por Empresa</option>
+                  <option value="referencias_por_estudiante">Referencias por Estudiante</option>
+                </select>
+              </div>
 
-          <div class="col-12 text-end">
-            <button class="btn btn-primary px-4 rounded-pill" id="btnGenerarReporte">
-              <i class="fas fa-file-alt me-2"></i>Generar Reporte
-            </button>
-            <button class="btn btn-success px-4 rounded-pill ms-2" id="btnDescargarPDF" style="display: none;">
-              <i class="fas fa-file-pdf me-2"></i>Descargar PDF
-            </button>
+              <div class="col-md-6 filtro-container" id="filtroEstadoReferenciasContainer" style="display: none;">
+                <label for="idEstadoReferencias" class="form-label">Estado de Referencia:</label>
+                <select class="form-select filter-select" id="idEstadoReferencias">
+                  <option value="">Todos los Estados</option>
+                  <?php foreach ($estados as $estado): ?>
+                    <option value="<?php echo htmlspecialchars($estado['id_estado']); ?>">
+                      <?php echo htmlspecialchars($estado['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroTipoReferenciaReferenciasContainer"
+                style="display: none;">
+                <label for="idTipoReferenciaReferencias" class="form-label">Tipo de Referencia:</label>
+                <select class="form-select filter-select" id="idTipoReferenciaReferencias">
+                  <option value="">Todos los Tipos</option>
+                  <?php foreach ($tipos_referencia as $tipo): ?>
+                    <option value="<?php echo htmlspecialchars($tipo['id_tipo_referencia']); ?>">
+                      <?php echo htmlspecialchars($tipo['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroEmpresaReferenciasContainer" style="display: none;">
+                <label for="idEmpresaReferencias" class="form-label">Empresa:</label>
+                <select class="form-select filter-select" id="idEmpresaReferencias">
+                  <option value="">Todas las Empresas</option>
+                  <?php foreach ($empresas as $empresa): ?>
+                    <option value="<?php echo htmlspecialchars($empresa['idEmpresa']); ?>">
+                      <?php echo htmlspecialchars($empresa['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-md-6 filtro-container" id="filtroEstudianteReferenciasContainer" style="display: none;">
+                <label for="idEstudianteReferencias" class="form-label">Estudiante:</label>
+                <select class="form-select filter-select" id="idEstudianteReferencias">
+                  <option value="">Todos los Estudiantes</option>
+                  <?php foreach ($estudiantes as $estudiante): ?>
+                    <option value="<?php echo htmlspecialchars($estudiante['idEstudiante']); ?>">
+                      <?php echo htmlspecialchars($estudiante['nombre'] . ' ' . $estudiante['apellidos']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
+              <div class="col-12 text-end">
+                <button class="btn btn-primary px-4 rounded-pill" id="btnGenerarReporteReferencias">
+                  <i class="fas fa-file-alt me-2"></i>Generar Reporte
+                </button>
+              </div>
+            </div>
           </div>
         </div>
+
+        <hr class="my-4">
+
+        <div class="text-end">
+          <button class="btn btn-success px-4 rounded-pill ms-2" id="btnDescargarPDF" style="display: none;">
+            <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+          </button>
+        </div>
+
       </div>
     </div>
 
     <div class="card shadow-sm mb-4" id="contenedorReporte" style="display: none;">
       <div class="card-header bg-info text-white">
-        <h5 class="card-title mb-0">📄 Resultado del Reporte</h5>
+        <h5 class="card-title mb-0" id="tituloReporteDisplay">📄 Resultado del Reporte</h5>
       </div>
       <div class="card-body">
-        <div id="areaReporte">
+        <div id="reporteResultadosContainer">
           <!-- El contenido del reporte se cargará aquí -->
           <p class="text-muted text-center py-5">Seleccione un tipo de reporte y genere para visualizarlo aquí.</p>
         </div>
@@ -293,8 +516,10 @@ $tipos_referencia = $catalogoObj->listarTodos('tipo_referencia');
     const GLOBAL_CARRERAS = <?php echo json_encode($carreras); ?>;
     const GLOBAL_ESTADOS = <?php echo json_encode($estados); ?>;
     const GLOBAL_EMPRESAS = <?php echo json_encode($empresas); ?>;
+    const GLOBAL_MODALIDADES = <?php echo json_encode($modalidades); ?>;
     const GLOBAL_TIPOS_OFERTA = <?php echo json_encode($tipos_oferta); ?>;
     const GLOBAL_TIPOS_REFERENCIA = <?php echo json_encode($tipos_referencia); ?>;
+    const GLOBAL_ESTUDIANTES = <?php echo json_encode($estudiantes); ?>;
 
 
     $(document).ready(function () {

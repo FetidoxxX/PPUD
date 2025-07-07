@@ -38,7 +38,7 @@ class Estudiante
       if (!$this->conexion) {
         throw new Exception("Conexión a la base de datos no establecida al registrar estudiante.");
       }
-      // Validar campos requeridos
+      // Campos requeridos
       $campos_requeridos = ['idEstudiante', 'nombre', 'apellidos', 'correo', 'telefono', 'fechaNac', 'n_doc', 'direccion', 'contrasena', 'tipo_documento'];
 
       foreach ($campos_requeridos as $campo) {
@@ -443,8 +443,8 @@ class Estudiante
   }
 
   /**
-   * Obtiene todos los estudiantes activos, opcionalmente filtrados por un término de búsqueda,
-   * con paginación. Este método es para la vista de la empresa.
+   * Obtiene todos los estudiantes activos, opcionalmente filtrados por un término de búsqueda.
+   * Este método es para la vista de la empresa.
    * @param string $busqueda Término de búsqueda (nombre, apellidos, correo, documento, ID).
    * @param int $limit Número máximo de resultados a devolver.
    * @param int $offset Desplazamiento desde el inicio de los resultados.
@@ -947,6 +947,92 @@ class Estudiante
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB (obtenerEstudiantesPorCarrera): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $estudiantes = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $estudiantes[] = $fila;
+    }
+    return $estudiantes;
+  }
+  /**
+   * Obtiene estudiantes filtrados por estado.
+   *
+   * @param int|null $idEstado ID del estado para filtrar, o null para todos los estados.
+   * @return array Un array de arrays asociativos con los datos de los estudiantes.
+   */
+  public function obtenerEstudiantesPorEstado($idEstado = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerEstudiantesPorEstado.");
+      return [];
+    }
+    $sql = "SELECT
+                e.idEstudiante,
+                e.nombre,
+                e.apellidos,
+                e.n_doc,
+                c.nombre AS carrera_nombre,
+                est.nombre AS estado_nombre,
+                e.fecha_creacion AS fecha_registro
+            FROM
+                estudiante e
+            LEFT JOIN
+                carrera c ON e.carrera_id_carrera = c.id_carrera
+            LEFT JOIN
+                estado est ON e.estado_id_estado = est.id_estado";
+    if (!empty($idEstado)) {
+      $idEstado = (int) mysqli_real_escape_string($this->conexion, $idEstado);
+      $sql .= " WHERE e.estado_id_estado = $idEstado";
+    }
+    $sql .= " ORDER BY est.nombre, e.nombre";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerEstudiantesPorEstado): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $estudiantes = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $estudiantes[] = $fila;
+    }
+    return $estudiantes;
+  }
+
+  /**
+   * Obtiene el top N de estudiantes con más intereses en ofertas.
+   *
+   * @param int $limite El número máximo de estudiantes a devolver.
+   * @return array Un array de arrays asociativos con los datos de los estudiantes.
+   */
+  public function obtenerTopEstudiantesInteresadosOfertas($limite = 5)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerTopEstudiantesInteresadosOfertas.");
+      return [];
+    }
+    $limite = (int) $limite;
+    $sql = "SELECT
+                e.idEstudiante,
+                e.nombre,
+                e.apellidos,
+                c.nombre AS carrera_nombre,
+                COUNT(ieo.oferta_idOferta) AS total_intereses
+            FROM
+                estudiante e
+            LEFT JOIN
+                interes_estudiante_oferta ieo ON e.idEstudiante = ieo.estudiante_idEstudiante
+            LEFT JOIN
+                carrera c ON e.carrera_id_carrera = c.id_carrera
+            GROUP BY
+                e.idEstudiante, e.nombre, e.apellidos, c.nombre
+            ORDER BY
+                total_intereses DESC
+            LIMIT $limite";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerTopEstudiantesInteresadosOfertas): " . mysqli_error($this->conexion) . " SQL: " . $sql);
       return [];
     }
     $estudiantes = [];

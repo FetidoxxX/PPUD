@@ -590,4 +590,81 @@ class Empresa
     }
     return $empresas;
   }
+  /**
+   * Obtiene el top N de empresas con más ofertas publicadas.
+   *
+   * @param int $limite El número máximo de empresas a devolver.
+   * @return array Un array de arrays asociativos con los datos de las empresas.
+   */
+  public function obtenerEmpresasConMasOfertas($limite = 5)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerEmpresasConMasOfertas.");
+      return [];
+    }
+    $limite = (int) $limite;
+    $sql = "SELECT
+                e.idEmpresa,
+                e.nombre,
+                COUNT(o.idOferta) AS total_ofertas
+            FROM
+                empresa e
+            LEFT JOIN
+                oferta o ON e.idEmpresa = o.empresa_idEmpresa
+            GROUP BY
+                e.idEmpresa, e.nombre
+            ORDER BY
+                total_ofertas DESC
+            LIMIT $limite";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerEmpresasConMasOfertas): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $empresas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $empresas[] = $fila;
+    }
+    return $empresas;
+  }
+
+  /**
+   * Obtiene el top N de empresas con más referencias emitidas.
+   *
+   * @param int $limite El número máximo de empresas a devolver.
+   * @return array Un array de arrays asociativos con los datos de las empresas.
+   */
+  public function obtenerEmpresasConMasReferenciasEmitidas($limite = 5)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerEmpresasConMasReferenciasEmitidas.");
+      return [];
+    }
+    $limite = (int) $limite;
+    $sql = "SELECT
+                e.idEmpresa,
+                e.nombre,
+                COUNT(r.idReferencia) AS total_referencias
+            FROM
+                empresa e
+            LEFT JOIN
+                referencia r ON e.idEmpresa = r.empresa_idEmpresa
+            GROUP BY
+                e.idEmpresa, e.nombre
+            ORDER BY
+                total_referencias DESC
+            LIMIT $limite";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerEmpresasConMasReferenciasEmitidas): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $empresas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $empresas[] = $fila;
+    }
+    return $empresas;
+  }
 }
