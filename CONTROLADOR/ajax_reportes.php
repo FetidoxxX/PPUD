@@ -520,7 +520,6 @@ switch ($accion) {
 
         default:
           throw new Exception('Tipo de reporte no válido.');
-          break;
       }
       $respuesta['html'] = $htmlReporte;
       $respuesta['datos'] = $datosReporte; // Enviar los datos brutos para el PDF

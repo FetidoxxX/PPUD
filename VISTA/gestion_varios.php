@@ -107,110 +107,26 @@ $tablasCatalogo = [
   <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    /* Estilos para la segunda barra de navegación (nav-pills) */
-    .nav-pills.bg-dark .nav-link {
-      color: #f8f9fa;
-      /* Color de texto claro para los enlaces en barra oscura */
-      border-radius: 0.5rem;
-      transition: all 0.3s ease;
-      margin: 0 0.25rem;
-      border: 1px solid transparent;
-      /* Borde transparente por defecto */
-    }
-
-    .nav-pills.bg-dark .nav-link:hover {
-      background-color: rgba(255, 255, 255, 0.15);
-      /* Fondo ligeramente más visible al pasar el ratón */
-      color: #fff;
-      border-color: rgba(13, 110, 253, 0.5);
-      /* Borde azul sutil al pasar el ratón */
-    }
-
-    .nav-pills.bg-dark .nav-link.active {
-      background-color: #0d6efd !important;
-      /* Color de fondo azul para la sección activa */
-      color: #fff !important;
-      border-color: #0d6efd;
-      /* Borde del mismo color para un contorno más definido */
-      font-weight: bold;
-      /* Texto en negrita para resaltar */
-      box-shadow: 0 0 8px rgba(13, 110, 253, 0.6);
-      /* Sombra sutil para un efecto 3D */
-    }
-
-    /* Ajuste para la tabla para que ocupe el espacio adecuado */
-    .table-responsive {
-      overflow-x: auto;
-      /* Permite desplazamiento horizontal si el contenido es demasiado ancho */
-    }
-
-    .table {
-      width: 100%;
-      /* Asegura que la tabla ocupe todo el ancho disponible */
-      table-layout: auto;
-      /* Permite que el ancho de las columnas se ajuste al contenido */
-    }
-
-    .table th,
-    .table td {
-      white-space: nowrap;
-      /* Evita que el texto se envuelva en celdas pequeñas */
-      padding: 0.75rem;
-      /* Espaciado interno de las celdas */
-      vertical-align: middle;
-      /* Alineación vertical del contenido */
-    }
-
-    /* Alineación de texto en las celdas */
-    .table .text-center {
-      text-align: center;
-    }
-
-    .table .text-start {
-      text-align: left;
-    }
-  </style>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom styles for aesthetic improvements -->
+  <link rel="stylesheet" href="../css/estiloMenu.css">
 </head>
 
 <body>
-  <!-- Barra de navegación principal -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="pruebaAdmin.php">Panel de Administración</a>
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
+  <!-- Barra de navegación superior (para el logo y el perfil de usuario) -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg">
+    <div class="container-fluid px-4">
+      <button class="btn btn-dark" id="menu-toggle">
+        <i class="fas fa-bars"></i>
       </button>
+      <a class="navbar-brand fw-bold text-lg ms-3" href="pruebaAdmin.php">Panel de Administración</a>
 
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" href="pruebaAdmin.php">Inicio</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_estudiantes.php">Gestión Estudiantes</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_empresas.php">Gestión Empresas</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_ofertas.php">Gestión Ofertas</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_referencias.php">Gestión Referencias</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_admin.php">Gestión Administradores</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="gestion_varios.php">Gestión Varios</a>
-          </li>
-        </ul>
-
-        <ul class="navbar-nav">
+      <div class="collapse navbar-collapse" id="topNavbarNav">
+        <ul class="navbar-nav ms-auto">
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
               Usuario: <?php echo htmlspecialchars($_SESSION['usuario']); ?>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -230,131 +146,171 @@ $tablasCatalogo = [
     </div>
   </nav>
 
-  <!-- Jumbotron de bienvenida -->
-  <div class="bg-secondary text-white py-4 mb-4">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-8 mx-auto text-center">
-          <h1 class="display-5 fw-bold">🗄️ Gestión de Datos Varios</h1>
-          <p class="lead">Administra los catálogos y datos auxiliares del sistema</p>
-        </div>
+  <div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <div class="bg-dark border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading text-white p-3">Menú Principal</div>
+      <div class="list-group list-group-flush">
+        <a href="pruebaAdmin.php" class="list-group-item list-group-item-action bg-dark text-white">Inicio</a>
+        <a href="gestion_estudiantes.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Estudiantes</a>
+        <a href="gestion_empresas.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Empresas</a>
+        <a href="gestion_ofertas.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Ofertas</a>
+        <a href="gestion_referencias.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Referencias</a>
+        <a href="gestion_admin.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Administradores</a>
+        <a href="gestion_varios.php" class="list-group-item list-group-item-action bg-dark text-white active">Gestión
+          Varios</a>
+        <a href="gestion_reportes.php" class="list-group-item list-group-item-action bg-dark text-white">Reportes</a>
       </div>
     </div>
-  </div>
+    <!-- /#sidebar-wrapper -->
 
-  <!-- Contenido principal -->
-  <div class="container">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="pruebaAdmin.php">Panel de Administración</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Gestión de Varios</li>
-      </ol>
-    </nav>
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+      <!-- Jumbotron de bienvenida -->
+      <div class="bg-secondary text-white py-4 mb-4">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+              <h1 class="display-5 fw-bold">🗄️ Gestión de Datos Varios</h1>
+              <p class="lead">Administra los catálogos y datos auxiliares del sistema</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Segunda barra de navegación (Pestañas de Catálogo) -->
-    <ul class="nav nav-pills nav-fill mb-4 bg-dark text-white rounded" id="pestañasCatalogo" role="tablist">
-      <?php foreach ($tablasCatalogo as $index => $tabla): ?>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link <?php echo ($index === 0) ? 'active' : ''; ?>" id="<?php echo $tabla['name']; ?>-tab"
-            data-bs-toggle="pill" data-bs-target="#<?php echo $tabla['name']; ?>-pane" type="button" role="tab"
-            aria-controls="<?php echo $tabla['name']; ?>-pane"
-            aria-selected="<?php echo ($index === 0) ? 'true' : 'false'; ?>"
-            onclick="cargarTabla('<?php echo $tabla['name']; ?>', '<?php echo $tabla['display']; ?>')">
-            <?php echo $tabla['display']; ?>
-          </button>
-        </li>
-      <?php endforeach; ?>
-    </ul>
+      <!-- Contenido principal -->
+      <div class="container-fluid">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="pruebaAdmin.php">Panel de Administración</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Gestión de Varios</li>
+          </ol>
+        </nav>
 
-    <!-- Contenido dinámico de la tabla seleccionada -->
-    <div class="tab-content" id="contenidoPestañaCatalogo">
-      <div class="tab-pane fade show active" id="panelTablaActual" role="tabpanel" aria-labelledby="currentTable-tab">
-        <!-- Contenido de la tabla (búsqueda, botón crear, tabla, estadísticas) se cargará aquí dinámicamente -->
-        <div class="row mb-4">
-          <div class="col-md-8">
+        <!-- Segunda barra de navegación (Pestañas de Catálogo) -->
+        <ul class="nav nav-pills nav-fill mb-4 bg-dark text-white rounded" id="pestañasCatalogo" role="tablist">
+          <?php foreach ($tablasCatalogo as $index => $tabla): ?>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link <?php echo ($index === 0) ? 'active' : ''; ?>"
+                id="<?php echo $tabla['name']; ?>-tab" data-bs-toggle="pill"
+                data-bs-target="#<?php echo $tabla['name']; ?>-pane" type="button" role="tab"
+                aria-controls="<?php echo $tabla['name']; ?>-pane"
+                aria-selected="<?php echo ($index === 0) ? 'true' : 'false'; ?>"
+                onclick="cargarTabla('<?php echo $tabla['name']; ?>', '<?php echo $tabla['display']; ?>')">
+                <?php echo $tabla['display']; ?>
+              </button>
+            </li>
+          <?php endforeach; ?>
+        </ul>
+
+        <!-- Contenido dinámico de la tabla seleccionada -->
+        <div class="tab-content" id="contenidoPestañaCatalogo">
+          <div class="tab-pane fade show active" id="panelTablaActual" role="tabpanel"
+            aria-labelledby="currentTable-tab">
+            <!-- Contenido de la tabla (búsqueda, botón crear, tabla, estadísticas) se cargará aquí dinámicamente -->
+            <div class="row mb-4">
+              <div class="col-md-8">
+                <div class="card shadow-sm">
+                  <div class="card-header bg-secondary text-white">
+                    <h5 class="card-title mb-0">🔍 Búsqueda en <span id="nombreTablaActualMostrar"></span></h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="input-group">
+                      <input type="text" class="form-control" id="entradaBusqueda" placeholder="Buscar por nombre...">
+                      <button class="btn btn-outline-secondary" type="button"
+                        onclick="limpiarBusqueda()">Limpiar</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="card shadow-sm text-white bg-secondary">
+                  <div class="card-header">📊 Estadísticas</div>
+                  <div class="card-body">
+                    <h4 class="card-title text-center" id="totalElementos">0</h4>
+                    <p class="card-text text-center mb-0" id="textoEstadistica">Total de elementos</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3 text-end">
+              <button type="button" class="btn btn-success rounded-pill px-4" id="btnCrearElemento">
+                <i class="fas fa-plus-circle me-2"></i>Crear Nuevo <span id="textoBtnCrearElemento"></span>
+              </button>
+            </div>
+
             <div class="card shadow-sm">
-              <div class="card-header bg-secondary text-white">
-                <h5 class="card-title mb-0">🔍 Búsqueda en <span id="nombreTablaActualMostrar"></span></h5>
+              <div class="card-header bg-dark text-white">
+                <h5 class="card-title mb-0">📋 Lista de <span id="nombreListaElementosTabla"></span></h5>
               </div>
               <div class="card-body">
-                <div class="input-group">
-                  <input type="text" class="form-control" id="entradaBusqueda" placeholder="Buscar por nombre...">
-                  <button class="btn btn-outline-secondary" type="button" onclick="limpiarBusqueda()">Limpiar</button>
+                <div class="table-responsive">
+                  <table class="table table-striped table-hover">
+                    <thead id="tablaEncabezados" class="table-dark">
+                      <!-- Los encabezados de la tabla se cargarán dinámicamente aquí por JavaScript -->
+                    </thead>
+                    <tbody id="tablaElementos">
+                      <!-- Contenido de la tabla cargado dinámicamente -->
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           </div>
-          <div class="col-md-4">
-            <div class="card shadow-sm text-white bg-secondary">
-              <div class="card-header">📊 Estadísticas</div>
-              <div class="card-body">
-                <h4 class="card-title text-center" id="totalElementos">0</h4>
-                <p class="card-text text-center mb-0" id="textoEstadistica">Total de elementos</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        <div class="mb-3 text-end">
-          <button type="button" class="btn btn-success rounded-pill px-4" id="btnCrearElemento">
-            <i class="fas fa-plus-circle me-2"></i>Crear Nuevo <span id="textoBtnCrearElemento"></span>
-          </button>
-        </div>
+        <!-- Modals -->
+        <?php include 'modal_catalogo_crud.php'; ?>
+        <?php include 'modal_detalle_catalogo.php'; ?>
 
-        <div class="card shadow-sm">
-          <div class="card-header bg-dark text-white">
-            <h5 class="card-title mb-0">📋 Lista de <span id="nombreListaElementosTabla"></span></h5>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-striped table-hover">
-                <thead id="tablaEncabezados" class="table-dark">
-                  <!-- Los encabezados de la tabla se cargarán dinámicamente aquí por JavaScript -->
-                </thead>
-                <tbody id="tablaElementos">
-                  <!-- Contenido de la tabla cargado dinámicamente -->
-                </tbody>
-              </table>
-            </div>
-          </div>
+      </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+  </div>
+  <!-- /#wrapper -->
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white text-center py-4 mt-5">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+          <p class="mb-0">&copy; <?php echo date('Y'); ?> Sistema de Gestión Administrativa. Todos los derechos
+            reservados.</p>
+          <small class="text-muted">Gestión de Varios - Desarrollado con Bootstrap
+            <?php echo date('Y'); ?></small>
         </div>
       </div>
     </div>
+  </footer>
 
-    <!-- Modals -->
-    <?php include 'modal_catalogo_crud.php'; ?>
-    <?php include 'modal_detalle_catalogo.php'; ?>
+  <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
+  <script src="../js/funcionesGvarios.js"></script>
+  <script>
+    // Pasar las tablas de catálogo a la función de inicialización de JavaScript
+    $(document).ready(function () {
+      inicializarGestionVarios(<?php echo json_encode($tablasCatalogo); ?>);
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-      <div class="container">
-        <div class="row">
-          <div class="col-12">
-            <p class="mb-0">&copy; <?php echo date('Y'); ?> Sistema de Gestión Administrativa. Todos los derechos
-              reservados.</p>
-            <small class="text-muted">Gestión de Varios - Desarrollado con Bootstrap
-              <?php echo date('Y'); ?></small>
-          </div>
-        </div>
-      </div>
-    </footer>
-
-    <script src="../js/jquery-3.6.1.min.js"></script>
-    <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
-    <script src="../sw/dist/sweetalert2.min.js"></script>
-    <script src="../js/funcionesGvarios.js"></script>
-    <script>
-      // Pasar las tablas de catálogo a la función de inicialización de JavaScript
-      $(document).ready(function () {
-        inicializarGestionVarios(<?php echo json_encode($tablasCatalogo); ?>);
+      // Script para el toggle de la barra lateral
+      $("#menu-toggle").click(function (e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
       });
+    });
 
-      // Función para mostrar perfil (ya existente en pruebaAdmin.php)
-      function mostrarPerfil() {
-        Swal.fire({
-          title: 'Perfil de Usuario',
-          html: `
+    // Función para mostrar perfil (ya existente en pruebaAdmin.php)
+    function mostrarPerfil() {
+      Swal.fire({
+        title: 'Perfil de Usuario',
+        html: `
             <div class="text-start">
               <div class="mb-2"><strong>Usuario:</strong> <?php echo htmlspecialchars($_SESSION['usuario']); ?></div>
               <div class="mb-2"><strong>Tipo:</strong> <span class="badge bg-primary">Administrador</span></div>
@@ -362,12 +318,12 @@ $tablasCatalogo = [
               <div class="mb-2"><strong>Estado:</strong> <span class="badge bg-success">Activo</span></div>
             </div>
           `,
-          icon: 'info',
-          confirmButtonText: 'Cerrar',
-          confirmButtonColor: '#0d6efd'
-        });
-      }
-    </script>
+        icon: 'info',
+        confirmButtonText: 'Cerrar',
+        confirmButtonColor: '#0d6efd'
+      });
+    }
+  </script>
 </body>
 
 </html>

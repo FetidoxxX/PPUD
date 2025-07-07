@@ -1,0 +1,247 @@
+/* Custom styles for aesthetic improvements */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f4f7f6;
+  overflow-x: hidden;
+  /* Prevent horizontal scroll */
+}
+
+#wrapper {
+  display: flex;
+  min-height: 100vh;
+  /* Ensure wrapper takes full viewport height */
+}
+
+#sidebar-wrapper {
+  min-height: 100vh;
+  margin-left: -15rem;
+  /* Hidden by default */
+  transition: margin 0.25s ease-out;
+  width: 15rem;
+  background-color: #343a40;
+  /* Dark background */
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+#wrapper.toggled #sidebar-wrapper {
+  margin-left: 0;
+  /* Show sidebar */
+}
+
+#page-content-wrapper {
+  min-width: 100vw;
+  flex-grow: 1;
+  /* Allow content to grow */
+}
+
+/* Adjust page-content-wrapper when sidebar is visible */
+#wrapper.toggled #page-content-wrapper {
+  min-width: calc(100vw - 15rem);
+  /* Adjust width for sidebar */
+}
+
+/* Sidebar list group items */
+.list-group-item {
+  border: none;
+  border-radius: 0;
+  color: #e0e0e0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.list-group-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.list-group-item.active {
+  background-color: #007bff !important;
+  /* Active link color */
+  color: #ffffff !important;
+  font-weight: bold;
+}
+
+.sidebar-heading {
+  padding: 0.875rem 1.25rem;
+  font-size: 1.2rem;
+  color: #f8f9fa;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Existing navbar styles adjusted for top navbar */
+.navbar-dark .navbar-nav .nav-link {
+  color: #e0e0e0;
+  transition: all 0.3s ease;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover,
+.navbar-dark .navbar-nav .nav-link.active {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar-dark .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-menu {
+  background-color: #343a40;
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+}
+
+.dropdown-item {
+  color: #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.dropdown-divider {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary {
+  background-image: linear-gradient(to right, #007bff, #0056b3);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-image: linear-gradient(to right, #0056b3, #007bff);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-success {
+  background-image: linear-gradient(to right, #28a745, #1e7e34);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+  background-image: linear-gradient(to right, #1e7e34, #28a745);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.card {
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.card-header {
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+
+.nav-tabs .nav-link {
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  color: #495057;
+  border: 1px solid #dee2e6;
+  border-bottom-color: transparent;
+  margin-bottom: -1px;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link.active {
+  color: #007bff;
+  background-color: #fff;
+  border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+  border-color: #e9ecef #e9ecef #dee2e6;
+  background-color: #f8f9fa;
+}
+
+/* Estilos para la segunda barra de navegación (nav-pills) */
+.nav-pills.bg-dark .nav-link {
+  color: #f8f9fa;
+  /* Color de texto claro para los enlaces en barra oscura */
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  margin: 0 0.25rem;
+  border: 1px solid transparent;
+  /* Borde transparente por defecto */
+}
+
+.nav-pills.bg-dark .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  /* Fondo ligeramente más visible al pasar el ratón */
+  color: #fff;
+  border-color: rgba(13, 110, 253, 0.5);
+  /* Borde azul sutil al pasar el ratón */
+}
+
+.nav-pills.bg-dark .nav-link.active {
+  background-color: #0d6efd !important;
+  /* Color de fondo azul para la sección activa */
+  color: #fff !important;
+  border-color: #0d6efd;
+  /* Borde del mismo color para un contorno más definido */
+  font-weight: bold;
+  /* Texto en negrita para resaltar */
+  box-shadow: 0 0 8px rgba(13, 110, 253, 0.6);
+  /* Sombra sutil para un efecto 3D */
+}
+
+/* Ajuste para la tabla para que ocupe el espacio adecuado */
+.table-responsive {
+  overflow-x: auto;
+  /* Permite desplazamiento horizontal si el contenido es demasiado ancho */
+}
+
+.table {
+  width: 100%;
+  /* Asegura que la tabla ocupe todo el ancho disponible */
+  table-layout: auto;
+  /* Permite que el ancho de las columnas se ajuste al contenido */
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+  /* Evita que el texto se envuelva en celdas pequeñas */
+  padding: 0.75rem;
+  /* Espaciado interno de las celdas */
+  vertical-align: middle;
+  /* Alineación vertical del contenido */
+}
+
+/* Alineación de texto en las celdas */
+.table .text-center {
+  text-align: center;
+}
+
+.table .text-start {
+  text-align: left;
+}
+
+/* Media queries for responsiveness */
+@media (min-width: 768px) {
+  #sidebar-wrapper {
+    margin-left: 0;
+    /* Always show sidebar on larger screens */
+  }
+
+  #page-content-wrapper {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #wrapper.toggled #sidebar-wrapper {
+    margin-left: -15rem;
+    /* Hide sidebar if toggled on larger screens */
+  }
+
+  #wrapper.toggled #page-content-wrapper {
+    min-width: 100vw;
+  }
+}

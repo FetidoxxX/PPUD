@@ -96,51 +96,26 @@ if (isset($_SESSION['usuario_id'])) {
   <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Custom styles for aesthetic improvements -->
+  <link rel="stylesheet" href="../css/estiloMenu.css">
 </head>
 
 <body>
-  <!-- Barra de navegación -->
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="pruebaAdmin.php">Panel de Administración</a>
-
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
+  <!-- Barra de navegación superior (para el logo y el perfil de usuario) -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-lg">
+    <div class="container-fluid px-4">
+      <button class="btn btn-dark" id="menu-toggle">
+        <i class="fas fa-bars"></i>
       </button>
+      <a class="navbar-brand fw-bold text-lg ms-3" href="pruebaAdmin.php">Panel de Administración</a>
 
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link active" href="pruebaAdmin.php">Inicio</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_estudiantes.php">Gestión Estudiantes</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_empresas.php">Gestión Empresas</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_ofertas.php">Gestión Ofertas</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_referencias.php">Gestión Referencias</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_admin.php">Gestión Administradores</a>
-          </li>
-          <!-- Nuevo módulo: Gestión Varios -->
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_varios.php">Gestión Varios</a>
-          </li>
-          <!-- Nuevo módulo: Reportes -->
-          <li class="nav-item">
-            <a class="nav-link" href="gestion_reportes.php">Reportes</a>
-          </li>
-        </ul>
-
-        <ul class="navbar-nav">
+      <div class="collapse navbar-collapse" id="topNavbarNav">
+        <ul class="navbar-nav ms-auto">
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+              aria-expanded="false">
               Usuario: <?php echo htmlspecialchars($_SESSION['usuario']); ?>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -160,155 +135,184 @@ if (isset($_SESSION['usuario_id'])) {
     </div>
   </nav>
 
-  <!-- Jumbotron de bienvenida -->
-  <div class="bg-primary text-white py-5 mb-4">
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-8 mx-auto text-center">
-          <h1 class="display-4 fw-bold">Bienvenido al Panel de Administración</h1>
-          <p class="lead">Gestiona todos los aspectos del sistema desde este panel centralizado</p>
-          <p class="mb-0">Conectado como: <span
-              class="badge bg-light text-dark fs-6"><?php echo htmlspecialchars($_SESSION['usuario']); ?></span></p>
-        </div>
+  <div class="d-flex" id="wrapper">
+    <!-- Sidebar -->
+    <div class="bg-dark border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading text-white p-3">Menú Principal</div>
+      <div class="list-group list-group-flush">
+        <a href="pruebaAdmin.php" class="list-group-item list-group-item-action bg-dark text-white active">Inicio</a>
+        <a href="gestion_estudiantes.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Estudiantes</a>
+        <a href="gestion_empresas.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Empresas</a>
+        <a href="gestion_ofertas.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Ofertas</a>
+        <a href="gestion_referencias.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Referencias</a>
+        <a href="gestion_admin.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Administradores</a>
+        <a href="gestion_varios.php" class="list-group-item list-group-item-action bg-dark text-white">Gestión
+          Varios</a>
+        <a href="gestion_reportes.php" class="list-group-item list-group-item-action bg-dark text-white">Reportes</a>
       </div>
     </div>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+      <!-- Jumbotron de bienvenida -->
+      <div class="bg-primary text-white py-5 mb-4">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+              <h1 class="display-4 fw-bold">Bienvenido al Panel de Administración</h1>
+              <p class="lead">Gestiona todos los aspectos del sistema desde este panel centralizado</p>
+              <p class="mb-0">Conectado como: <span
+                  class="badge bg-light text-dark fs-6"><?php echo htmlspecialchars($_SESSION['usuario']); ?></span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="container-fluid">
+        <!-- Título de sección -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <h2 class="text-center mb-4">Módulos de Gestión</h2>
+          </div>
+        </div>
+
+        <!-- Cards de gestión -->
+        <div class="row g-4 mb-5">
+          <!-- Gestión de Estudiantes -->
+          <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center">
+                <div class="display-1 text-primary mb-3">📚</div>
+                <h5 class="card-title">Gestión de Estudiantes</h5>
+                <p class="card-text">Administrar, editar y consultar información de estudiantes registrados</p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a href="gestion_estudiantes.php" class="btn btn-primary w-100">Acceder</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gestión de Empresas -->
+          <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center">
+                <div class="display-1 text-success mb-3">🏢</div>
+                <h5 class="card-title">Gestión de Empresas</h5>
+                <p class="card-text">Administrar empresas colaboradoras y sus datos de contacto</p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a href="gestion_empresas.php" class="btn btn-success w-100">Acceder</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gestión de Ofertas -->
+          <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center">
+                <div class="display-1 text-warning mb-3">💼</div>
+                <h5 class="card-title">Gestión de Ofertas</h5>
+                <p class="card-text">Administrar ofertas laborales y oportunidades de empleo</p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a href="gestion_ofertas.php" class="btn btn-warning w-100">Acceder</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gestión de Referencias -->
+          <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center">
+                <div class="display-1 text-info mb-3">⭐</div>
+                <h5 class="card-title">Gestión de Referencias</h5>
+                <p class="card-text">Administrar referencias laborales y recomendaciones</p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a href="gestion_referencias.php" class="btn btn-info w-100">Acceder</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gestión de Administradores (Nuevo Módulo) -->
+          <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center">
+                <div class="display-1 text-danger mb-3">⚙️</div>
+                <h5 class="card-title">Gestión de Administradores</h5>
+                <p class="card-text">Administrar usuarios con permisos de administrador</p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a href="gestion_admin.php" class="btn btn-danger w-100">Acceder</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nuevo módulo: Gestión Varios -->
+          <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center">
+                <div class="display-1 text-secondary mb-3">🗄️</div>
+                <h5 class="card-title">Gestión de Varios</h5>
+                <p class="card-text">Administra los catálogos y datos auxiliares del sistema.</p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a href="gestion_varios.php" class="btn btn-secondary w-100">Acceder</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Nuevo módulo: Reportes -->
+          <div class="col-lg-3 col-md-6">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body text-center">
+                <div class="display-1 text-info mb-3">📊</div>
+                <h5 class="card-title">Módulo de Reportes</h5>
+                <p class="card-text">Genera informes completos y detallados del sistema.</p>
+              </div>
+              <div class="card-footer bg-transparent">
+                <a href="gestion_reportes.php" class="btn btn-info w-100">Acceder</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mt-4">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item active" aria-current="page">Panel de Administración</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+    <!-- /#page-content-wrapper -->
   </div>
-
-  <!-- Contenido principal -->
-  <div class="container">
-    <!-- Título de sección -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <h2 class="text-center mb-4">Módulos de Gestión</h2>
-      </div>
-    </div>
-
-    <!-- Cards de gestión -->
-    <div class="row g-4 mb-5">
-      <!-- Gestión de Estudiantes -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-primary mb-3">📚</div>
-            <h5 class="card-title">Gestión de Estudiantes</h5>
-            <p class="card-text">Administrar, editar y consultar información de estudiantes registrados</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_estudiantes.php" class="btn btn-primary w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Empresas -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-success mb-3">🏢</div>
-            <h5 class="card-title">Gestión de Empresas</h5>
-            <p class="card-text">Administrar empresas colaboradoras y sus datos de contacto</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_empresas.php" class="btn btn-success w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Ofertas -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-warning mb-3">💼</div>
-            <h5 class="card-title">Gestión de Ofertas</h5>
-            <p class="card-text">Administrar ofertas laborales y oportunidades de empleo</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_ofertas.php" class="btn btn-warning w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Referencias -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-info mb-3">⭐</div>
-            <h5 class="card-title">Gestión de Referencias</h5>
-            <p class="card-text">Administrar referencias laborales y recomendaciones</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_referencias.php" class="btn btn-info w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Administradores (Nuevo Módulo) -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-danger mb-3">⚙️</div>
-            <h5 class="card-title">Gestión de Administradores</h5>
-            <p class="card-text">Administrar usuarios con permisos de administrador</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_admin.php" class="btn btn-danger w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nuevo módulo: Gestión Varios -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-secondary mb-3">🗄️</div>
-            <h5 class="card-title">Gestión de Varios</h5>
-            <p class="card-text">Administra los catálogos y datos auxiliares del sistema.</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_varios.php" class="btn btn-secondary w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nuevo módulo: Reportes -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-info mb-3">📊</div>
-            <h5 class="card-title">Módulo de Reportes</h5>
-            <p class="card-text">Genera informes completos y detallados del sistema.</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_reportes.php" class="btn btn-info w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mt-4">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">Panel de Administración</li>
-      </ol>
-    </nav>
-  </div>
+  <!-- /#wrapper -->
 
   <!-- Footer -->
   <footer class="bg-dark text-white text-center py-4 mt-5">
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
         <div class="col-12">
           <p class="mb-0">&copy; <?php echo date('Y'); ?> Sistema de Gestión Administrativa. Todos los derechos
             reservados.</p>
-          <small class="text-muted">Desarrollado con Bootstrap <?php echo date('Y'); ?></small>
+          <small class="text-muted">Desarrollado con Bootstrap</small>
         </div>
       </div>
     </div>
   </footer>
 
-  <script src="../bootstrap/js/bootstrap.min.js"></script>
-  <script src="../sw/dist/sweetalert2.min.js"></script>
   <script src="../js/jquery-3.6.1.min.js"></script>
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
 
   <script>
     // Función para mostrar perfil
@@ -328,6 +332,12 @@ if (isset($_SESSION['usuario_id'])) {
         confirmButtonColor: '#0d6efd'
       });
     }
+
+    // Script para el toggle de la barra lateral
+    $("#menu-toggle").click(function (e) {
+      e.preventDefault();
+      $("#wrapper").toggleClass("toggled");
+    });
 
     // Tooltip para elementos que lo necesiten
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));

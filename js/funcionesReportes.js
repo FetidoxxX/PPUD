@@ -299,10 +299,26 @@ function generarReporte(tabId) {
       if (respuesta.success) {
         currentReportData = respuesta.datos;
         currentReportTitle = respuesta.titulo;
-        $('#reporteResultadosContainer').html(respuesta.html);
-        $('#tituloReporteDisplay').text(respuesta.titulo); // Actualizar el título del reporte
-        $('#btnDescargarPDF').show(); // Mostrar botón de descarga
-        mostrarExito(respuesta.message);
+
+        if (currentReportData && currentReportData.length > 0) {
+          $('#reporteResultadosContainer').html(respuesta.html);
+          $('#tituloReporteDisplay').text(respuesta.titulo); // Actualizar el título del reporte
+          $('#btnDescargarPDF').show(); // Mostrar botón de descarga
+          mostrarExito(respuesta.message);
+        } else {
+          // Si no hay datos, mostrar un mensaje al usuario
+          $('#reporteResultadosContainer').html(
+            '<div class="alert alert-info text-center">' +
+              '<i class="fas fa-info-circle me-2"></i> No se encontraron resultados para el reporte seleccionado con los parámetros actuales. ' +
+              'Por favor, intente con otros valores o criterios de búsqueda.' +
+              '</div>'
+          );
+          $('#tituloReporteDisplay').text(
+            respuesta.titulo + ' (Sin Resultados)'
+          );
+          $('#btnDescargarPDF').hide(); // Ocultar botón de descarga si no hay datos
+          mostrarExito('Reporte generado, pero sin resultados.');
+        }
       } else {
         mostrarError(respuesta.message || 'Error al generar el reporte.');
         $('#reporteResultadosContainer').html(
