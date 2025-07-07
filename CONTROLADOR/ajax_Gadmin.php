@@ -187,11 +187,6 @@ switch ($action) {
     echo json_encode(['success' => true, 'html' => $html]);
     break;
 
-  case 'crear':
-    // Se ha decidido deshabilitar la creación de administradores desde este módulo.
-    echo json_encode(['success' => false, 'message' => 'La creación de administradores no está permitida desde este módulo.']);
-    exit();
-    break;
 
   case 'actualizar':
     if (empty($id)) {
