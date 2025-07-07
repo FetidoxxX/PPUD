@@ -433,4 +433,52 @@ class Referencia
     }
     return $estados;
   }
+
+  /**
+   * Obtiene referencias filtradas por estado.
+   *
+   * @param int|null $idEstado ID del estado para filtrar, o null para todos los estados.
+   * @return array Un array de arrays asociativos con los datos de las referencias.
+   */
+  public function obtenerReferenciasPorEstado($idEstado = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerReferenciasPorEstado.");
+      return [];
+    }
+    $sql = "SELECT
+                r.idReferencia,
+                e.nombre AS estudiante_nombre,
+                e.apellidos AS estudiante_apellidos,
+                emp.nombre AS empresa_nombre,
+                tr.nombre AS tipo_referencia_nombre,
+                est.nombre AS estado_nombre,
+                r.fecha_creacion AS fecha_solicitud
+            FROM
+                referencia r
+            JOIN
+                estudiante e ON r.estudiante_idEstudiante = e.idEstudiante
+            JOIN
+                empresa emp ON r.empresa_idEmpresa = emp.idEmpresa
+            LEFT JOIN
+                tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
+            LEFT JOIN
+                estado est ON r.estado_id_estado = est.id_estado";
+    if (!empty($idEstado)) {
+      $idEstado = (int) mysqli_real_escape_string($this->conexion, $idEstado);
+      $sql .= " WHERE r.estado_id_estado = $idEstado";
+    }
+    $sql .= " ORDER BY est.nombre, r.fecha_creacion DESC";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerReferenciasPorEstado): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $referencias = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $referencias[] = $fila;
+    }
+    return $referencias;
+  }
 }

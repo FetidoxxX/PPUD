@@ -544,4 +544,50 @@ class Empresa
     error_log("ADVERTENCIA: Estado con nombre '$nombreEstado' no encontrado en la tabla 'estado'.");
     return false;
   }
+
+  /**
+   * Obtiene empresas filtradas por estado.
+   *
+   * @param int|null $idEstado ID del estado para filtrar, o null para todos los estados.
+   * @return array Un array de arrays asociativos con los datos de las empresas.
+   */
+  public function obtenerEmpresasPorEstado($idEstado = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerEmpresasPorEstado.");
+      return [];
+    }
+    $sql = "SELECT
+                em.idEmpresa,
+                em.nombre,
+                em.correo,
+                em.telefono,
+                em.direccion,
+                td.nombre AS tipo_documento_nombre,
+                em.n_doc,
+                est.nombre AS estado_nombre,
+                em.fecha_creacion
+            FROM
+                empresa em
+            LEFT JOIN
+                tipo_documento td ON em.tipo_documento_id_tipo = td.id_tipo
+            LEFT JOIN
+                estado est ON em.estado_id_estado = est.id_estado";
+    if (!empty($idEstado)) {
+      $idEstado = (int) mysqli_real_escape_string($this->conexion, $idEstado);
+      $sql .= " WHERE em.estado_id_estado = $idEstado";
+    }
+    $sql .= " ORDER BY est.nombre, em.nombre";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerEmpresasPorEstado): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $empresas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $empresas[] = $fila;
+    }
+    return $empresas;
+  }
 }

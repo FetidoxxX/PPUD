@@ -42,9 +42,11 @@ if (!$_SESSION['usuario']) {
   exit();
 }
 
-// INICIO DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+// Validación de estado de administrador
 include_once '../MODELO/class_administrador.php';
+include_once '../MODELO/class_catalogo.php'; // Para obtener datos de catálogos
 $administradorObj = new Administrador();
+$catalogoObj = new Catalogo();
 
 if (isset($_SESSION['usuario_id'])) {
   $admin_id = $_SESSION['usuario_id'];
@@ -82,7 +84,13 @@ if (isset($_SESSION['usuario_id'])) {
     exit();
   }
 }
-// FIN DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+
+// Obtener datos para filtros dinámicos
+$estados = $catalogoObj->listarTodos('estado');
+$carreras = $catalogoObj->listarTodos('carrera');
+$empresas = $catalogoObj->listarTodos('empresa'); // Asumiendo que existe un listarTodos en Empresa o se adapta Catalogo
+$tipos_oferta = $catalogoObj->listarTodos('tipo_oferta');
+$tipos_referencia = $catalogoObj->listarTodos('tipo_referencia');
 
 ?>
 
@@ -92,7 +100,7 @@ if (isset($_SESSION['usuario_id'])) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Panel de Administración</title>
+  <title>Gestión de Reportes</title>
   <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -111,7 +119,7 @@ if (isset($_SESSION['usuario_id'])) {
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link active" href="pruebaAdmin.php">Inicio</a>
+            <a class="nav-link" href="pruebaAdmin.php">Inicio</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="gestion_estudiantes.php">Gestión Estudiantes</a>
@@ -128,13 +136,11 @@ if (isset($_SESSION['usuario_id'])) {
           <li class="nav-item">
             <a class="nav-link" href="gestion_admin.php">Gestión Administradores</a>
           </li>
-          <!-- Nuevo módulo: Gestión Varios -->
           <li class="nav-item">
             <a class="nav-link" href="gestion_varios.php">Gestión Varios</a>
           </li>
-          <!-- Nuevo módulo: Reportes -->
           <li class="nav-item">
-            <a class="nav-link" href="gestion_reportes.php">Reportes</a>
+            <a class="nav-link active" href="gestion_reportes.php">Reportes</a>
           </li>
         </ul>
 
@@ -161,14 +167,12 @@ if (isset($_SESSION['usuario_id'])) {
   </nav>
 
   <!-- Jumbotron de bienvenida -->
-  <div class="bg-primary text-white py-5 mb-4">
+  <div class="bg-info text-white py-4 mb-4">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto text-center">
-          <h1 class="display-4 fw-bold">Bienvenido al Panel de Administración</h1>
-          <p class="lead">Gestiona todos los aspectos del sistema desde este panel centralizado</p>
-          <p class="mb-0">Conectado como: <span
-              class="badge bg-light text-dark fs-6"><?php echo htmlspecialchars($_SESSION['usuario']); ?></span></p>
+          <h1 class="display-5 fw-bold">📊 Módulo de Reportes</h1>
+          <p class="lead">Genera informes completos y detallados del sistema</p>
         </div>
       </div>
     </div>
@@ -176,121 +180,90 @@ if (isset($_SESSION['usuario_id'])) {
 
   <!-- Contenido principal -->
   <div class="container">
-    <!-- Título de sección -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <h2 class="text-center mb-4">Módulos de Gestión</h2>
-      </div>
-    </div>
-
-    <!-- Cards de gestión -->
-    <div class="row g-4 mb-5">
-      <!-- Gestión de Estudiantes -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-primary mb-3">📚</div>
-            <h5 class="card-title">Gestión de Estudiantes</h5>
-            <p class="card-text">Administrar, editar y consultar información de estudiantes registrados</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_estudiantes.php" class="btn btn-primary w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Empresas -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-success mb-3">🏢</div>
-            <h5 class="card-title">Gestión de Empresas</h5>
-            <p class="card-text">Administrar empresas colaboradoras y sus datos de contacto</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_empresas.php" class="btn btn-success w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Ofertas -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-warning mb-3">💼</div>
-            <h5 class="card-title">Gestión de Ofertas</h5>
-            <p class="card-text">Administrar ofertas laborales y oportunidades de empleo</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_ofertas.php" class="btn btn-warning w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Referencias -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-info mb-3">⭐</div>
-            <h5 class="card-title">Gestión de Referencias</h5>
-            <p class="card-text">Administrar referencias laborales y recomendaciones</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_referencias.php" class="btn btn-info w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Gestión de Administradores (Nuevo Módulo) -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-danger mb-3">⚙️</div>
-            <h5 class="card-title">Gestión de Administradores</h5>
-            <p class="card-text">Administrar usuarios con permisos de administrador</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_admin.php" class="btn btn-danger w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nuevo módulo: Gestión Varios -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-secondary mb-3">🗄️</div>
-            <h5 class="card-title">Gestión de Varios</h5>
-            <p class="card-text">Administra los catálogos y datos auxiliares del sistema.</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_varios.php" class="btn btn-secondary w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Nuevo módulo: Reportes -->
-      <div class="col-lg-3 col-md-6">
-        <div class="card h-100 shadow-sm">
-          <div class="card-body text-center">
-            <div class="display-1 text-info mb-3">📊</div>
-            <h5 class="card-title">Módulo de Reportes</h5>
-            <p class="card-text">Genera informes completos y detallados del sistema.</p>
-          </div>
-          <div class="card-footer bg-transparent">
-            <a href="gestion_reportes.php" class="btn btn-info w-100">Acceder</a>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
     <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item active" aria-current="page">Panel de Administración</li>
+        <li class="breadcrumb-item"><a href="pruebaAdmin.php">Panel de Administración</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Reportes</li>
       </ol>
     </nav>
+
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-dark text-white">
+        <h5 class="card-title mb-0">⚙️ Opciones de Reporte</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="tipoReporte" class="form-label">Tipo de Reporte:</label>
+            <select class="form-select" id="tipoReporte">
+              <option value="">Seleccione un tipo de reporte...</option>
+              <option value="ofertas_por_fecha">Ofertas por Rango de Fechas</option>
+              <option value="estudiantes_registrados">Estudiantes Registrados (General)</option>
+              <option value="estudiantes_por_carrera">Estudiantes por Carrera</option>
+              <option value="empresas_por_estado">Empresas por Estado</option>
+              <option value="top_ofertas_interes">Top 5 Ofertas con Más Interesados</option>
+              <option value="referencias_por_estado">Referencias por Estado</option>
+            </select>
+          </div>
+
+          <div class="col-md-3" id="filtroFechaInicio" style="display: none;">
+            <label for="fechaInicio" class="form-label">Fecha Inicio:</label>
+            <input type="date" class="form-control" id="fechaInicio">
+          </div>
+          <div class="col-md-3" id="filtroFechaFin" style="display: none;">
+            <label for="fechaFin" class="form-label">Fecha Fin:</label>
+            <input type="date" class="form-control" id="fechaFin">
+          </div>
+
+          <div class="col-md-6" id="filtroCarrera" style="display: none;">
+            <label for="idCarrera" class="form-label">Carrera:</label>
+            <select class="form-select" id="idCarrera">
+              <option value="">Todas las Carreras</option>
+              <?php foreach ($carreras as $carrera): ?>
+                <option value="<?php echo htmlspecialchars($carrera['id_carrera']); ?>">
+                  <?php echo htmlspecialchars($carrera['nombre']); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-md-6" id="filtroEstado" style="display: none;">
+            <label for="idEstado" class="form-label">Estado:</label>
+            <select class="form-select" id="idEstado">
+              <option value="">Todos los Estados</option>
+              <?php foreach ($estados as $estado): ?>
+                <option value="<?php echo htmlspecialchars($estado['id_estado']); ?>">
+                  <?php echo htmlspecialchars($estado['nombre']); ?>
+                </option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+
+          <div class="col-12 text-end">
+            <button class="btn btn-primary px-4 rounded-pill" id="btnGenerarReporte">
+              <i class="fas fa-file-alt me-2"></i>Generar Reporte
+            </button>
+            <button class="btn btn-success px-4 rounded-pill ms-2" id="btnDescargarPDF" style="display: none;">
+              <i class="fas fa-file-pdf me-2"></i>Descargar PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card shadow-sm mb-4" id="contenedorReporte" style="display: none;">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">📄 Resultado del Reporte</h5>
+      </div>
+      <div class="card-body">
+        <div id="areaReporte">
+          <!-- El contenido del reporte se cargará aquí -->
+          <p class="text-muted text-center py-5">Seleccione un tipo de reporte y genere para visualizarlo aquí.</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Footer -->
@@ -300,18 +273,35 @@ if (isset($_SESSION['usuario_id'])) {
         <div class="col-12">
           <p class="mb-0">&copy; <?php echo date('Y'); ?> Sistema de Gestión Administrativa. Todos los derechos
             reservados.</p>
-          <small class="text-muted">Desarrollado con Bootstrap <?php echo date('Y'); ?></small>
+          <small class="text-muted">Módulo de Reportes - Desarrollado con Bootstrap</small>
         </div>
       </div>
     </div>
   </footer>
 
-  <script src="../bootstrap/js/bootstrap.min.js"></script>
-  <script src="../sw/dist/sweetalert2.min.js"></script>
   <script src="../js/jquery-3.6.1.min.js"></script>
-
+  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="../sw/dist/sweetalert2.min.js"></script>
+  <!-- jsPDF y html2canvas para la descarga de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- ¡IMPORTANTE! Cargar jspdf-autotable ANTES de funcionesReportes.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="../js/funcionesReportes.js"></script>
   <script>
-    // Función para mostrar perfil
+    // Pasar variables PHP a JavaScript
+    const GLOBAL_CARRERAS = <?php echo json_encode($carreras); ?>;
+    const GLOBAL_ESTADOS = <?php echo json_encode($estados); ?>;
+    const GLOBAL_EMPRESAS = <?php echo json_encode($empresas); ?>;
+    const GLOBAL_TIPOS_OFERTA = <?php echo json_encode($tipos_oferta); ?>;
+    const GLOBAL_TIPOS_REFERENCIA = <?php echo json_encode($tipos_referencia); ?>;
+
+
+    $(document).ready(function () {
+      inicializarReportes();
+    });
+
+    // Función para mostrar perfil (ya existente en pruebaAdmin.php)
     function mostrarPerfil() {
       Swal.fire({
         title: 'Perfil de Usuario',
@@ -328,12 +318,6 @@ if (isset($_SESSION['usuario_id'])) {
         confirmButtonColor: '#0d6efd'
       });
     }
-
-    // Tooltip para elementos que lo necesiten
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
   </script>
 </body>
 

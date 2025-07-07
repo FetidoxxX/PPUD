@@ -115,8 +115,8 @@ class Oferta
       return false;
     }
     $idOferta = mysqli_real_escape_string($this->conexion, $idOferta);
-    $sql = "SELECT o.*, 
-                       m.nombre as modalidad_nombre, 
+    $sql = "SELECT o.*,
+                       m.nombre as modalidad_nombre,
                        toferta.nombre as tipo_oferta_nombre,
                        ac.nombre as area_conocimiento_nombre,
                        e.nombre as empresa_nombre,
@@ -158,9 +158,9 @@ class Oferta
     // Actualizar el estado de las ofertas vencidas antes de la consulta principal
     if ($estado_vencida_oferta_id !== false && $estado_activo_oferta_id !== false) {
       $fecha_actual = date('Y-m-d');
-      $sql_update_expired = "UPDATE oferta 
-                               SET estado_id_estado = $estado_vencida_oferta_id 
-                               WHERE fecha_vencimiento < '$fecha_actual' 
+      $sql_update_expired = "UPDATE oferta
+                               SET estado_id_estado = $estado_vencida_oferta_id
+                               WHERE fecha_vencimiento < '$fecha_actual'
                                AND estado_id_estado = $estado_activo_oferta_id";
       if ($this->conexion) {
         $update_res = mysqli_query($this->conexion, $sql_update_expired);
@@ -181,18 +181,18 @@ class Oferta
     }
 
 
-    $where = "WHERE o.estado_id_estado = $estado_activo_oferta_id 
+    $where = "WHERE o.estado_id_estado = $estado_activo_oferta_id
               AND e.estado_id_estado = $estado_activo_empresa_id"; // Filtrar por ofertas activas Y empresas activas
 
     if (!empty($busqueda)) {
-      $where .= " AND (o.titulo LIKE '%$busqueda%' 
-                        OR o.descripcion LIKE '%$busqueda%' 
+      $where .= " AND (o.titulo LIKE '%$busqueda%'
+                        OR o.descripcion LIKE '%$busqueda%'
                         OR e.nombre LIKE '%$busqueda%'
                         OR ac.nombre LIKE '%$busqueda%')";
     }
 
-    $sql = "SELECT o.*, 
-                       m.nombre as modalidad_nombre, 
+    $sql = "SELECT o.*,
+                       m.nombre as modalidad_nombre,
                        toferta.nombre as tipo_oferta_nombre,
                        ac.nombre as area_conocimiento_nombre,
                        e.nombre as empresa_nombre,
@@ -242,17 +242,17 @@ class Oferta
       return 0;
     }
 
-    $where = "WHERE o.estado_id_estado = $estado_activo_oferta_id 
+    $where = "WHERE o.estado_id_estado = $estado_activo_oferta_id
               AND e.estado_id_estado = $estado_activo_empresa_id"; // Filtrar por ofertas activas Y empresas activas
 
     if (!empty($busqueda)) {
-      $where .= " AND (o.titulo LIKE '%$busqueda%' 
-                        OR o.descripcion LIKE '%$busqueda%' 
+      $where .= " AND (o.titulo LIKE '%$busqueda%'
+                        OR o.descripcion LIKE '%$busqueda%'
                         OR e.nombre LIKE '%$busqueda%'
                         OR ac.nombre LIKE '%$busqueda%')";
     }
 
-    $sql = "SELECT COUNT(*) as total 
+    $sql = "SELECT COUNT(*) as total
                 FROM oferta o
                 JOIN empresa e ON o.empresa_idEmpresa = e.idEmpresa -- Usar JOIN para asegurar que la empresa exista y esté activa
                 LEFT JOIN area_conocimiento ac ON o.area_conocimiento_id_area = ac.id_area
@@ -283,9 +283,9 @@ class Oferta
 
     if ($estado_vencida_id !== false && $estado_activo_id !== false) {
       $fecha_actual = date('Y-m-d');
-      $sql_update_expired = "UPDATE oferta 
-                               SET estado_id_estado = $estado_vencida_id 
-                               WHERE fecha_vencimiento < '$fecha_actual' 
+      $sql_update_expired = "UPDATE oferta
+                               SET estado_id_estado = $estado_vencida_id
+                               WHERE fecha_vencimiento < '$fecha_actual'
                                AND estado_id_estado = $estado_activo_id";
       if ($this->conexion) {
         $update_res = mysqli_query($this->conexion, $sql_update_expired);
@@ -303,13 +303,13 @@ class Oferta
     }
 
     if (!empty($busqueda)) {
-      $where .= " AND (o.titulo LIKE '%$busqueda%' 
-                        OR o.descripcion LIKE '%$busqueda%' 
+      $where .= " AND (o.titulo LIKE '%$busqueda%'
+                        OR o.descripcion LIKE '%$busqueda%'
                         OR ac.nombre LIKE '%$busqueda%')";
     }
 
-    $sql = "SELECT o.*, 
-                       m.nombre as modalidad_nombre, 
+    $sql = "SELECT o.*,
+                       m.nombre as modalidad_nombre,
                        toferta.nombre as tipo_oferta_nombre,
                        ac.nombre as area_conocimiento_nombre,
                        est.nombre as estado_nombre
@@ -353,12 +353,12 @@ class Oferta
     }
 
     if (!empty($busqueda)) {
-      $where .= " AND (o.titulo LIKE '%$busqueda%' 
-                        OR o.descripcion LIKE '%$busqueda%' 
+      $where .= " AND (o.titulo LIKE '%$busqueda%'
+                        OR o.descripcion LIKE '%$busqueda%'
                         OR ac.nombre LIKE '%$busqueda%')";
     }
 
-    $sql = "SELECT COUNT(*) as total 
+    $sql = "SELECT COUNT(*) as total
                 FROM oferta o
                 LEFT JOIN area_conocimiento ac ON o.area_conocimiento_id_area = ac.id_area
                 $where";
@@ -738,4 +738,98 @@ class Oferta
     return $estudiantes;
   }
 
+  /**
+   * Obtiene ofertas publicadas dentro de un rango de fechas.
+   *
+   * @param string $fechaInicio Fecha de inicio del rango (YYYY-MM-DD).
+   * @param string $fechaFin Fecha de fin del rango (YYYY-MM-DD).
+   * @return array Un array de arrays asociativos con los datos de las ofertas.
+   */
+  public function obtenerOfertasPorRangoFecha($fechaInicio, $fechaFin)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerOfertasPorRangoFecha.");
+      return [];
+    }
+    $fechaInicio = mysqli_real_escape_string($this->conexion, $fechaInicio);
+    $fechaFin = mysqli_real_escape_string($this->conexion, $fechaFin);
+
+    $sql = "SELECT
+                o.idOferta,
+                o.titulo,
+                o.descripcion,
+                o.fecha_creacion AS fecha_publicacion,
+                o.fecha_vencimiento,
+                e.nombre AS empresa_nombre,
+                m.nombre AS modalidad_nombre,
+                toferta.nombre AS tipo_oferta_nombre,
+                est.nombre AS estado_nombre
+            FROM
+                oferta o
+            JOIN
+                empresa e ON o.empresa_idEmpresa = e.idEmpresa
+            LEFT JOIN
+                modalidad m ON o.modalidad_id_modalidad = m.id_modalidad
+            LEFT JOIN
+                tipo_oferta toferta ON o.tipo_oferta_id_tipo_oferta = toferta.id_tipo_oferta
+            LEFT JOIN
+                estado est ON o.estado_id_estado = est.id_estado
+            WHERE
+                o.fecha_creacion BETWEEN '$fechaInicio' AND '$fechaFin'
+            ORDER BY
+                o.fecha_creacion DESC";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerOfertasPorRangoFecha): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $ofertas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $ofertas[] = $fila;
+    }
+    return $ofertas;
+  }
+
+  /**
+   * Obtiene el top N de ofertas con más estudiantes interesados.
+   *
+   * @param int $limite El número máximo de ofertas a devolver.
+   * @return array Un array de arrays asociativos con los datos de las ofertas.
+   */
+  public function obtenerTopOfertasInteres($limite = 5)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerTopOfertasInteres.");
+      return [];
+    }
+    $limite = (int) $limite;
+    $sql = "SELECT
+                o.idOferta,
+                o.titulo,
+                e.nombre AS empresa_nombre,
+                COUNT(ieo.estudiante_idEstudiante) AS total_interesados
+            FROM
+                oferta o
+            JOIN
+                empresa e ON o.empresa_idEmpresa = e.idEmpresa
+            LEFT JOIN
+                interes_estudiante_oferta ieo ON o.idOferta = ieo.oferta_idOferta
+            GROUP BY
+                o.idOferta, o.titulo, e.nombre
+            ORDER BY
+                total_interesados DESC
+            LIMIT $limite";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerTopOfertasInteres): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $ofertas = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $ofertas[] = $fila;
+    }
+    return $ofertas;
+  }
 }

@@ -872,4 +872,87 @@ class Estudiante
     error_log("ADVERTENCIA: Estado con nombre '$nombreEstado' no encontrado en la tabla 'estado'.");
     return false;
   }
+
+  /**
+   * Obtiene todos los estudiantes registrados.
+   * @return array Un array de arrays asociativos con los datos de los estudiantes.
+   */
+  public function obtenerEstudiantesRegistrados()
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerEstudiantesRegistrados.");
+      return [];
+    }
+    $sql = "SELECT
+                e.idEstudiante,
+                e.nombre,
+                e.apellidos,
+                e.n_doc,
+                c.nombre AS carrera_nombre,
+                est.nombre AS estado_nombre,
+                e.fecha_creacion AS fecha_registro
+            FROM
+                estudiante e
+            LEFT JOIN
+                carrera c ON e.carrera_id_carrera = c.id_carrera
+            LEFT JOIN
+                estado est ON e.estado_id_estado = est.id_estado
+            ORDER BY
+                e.fecha_creacion DESC";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerEstudiantesRegistrados): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $estudiantes = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $estudiantes[] = $fila;
+    }
+    return $estudiantes;
+  }
+
+  /**
+   * Obtiene estudiantes filtrados por carrera.
+   *
+   * @param int|null $idCarrera ID de la carrera para filtrar, o null para todas las carreras.
+   * @return array Un array de arrays asociativos con los datos de los estudiantes.
+   */
+  public function obtenerEstudiantesPorCarrera($idCarrera = null)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerEstudiantesPorCarrera.");
+      return [];
+    }
+    $sql = "SELECT
+                e.idEstudiante,
+                e.nombre,
+                e.apellidos,
+                e.n_doc,
+                c.nombre AS carrera_nombre,
+                est.nombre AS estado_nombre,
+                e.fecha_creacion AS fecha_registro
+            FROM
+                estudiante e
+            LEFT JOIN
+                carrera c ON e.carrera_id_carrera = c.id_carrera
+            LEFT JOIN
+                estado est ON e.estado_id_estado = est.id_estado";
+    if (!empty($idCarrera)) {
+      $idCarrera = (int) mysqli_real_escape_string($this->conexion, $idCarrera);
+      $sql .= " WHERE e.carrera_id_carrera = $idCarrera";
+    }
+    $sql .= " ORDER BY c.nombre, e.nombre";
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerEstudiantesPorCarrera): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $estudiantes = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $estudiantes[] = $fila;
+    }
+    return $estudiantes;
+  }
 }
