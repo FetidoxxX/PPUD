@@ -67,6 +67,10 @@ switch ($action) {
               <?php echo isset($emp['fecha_registro']) ? date('d/m/Y', strtotime($emp['fecha_registro'])) : 'No disponible'; ?>
             </td>
           </tr>
+          <tr>
+            <th>Estado:</th>
+            <td><?php echo htmlspecialchars($emp['estado_nombre'] ?? 'N/A'); ?></td>
+          </tr>
         </table>
       </div>
     </div>
@@ -91,17 +95,17 @@ switch ($action) {
     ]);
     break;
 
-  // 🚀 NUEVO: Listar todas las empresas vía AJAX
   case 'listar':
     $busqueda = $_GET['busqueda'] ?? '';
-    $empresas = $empresa->obtenerTodos($busqueda);
+    $empresas = $empresa->obtenerTodos($busqueda); // Ahora obtiene todos (activos e inactivos)
+    $total_empresas = $empresa->contarTotal($busqueda); // Contar todas las empresas
 
     // Generar HTML de la tabla
     ob_start();
     ?>
     <?php if (empty($empresas)): ?>
       <tr>
-        <td colspan="7" class="text-center py-4">
+        <td colspan="8" class="text-center py-4">
           <div class="text-muted">
             <div class="display-1">🏢</div>
             <h5><?php echo empty($busqueda) ? 'No hay empresas registradas' : 'No se encontraron resultados'; ?></h5>
@@ -119,7 +123,21 @@ switch ($action) {
           <td><?php echo htmlspecialchars($emp['correo']); ?></td>
           <td><?php echo htmlspecialchars($emp['telefono']); ?></td>
           <td><?php echo htmlspecialchars($emp['tipo_documento_nombre'] ?? 'N/A'); ?></td>
-          <td><?php echo htmlspecialchars($emp['idEmpresa']); ?></td>
+          <td><?php echo htmlspecialchars($emp['n_doc']); ?></td>
+          <td>
+            <?php
+            $estado_badge_class = '';
+            if ($emp['estado_id_estado'] == 1) {
+              $estado_badge_class = 'bg-success'; // Activo
+            } elseif ($emp['estado_id_estado'] == 2) {
+              $estado_badge_class = 'bg-danger'; // Inactivo
+            } else {
+              $estado_badge_class = 'bg-secondary'; // Otro estado
+            }
+            ?>
+            <span
+              class="badge <?php echo $estado_badge_class; ?>"><?php echo htmlspecialchars($emp['estado_nombre'] ?? 'Desconocido'); ?></span>
+          </td>
           <td>
             <div class="btn-group" role="group">
               <button class="btn btn-sm btn-outline-primary" onclick="verDetalle('<?php echo $emp['idEmpresa']; ?>')"
@@ -131,7 +149,7 @@ switch ($action) {
                 ✏️
               </button>
               <button class="btn btn-sm btn-outline-danger" onclick="eliminarEmpresa('<?php echo $emp['idEmpresa']; ?>')"
-                title="Eliminar">
+                title="Desactivar">
                 🗑️
               </button>
             </div>
@@ -145,11 +163,10 @@ switch ($action) {
     echo json_encode([
       'success' => true,
       'html' => $html,
-      'total' => count($empresas)
+      'total' => $total_empresas // Enviar el total correcto
     ]);
     break;
 
-  // 🚀 NUEVO: Actualizar empresa vía AJAX
   case 'actualizar':
     if (empty($id)) {
       echo json_encode(['success' => false, 'message' => 'ID no proporcionado']);
@@ -161,14 +178,14 @@ switch ($action) {
       'correo' => $_POST['correo'] ?? '',
       'telefono' => $_POST['telefono'] ?? '',
       'direccion' => $_POST['direccion'] ?? '',
-      'tipo_documento_id_tipo' => $_POST['tipo_documento'] ?? ''
+      'tipo_documento_id_tipo' => $_POST['tipo_documento'] ?? '',
+      'estado_id_estado' => $_POST['estado_id_estado'] ?? '' // Recibir el estado
     ];
 
     $resultado = $empresa->actualizar($id, $datos);
     echo json_encode($resultado);
     break;
 
-  // 🚀 NUEVO: Eliminar empresa vía AJAX
   case 'eliminar':
     if (empty($id)) {
       echo json_encode(['success' => false, 'message' => 'ID no proporcionado']);
@@ -179,10 +196,9 @@ switch ($action) {
     echo json_encode($resultado);
     break;
 
-  // 🚀 NUEVO: Búsqueda en tiempo real vía AJAX
   case 'buscar':
     $termino = $_GET['termino'] ?? '';
-    $empresas = $empresa->obtenerTodos($termino);
+    $empresas = $empresa->obtenerTodos($termino); // Ahora obtiene todos (activos e inactivos)
 
     echo json_encode([
       'success' => true,
@@ -195,6 +211,4 @@ switch ($action) {
     echo json_encode(['success' => false, 'message' => 'Acción no válida']);
     break;
 }
-
-//prueba 
 ?>

@@ -14,7 +14,7 @@ include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa para obt
 
 // Crear instancias de las clases
 $estudiante = new Estudiante();
-// $empresaObj = new Empresa(); // No es necesario instanciarla aquí si solo se usa en gestion_estudiantes.php
+$empresaObj = new Empresa(); // Se instancia para obtener tipos de documento y estados
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 $id = $_GET['id'] ?? $_POST['id'] ?? '';
@@ -75,12 +75,20 @@ switch ($action) {
             <th>Edad:</th>
             <td>
               <?php
-              $fecha_nac = new DateTime($est['fechaNac']);
-              $hoy = new DateTime();
-              $edad = $hoy->diff($fecha_nac)->y;
-              echo $edad . ' años';
+              if (!empty($est['fechaNac'])) {
+                $fecha_nac = new DateTime($est['fechaNac']);
+                $hoy = new DateTime();
+                $edad = $hoy->diff($fecha_nac)->y;
+                echo $edad . ' años';
+              } else {
+                echo '<span class="text-muted">N/A</span>';
+              }
               ?>
             </td>
+          </tr>
+          <tr>
+            <th>Estado:</th>
+            <td><?php echo htmlspecialchars($est['estado_nombre'] ?? 'N/A'); ?></td>
           </tr>
         </table>
       </div>
@@ -129,36 +137,26 @@ switch ($action) {
       'telefono' => $_POST['telefono'] ?? '',
       'direccion' => $_POST['direccion'] ?? '',
       'fechaNac' => $_POST['fechaNac'] ?? '',
-      'tipo_documento_id_tipo' => $_POST['tipo_documento'] ?? ''
-
+      'tipo_documento_id_tipo' => $_POST['tipo_documento'] ?? '',
+      'estado_id_estado' => $_POST['estado_id_estado'] ?? '' // Recibir el estado
     ];
 
-    // Se pasa un array vacío para carreras_interes_ids, ya que esta vista no las gestiona
     $resultado = $estudiante->actualizar($id, $datos, []);
     echo json_encode($resultado);
     break;
 
-  case 'buscar': // Este caso es redundante con 'listar' si 'listar' maneja la búsqueda.
-    $termino = $_GET['termino'] ?? '';
-    $estudiantes = $estudiante->obtenerTodos($termino);
-
-    echo json_encode([
-      'success' => true,
-      'estudiantes' => $estudiantes,
-      'total' => count($estudiantes)
-    ]);
-    break;
-
   case 'listar':
     $busqueda = $_GET['busqueda'] ?? '';
+    // Se restauran las llamadas a los métodos para obtener y contar TODOS los estudiantes (activos e inactivos)
     $estudiantes = $estudiante->obtenerTodos($busqueda);
+    $total_estudiantes = $estudiante->contarEstudiantes($busqueda);
 
     // Generar HTML de la tabla
     ob_start();
     ?>
     <?php if (empty($estudiantes)): ?>
       <tr>
-        <td colspan="7" class="text-center py-4">
+        <td colspan="8" class="text-center py-4">
           <div class="text-muted">
             <div class="display-1">📚</div>
             <h5><?php echo empty($busqueda) ? 'No hay estudiantes registrados' : 'No se encontraron resultados'; ?></h5>
@@ -189,6 +187,20 @@ switch ($action) {
             ?>
           </td>
           <td>
+            <?php
+            $estado_badge_class = '';
+            if ($est['estado_id_estado'] == 1) {
+              $estado_badge_class = 'bg-success'; // Activo
+            } elseif ($est['estado_id_estado'] == 2) {
+              $estado_badge_class = 'bg-danger'; // Inactivo
+            } else {
+              $estado_badge_class = 'bg-secondary'; // Otro estado
+            }
+            ?>
+            <span
+              class="badge <?php echo $estado_badge_class; ?>"><?php echo htmlspecialchars($est['estado_nombre'] ?? 'Desconocido'); ?></span>
+          </td>
+          <td>
             <div class="btn-group" role="group">
               <button class="btn btn-sm btn-outline-primary" onclick="verDetalle('<?php echo $est['idEstudiante']; ?>')"
                 title="Ver detalles">
@@ -199,7 +211,7 @@ switch ($action) {
                 ✏️
               </button>
               <button class="btn btn-sm btn-outline-danger" onclick="eliminarEstudiante('<?php echo $est['idEstudiante']; ?>')"
-                title="Eliminar">
+                title="Desactivar">
                 🗑️
               </button>
             </div>
@@ -213,7 +225,7 @@ switch ($action) {
     echo json_encode([
       'success' => true,
       'html' => $html,
-      'total' => count($estudiantes)
+      'total' => $total_estudiantes // Enviar el total correcto
     ]);
     break;
 
