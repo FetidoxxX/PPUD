@@ -85,6 +85,45 @@ try {
   // Puedes mostrar un SweetAlert de error aquí si quieres que el usuario vea el problema inmediatamente
 }
 
+// INICIO DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+if (isset($_SESSION['usuario_id'])) {
+  $estudiante_id = $_SESSION['usuario_id'];
+  $estudiante_data = $estudianteObj->obtenerPorId($estudiante_id);
+  $inactivo_id = $estudianteObj->getIdEstadoPorNombre('inactivo'); // Obtener el ID del estado 'inactivo'
+
+  if ($estudiante_data && $inactivo_id !== false && $estudiante_data['estado_id_estado'] == $inactivo_id) {
+    session_destroy();
+    ?>
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+      <meta charset='utf-8'>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
+    </head>
+
+    <body>
+      <script type='text/javascript'>
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Su cuenta de estudiante ha sido desactivada. Por favor, contacte al administrador.'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location = '../index.php';
+          }
+        });
+      </script>
+    </body>
+
+    </html>
+    <?php
+    exit();
+  }
+}
+// FIN DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -98,24 +137,24 @@ try {
   <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-  .card-offer {
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  }
+    .card-offer {
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
 
-  .card-offer:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-  }
+    .card-offer:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
 
-  .company-link {
-    color: #0d6efd;
-    /* Bootstrap primary color */
-    text-decoration: none;
-  }
+    .company-link {
+      color: #0d6efd;
+      /* Bootstrap primary color */
+      text-decoration: none;
+    }
 
-  .company-link:hover {
-    text-decoration: underline;
-  }
+    .company-link:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 
@@ -316,26 +355,26 @@ try {
   <!-- Incluye el JS específico para las funciones de referencia de estudiante a empresa -->
   <script src="../js/funcionesReferenciasEstudiante.js"></script>
   <script>
-  // Variable global para el ID del estudiante, accesible por JavaScript
-  const ESTUDIANTE_ID_MODULO = '<?php echo htmlspecialchars($_SESSION['usuario_id']); ?>';
+    // Variable global para el ID del estudiante, accesible por JavaScript
+    const ESTUDIANTE_ID_MODULO = '<?php echo htmlspecialchars($_SESSION['usuario_id']); ?>';
 
-  $(document).ready(function() {
-    cargarOfertas(); // Cargar ofertas al iniciar la página
+    $(document).ready(function () {
+      cargarOfertas(); // Cargar ofertas al iniciar la página
 
-    $('#searchIcon').on('click', function() {
-      cargarOfertas(false);
-    });
-
-    $('#busquedaOfertas').on('keypress', function(e) {
-      if (e.which === 13) {
+      $('#searchIcon').on('click', function () {
         cargarOfertas(false);
-      }
-    });
+      });
 
-    $('#loadMoreBtn').on('click', function() {
-      loadMoreOffers();
+      $('#busquedaOfertas').on('keypress', function (e) {
+        if (e.which === 13) {
+          cargarOfertas(false);
+        }
+      });
+
+      $('#loadMoreBtn').on('click', function () {
+        loadMoreOffers();
+      });
     });
-  });
   </script>
 </body>
 

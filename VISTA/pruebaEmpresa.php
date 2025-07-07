@@ -63,6 +63,49 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   ";
   exit();
 }
+
+// INICIO DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa
+$empresaObj = new Empresa();
+
+if (isset($_SESSION['usuario_id'])) {
+  $empresa_id = $_SESSION['usuario_id'];
+  $empresa_data = $empresaObj->obtenerPorId($empresa_id);
+  $inactivo_id = $empresaObj->getIdEstadoPorNombre('inactivo'); // Obtener el ID del estado 'inactivo'
+
+  if ($empresa_data && $inactivo_id !== false && $empresa_data['estado_id_estado'] == $inactivo_id) {
+    session_destroy();
+    ?>
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+      <meta charset='utf-8'>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
+    </head>
+
+    <body>
+      <script type='text/javascript'>
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Su cuenta de empresa ha sido desactivada. Por favor, contacte al administrador.'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location = '../index.php';
+          }
+        });
+      </script>
+    </body>
+
+    </html>
+    <?php
+    exit();
+  }
+}
+// FIN DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+
 ?>
 
 <!DOCTYPE html>

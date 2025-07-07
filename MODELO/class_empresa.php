@@ -519,4 +519,29 @@ class Empresa
     }
     return $estados;
   }
+
+  /**
+   * Obtiene el ID de un estado a partir de su nombre.
+   * @param string $nombreEstado El nombre del estado (ej. 'activo', 'inactivo').
+   * @return int|false El ID del estado o false si no se encuentra.
+   */
+  public function getIdEstadoPorNombre($nombreEstado)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en getIdEstadoPorNombre.");
+      return false;
+    }
+    $nombreEstado = mysqli_real_escape_string($this->conexion, $nombreEstado);
+    $sql = "SELECT id_estado FROM estado WHERE nombre = '$nombreEstado'";
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB: Fallo en getIdEstadoPorNombre: " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return false;
+    }
+    if ($fila = mysqli_fetch_assoc($resultado)) {
+      return (int) $fila['id_estado'];
+    }
+    error_log("ADVERTENCIA: Estado con nombre '$nombreEstado' no encontrado en la tabla 'estado'.");
+    return false;
+  }
 }
