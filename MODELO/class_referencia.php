@@ -59,9 +59,10 @@ class Referencia
       $tipo_referencia_id_tipo_referencia = (int) $datos['tipo_referencia_id_tipo_referencia'];
       $estudiante_idEstudiante = mysqli_real_escape_string($this->conexion, $datos['estudiante_idEstudiante']);
       $empresa_idEmpresa = (int) $datos['empresa_idEmpresa'];
+      $estado_activo_id = 1; // Asumiendo que el ID para 'Activo' es 1
 
-      $sql = "INSERT INTO referencia (comentario, puntuacion, tipo_referencia_id_tipo_referencia, estudiante_idEstudiante, empresa_idEmpresa, fecha_creacion, fecha_actualizacion)
-                VALUES ('$comentario', " . ($puntuacion === 'NULL' ? 'NULL' : $puntuacion) . ", $tipo_referencia_id_tipo_referencia, '$estudiante_idEstudiante', $empresa_idEmpresa, NOW(), NOW())";
+      $sql = "INSERT INTO referencia (comentario, puntuacion, tipo_referencia_id_tipo_referencia, estudiante_idEstudiante, empresa_idEmpresa, fecha_creacion, fecha_actualizacion, estado_id_estado)
+                VALUES ('$comentario', " . ($puntuacion === 'NULL' ? 'NULL' : $puntuacion) . ", $tipo_referencia_id_tipo_referencia, '$estudiante_idEstudiante', $empresa_idEmpresa, NOW(), NOW(), $estado_activo_id)";
 
       if (mysqli_query($this->conexion, $sql)) {
         return ['success' => true, 'message' => 'Referencia registrada correctamente.', 'idReferencia' => mysqli_insert_id($this->conexion)];
@@ -88,13 +89,15 @@ class Referencia
       return false;
     }
     $idReferencia = (int) $idReferencia;
+    // Agregamos el filtro por estado activo si es para visualización general
+    // Sin embargo, para edición/eliminación se necesita obtenerla independientemente del estado actual para verificar permisos
     $sql = "SELECT r.*, tr.nombre AS tipo_referencia_nombre, e.nombre AS empresa_nombre, est.nombre AS estudiante_nombre, est.apellidos AS estudiante_apellidos, s.nombre AS estado_nombre
             FROM referencia r
             LEFT JOIN tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
             LEFT JOIN empresa e ON r.empresa_idEmpresa = e.idEmpresa
             LEFT JOIN estudiante est ON r.estudiante_idEstudiante = est.idEstudiante
             LEFT JOIN estado s ON r.estado_id_estado = s.id_estado
-            WHERE r.idReferencia = $idReferencia";
+            WHERE r.idReferencia = $idReferencia"; // No se filtra por estado aquí, ya que se usa para obtener la referencia a editar/eliminar.
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB (obtenerPorId referencia): " . mysqli_error($this->conexion) . " SQL: " . $sql);
@@ -104,130 +107,12 @@ class Referencia
   }
 
   /**
-   * Obtiene todas las referencias, filtradas opcionalmente por empresa, estudiante, tipo específico, búsqueda, límite y offset.
-   *
-   * @param int|null $idEmpresa ID de la empresa (para referencias realizadas por esta empresa).
-   * @param string|null $idEstudiante ID del estudiante (para referencias realizadas a este estudiante).
-   * @param int|null $tipoReferenciaIdToInclude ID del tipo de referencia a incluir (ej. 2 para 'empresa_a_estudiante').
-   * @param string $busqueda Término de búsqueda para filtrar (comentario, tipo, empresa, estudiante).
-   * @param int $limit Límite de resultados.
-   * @param int $offset Desplazamiento para paginación.
-   * @return array Un array de arrays asociativos con los datos de las referencias.
-   */
-  public function obtenerTodas($idEmpresa = null, $idEstudiante = null, $tipoReferenciaIdToInclude = null, $busqueda = '', $limit = 10, $offset = 0)
-  {
-    if (!$this->conexion) {
-      error_log("ERROR: Conexión a la base de datos no establecida en obtenerTodas (Referencia).");
-      return [];
-    }
-
-    $sql = "SELECT r.*,
-                   tr.nombre AS tipo_referencia_nombre,
-                   emp.nombre AS empresa_nombre,
-                   est.nombre AS estudiante_nombre,
-                   est.apellidos AS estudiante_apellidos,
-                   s.nombre AS estado_nombre
-            FROM referencia r
-            LEFT JOIN tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
-            LEFT JOIN empresa emp ON r.empresa_idEmpresa = emp.idEmpresa
-            LEFT JOIN estudiante est ON r.estudiante_idEstudiante = est.idEstudiante
-            LEFT JOIN estado s ON r.estado_id_estado = s.id_estado";
-
-    $conditions = [];
-    if ($busqueda) {
-      $busqueda_safe = mysqli_real_escape_string($this->conexion, $busqueda);
-      $conditions[] = "(r.comentario LIKE '%$busqueda_safe%' OR
-                          tr.nombre LIKE '%$busqueda_safe%' OR
-                          emp.nombre LIKE '%$busqueda_safe%' OR
-                          est.nombre LIKE '%$busqueda_safe%' OR
-                          est.apellidos LIKE '%$busqueda_safe%')";
-    }
-    if ($idEmpresa !== null) {
-      $idEmpresa = mysqli_real_escape_string($this->conexion, $idEmpresa);
-      $conditions[] = "r.empresa_idEmpresa = '$idEmpresa'";
-    }
-    if ($idEstudiante !== null) {
-      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
-      $conditions[] = "r.estudiante_idEstudiante = '$idEstudiante'";
-    }
-    // Filtro directo por el ID del tipo de referencia a incluir
-    if ($tipoReferenciaIdToInclude !== null) {
-      $tipoReferenciaIdToInclude = (int) $tipoReferenciaIdToInclude; // Asegurar que sea un entero
-      $conditions[] = "r.tipo_referencia_id_tipo_referencia = '$tipoReferenciaIdToInclude'";
-    }
-
-
-    if (!empty($conditions)) {
-      $sql .= " WHERE " . implode(' AND ', $conditions);
-    }
-
-    $sql .= " ORDER BY r.fecha_creacion DESC LIMIT $limit OFFSET $offset";
-
-    $resultado = mysqli_query($this->conexion, $sql);
-    if (!$resultado) {
-      error_log("ERROR DB (obtenerTodas referencia): " . mysqli_error($this->conexion) . " SQL: " . $sql);
-      return [];
-    }
-    $referencias = [];
-    while ($fila = mysqli_fetch_assoc($resultado)) {
-      $referencias[] = $fila;
-    }
-    return $referencias;
-  }
-
-  /**
-   * Cuenta el total de referencias, opcionalmente filtradas por búsqueda y tipo de referencia.
-   *
-   * @param string $busqueda Término de búsqueda para filtrar.
-   * @param int|null $tipoReferenciaIdFilter ID del tipo de referencia para filtrar (opcional).
-   * @return int El número total de referencias.
-   */
-  public function contarTodasReferencias($busqueda = '', $tipoReferenciaIdFilter = null)
-  {
-    if (!$this->conexion) {
-      error_log("ERROR: Conexión a la base de datos no establecida en contarTodasReferencias.");
-      return 0;
-    }
-
-    $sql = "SELECT COUNT(*) AS total
-            FROM referencia r
-            LEFT JOIN tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
-            LEFT JOIN empresa emp ON r.empresa_idEmpresa = emp.idEmpresa
-            LEFT JOIN estudiante est ON r.estudiante_idEstudiante = est.idEstudiante";
-
-    $conditions = [];
-    if ($busqueda) {
-      $busqueda_safe = mysqli_real_escape_string($this->conexion, $busqueda);
-      $conditions[] = "(r.comentario LIKE '%$busqueda_safe%' OR
-                          tr.nombre LIKE '%$busqueda_safe%' OR
-                          emp.nombre LIKE '%$busqueda_safe%' OR
-                          est.nombre LIKE '%$busqueda_safe%' OR
-                          est.apellidos LIKE '%$busqueda_safe%')";
-    }
-    if ($tipoReferenciaIdFilter !== null) {
-      $tipoReferenciaIdFilter = (int) $tipoReferenciaIdFilter;
-      $conditions[] = "r.tipo_referencia_id_tipo_referencia = '$tipoReferenciaIdFilter'";
-    }
-
-    if (!empty($conditions)) {
-      $sql .= " WHERE " . implode(' AND ', $conditions);
-    }
-
-    $resultado = mysqli_query($this->conexion, $sql);
-    if (!$resultado) {
-      error_log("ERROR DB (contarTodasReferencias): " . mysqli_error($this->conexion) . " SQL: " . $sql);
-      return 0;
-    }
-    $fila = mysqli_fetch_assoc($resultado);
-    return (int) $fila['total'];
-  }
-
-
-  /**
    * Actualiza los datos de una referencia existente.
    *
    * @param int $idReferencia El ID de la referencia a actualizar.
-   * @param array $datos Array asociativo con los datos a actualizar (comentario, puntuacion, tipo_referencia_id_tipo_referencia, estado_id_estado).
+   * @param array $datos Array asociativo con los datos a actualizar.
+   * Puede contener: 'comentario' (string), 'puntuacion' (float),
+   * 'tipo_referencia_id_tipo_referencia' (int), 'estado_id_estado' (int).
    * @return array Resultado de la operación (éxito/error, mensaje).
    */
   public function actualizar($idReferencia, $datos)
@@ -236,6 +121,7 @@ class Referencia
       if (!$this->conexion) {
         throw new Exception("Conexión a la base de datos no establecida para actualizar referencia.");
       }
+
       $idReferencia = (int) $idReferencia;
       $updates = [];
 
@@ -249,7 +135,7 @@ class Referencia
       if (isset($datos['tipo_referencia_id_tipo_referencia'])) {
         $updates[] = "tipo_referencia_id_tipo_referencia = " . (int) $datos['tipo_referencia_id_tipo_referencia'];
       }
-      if (isset($datos['estado_id_estado'])) { // Asumiendo que las referencias pueden tener un estado
+      if (isset($datos['estado_id_estado'])) {
         $updates[] = "estado_id_estado = " . (int) $datos['estado_id_estado'];
       }
 
@@ -258,7 +144,6 @@ class Referencia
       }
 
       $updates[] = "fecha_actualizacion = NOW()";
-
       $sql = "UPDATE referencia SET " . implode(', ', $updates) . " WHERE idReferencia = $idReferencia";
 
       if (mysqli_query($this->conexion, $sql)) {
@@ -274,36 +159,232 @@ class Referencia
   }
 
   /**
-   * Elimina una referencia de la base de datos.
+   * Actualiza los datos de una referencia existente, con validaciones específicas para el estudiante.
+   * Incluye verificación de propiedad y restricción de 24 horas.
    *
-   * @param int $idReferencia El ID de la referencia a eliminar.
+   * @param int $idReferencia El ID de la referencia a actualizar.
+   * @param string $idEstudianteLogueado El ID del estudiante que intenta actualizar.
+   * @param array $datos Array asociativo con los datos a actualizar ('comentario', 'puntuacion').
+   * @return array Resultado de la operación (éxito/error, mensaje).
+   */
+  public function actualizarReferenciaEstudiante($idReferencia, $idEstudianteLogueado, $datos)
+  {
+    try {
+      if (!$this->conexion) {
+        throw new Exception("Conexión a la base de datos no establecida para actualizar referencia de estudiante.");
+      }
+
+      $idReferencia = (int) $idReferencia;
+      $idEstudianteLogueado = mysqli_real_escape_string($this->conexion, $idEstudianteLogueado);
+
+      // 1. Obtener la referencia para verificar propiedad y fecha de creación
+      $referenciaExistente = $this->obtenerPorId($idReferencia);
+
+      if (!$referenciaExistente) {
+        return ['success' => false, 'message' => 'Referencia no encontrada.'];
+      }
+
+      // 2. Verificar que la referencia pertenece al estudiante logueado
+      if ($referenciaExistente['estudiante_idEstudiante'] != $idEstudianteLogueado) {
+        return ['success' => false, 'message' => 'No tienes permiso para actualizar esta referencia.'];
+      }
+
+      // 3. Verificar la restricción de 24 horas para edición
+      $fecha_creacion = new DateTime($referenciaExistente['fecha_creacion']);
+      $fecha_actual = new DateTime();
+      $diferencia = $fecha_actual->getTimestamp() - $fecha_creacion->getTimestamp();
+
+      if ($diferencia > 86400) { // 86400 segundos = 24 horas
+        return ['success' => false, 'message' => 'El tiempo de edición para esta referencia ha expirado (más de 24 horas).'];
+      }
+
+      // 4. Proceder con la actualización (usando la lógica de 'actualizar' pero con los datos filtrados)
+      $updates = [];
+      if (isset($datos['comentario'])) {
+        $updates[] = "comentario = '" . mysqli_real_escape_string($this->conexion, $datos['comentario']) . "'";
+      }
+      if (isset($datos['puntuacion'])) {
+        $puntuacion = is_numeric($datos['puntuacion']) ? (float) $datos['puntuacion'] : 'NULL';
+        $updates[] = "puntuacion = " . ($puntuacion === 'NULL' ? 'NULL' : $puntuacion);
+      }
+
+      if (empty($updates)) {
+        return ['success' => false, 'message' => 'No hay datos para actualizar.'];
+      }
+
+      $updates[] = "fecha_actualizacion = NOW()";
+      $sql = "UPDATE referencia SET " . implode(', ', $updates) . " WHERE idReferencia = $idReferencia";
+
+      if (mysqli_query($this->conexion, $sql)) {
+        return ['success' => true, 'message' => 'Referencia actualizada correctamente.'];
+      } else {
+        error_log("ERROR DB (actualizarReferenciaEstudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+        throw new Exception("Error al actualizar: " . mysqli_error($this->conexion));
+      }
+    } catch (Exception $e) {
+      error_log("ERROR (actualizarReferenciaEstudiante): " . $e->getMessage() . " en línea " . $e->getLine());
+      return ['success' => false, 'message' => $e->getMessage()];
+    }
+  }
+
+
+  /**
+   * Cambia el estado de una referencia a 'inactiva' (simulando una eliminación lógica).
+   *
+   * @param int $idReferencia El ID de la referencia a "eliminar" (inactivar).
    * @return array Resultado de la operación (éxito/error, mensaje).
    */
   public function eliminar($idReferencia)
   {
     try {
       if (!$this->conexion) {
-        throw new Exception("Conexión a la base de datos no establecida al eliminar referencia.");
+        throw new Exception("Conexión a la base de datos no establecida para eliminar referencia.");
       }
-      $idReferencia = (int) $idReferencia;
 
-      $sql = "DELETE FROM referencia WHERE idReferencia = $idReferencia";
+      $idReferencia = (int) $idReferencia;
+      $estado_inactivo_id = 2; // Asumiendo que el ID para 'Inactivo' es 2
+
+      $sql = "UPDATE referencia SET estado_id_estado = $estado_inactivo_id, fecha_actualizacion = NOW() WHERE idReferencia = $idReferencia";
 
       if (mysqli_query($this->conexion, $sql)) {
         if (mysqli_affected_rows($this->conexion) > 0) {
-          return ['success' => true, 'message' => 'Referencia eliminada correctamente.'];
+          return ['success' => true, 'message' => 'Referencia eliminada (desactivada) correctamente.'];
         } else {
-          return ['success' => false, 'message' => 'La referencia no existe o ya fue eliminada.'];
+          return ['success' => false, 'message' => 'No se encontró la referencia o ya estaba inactiva.'];
         }
       } else {
-        error_log("ERROR DB (eliminar referencia): " . mysqli_error($this->conexion) . " SQL: " . $sql);
-        throw new Exception("Error al eliminar: " . mysqli_error($this->conexion));
+        error_log("ERROR DB (eliminar referencia - inactivar): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+        throw new Exception("Error al eliminar (desactivar): " . mysqli_error($this->conexion));
       }
     } catch (Exception $e) {
-      error_log("ERROR (eliminar referencia): " . $e->getMessage() . " en línea " . $e->getLine());
+      error_log("ERROR (eliminar referencia - inactivar): " . $e->getMessage() . " en línea " . $e->getLine());
       return ['success' => false, 'message' => $e->getMessage()];
     }
   }
+
+  /**
+   * Obtiene todas las referencias, opcionalmente filtradas por empresa y/o estudiante y por estado.
+   *
+   * @param int|null $idEmpresa ID de la empresa para filtrar.
+   * @param int|null $idEstudiante ID del estudiante para filtrar.
+   * @param int|null $tipoReferenciaIdToInclude ID del tipo de referencia a incluir.
+   * @param int $limit Límite de resultados.
+   * @param int $offset Desplazamiento de resultados.
+   * @param int $estado_id_estado ID del estado para filtrar (por defecto, 1 para activas).
+   * @return array Un array de arrays asociativos con los datos de las referencias.
+   */
+  public function obtenerTodas($idEmpresa = null, $idEstudiante = null, $tipoReferenciaIdToInclude = null, $limit = 10, $offset = 0, $estado_id_estado = 1)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerTodas (Referencia).");
+      return [];
+    }
+    $sql = "SELECT r.*, tr.nombre AS tipo_referencia_nombre, e.nombre AS empresa_nombre, e.idEmpresa AS empresa_idEmpresa,
+                   est.nombre AS estudiante_nombre, est.apellidos AS estudiante_apellidos, s.nombre AS estado_nombre
+            FROM referencia r
+            LEFT JOIN tipo_referencia tr ON r.tipo_referencia_id_tipo_referencia = tr.id_tipo_referencia
+            LEFT JOIN empresa e ON r.empresa_idEmpresa = e.idEmpresa
+            LEFT JOIN estudiante est ON r.estudiante_idEstudiante = est.idEstudiante
+            LEFT JOIN estado s ON r.estado_id_estado = s.id_estado";
+
+    $conditions = [];
+    if ($idEmpresa !== null) {
+      $idEmpresa = (int) $idEmpresa;
+      $conditions[] = "r.empresa_idEmpresa = $idEmpresa";
+    }
+    if ($idEstudiante !== null) {
+      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+      // La columna 'estudiante_idEstudiante' se usa para el estudiante INVOLUCRADO en la referencia.
+      // Si el tipo de referencia es 'empresa_a_estudiante' (ID 2), este estudiante es el RECEPTOR.
+      // Si el tipo de referencia es 'estudiante_a_empresa' (ID 1), este estudiante es el CREADOR.
+      // Para el perfil del estudiante, queremos las referencias RECIBIDAS, que son de tipo 2.
+      // Por lo tanto, el filtro de estudiante debe aplicarse SOLO cuando el tipo de referencia sea 2.
+      // Si el tipo de referencia es 1, el estudiante_idEstudiante es el creador, no el receptor.
+      // Sin embargo, la llamada desde ajax_perfilE.php ya pasa el tipo 2, así que este filtro es correcto
+      // para identificar al estudiante como RECEPTOR.
+      $conditions[] = "r.estudiante_idEstudiante = '$idEstudiante'";
+    }
+    if ($tipoReferenciaIdToInclude !== null) {
+      $tipoReferenciaIdToInclude = (int) $tipoReferenciaIdToInclude;
+      $conditions[] = "r.tipo_referencia_id_tipo_referencia = $tipoReferenciaIdToInclude";
+    }
+    // Añadir el filtro de estado
+    if ($estado_id_estado !== null) {
+      $estado_id_estado = (int) $estado_id_estado;
+      $conditions[] = "r.estado_id_estado = $estado_id_estado";
+    }
+
+    if (!empty($conditions)) {
+      $sql .= " WHERE " . implode(' AND ', $conditions);
+    }
+
+    $sql .= " ORDER BY r.fecha_creacion DESC LIMIT $limit OFFSET $offset";
+
+    // Línea de depuración añadida
+    error_log("DEBUG (class_referencia - obtenerTodas): SQL Query: " . $sql);
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerTodas referencia): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $referencias = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $referencias[] = $fila;
+    }
+    return $referencias;
+  }
+
+  /**
+   * Obtiene la cantidad total de referencias, opcionalmente filtradas por empresa y/o estudiante.
+   *
+   * @param int|null $idEmpresa ID de la empresa para filtrar.
+   * @param int|null $idEstudiante ID del estudiante para filtrar.
+   * @param int|null $tipoReferenciaIdToInclude ID del tipo de referencia a incluir.
+   * @param int $estado_id_estado ID del estado para filtrar (por defecto, 1 para activas).
+   * @return int El número total de referencias.
+   */
+  public function contarReferencias($idEmpresa = null, $idEstudiante = null, $tipoReferenciaIdToInclude = null, $estado_id_estado = 1)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en contarReferencias (Referencia).");
+      return 0;
+    }
+
+    $sql = "SELECT COUNT(*) AS total FROM referencia r";
+    $conditions = [];
+
+    if ($idEmpresa !== null) {
+      $idEmpresa = (int) $idEmpresa;
+      $conditions[] = "r.empresa_idEmpresa = $idEmpresa";
+    }
+    if ($idEstudiante !== null) {
+      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+      $conditions[] = "r.estudiante_idEstudiante = '$idEstudiante'";
+    }
+    if ($tipoReferenciaIdToInclude !== null) {
+      $tipoReferenciaIdToInclude = (int) $tipoReferenciaIdToInclude;
+      $conditions[] = "r.tipo_referencia_id_tipo_referencia = $tipoReferenciaIdToInclude";
+    }
+    // Añadir el filtro de estado
+    if ($estado_id_estado !== null) {
+      $estado_id_estado = (int) $estado_id_estado;
+      $conditions[] = "r.estado_id_estado = $estado_id_estado";
+    }
+
+    if (!empty($conditions)) {
+      $sql .= " WHERE " . implode(' AND ', $conditions);
+    }
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (contarReferencias referencia): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return 0;
+    }
+    $fila = mysqli_fetch_assoc($resultado);
+    return (int) $fila['total'];
+  }
+
 
   /**
    * Obtiene todos los tipos de referencia disponibles desde la tabla `tipo_referencia`.
@@ -330,7 +411,7 @@ class Referencia
   }
 
   /**
-   * Obtiene todos los estados disponibles desde la tabla `estado`.
+   * Obtiene todos los estados disponibles desde la tabla `estado` (útil para referencias activas/inactivas si se implementa).
    *
    * @return array Un array de arrays asociativos con 'id_estado' y 'nombre'.
    */

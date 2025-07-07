@@ -26,7 +26,7 @@ try {
   if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
     error_log("DEBUG AUTH FAIL: usuario_id is set? " . (isset($_SESSION['usuario_id']) ? 'Yes' : 'No') . " | rol is empresa? " . (($_SESSION['rol'] ?? 'none') === 'empresa' ? 'Yes' : 'No'));
     ob_end_clean(); // Limpiar el búfer antes de enviar la respuesta JSON
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Empresa en el Sistema.', 'redirect' => '../index.php']);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Empresa en el Sistema.', 'redirect' => '../index.index.php']);
     exit();
   }
 
@@ -34,7 +34,8 @@ try {
   $ofertaObj = new Oferta();
   $empresaObj = new Empresa();
   $estudianteObj = new Estudiante(); // Instancia para manejar estudiantes
-  // $referenciaObj está instanciado en ajax_referenciasE.php, no es necesario aquí a menos que se use directamente.
+  $referenciaObj = new Referencia(); // Instancia de la clase Referencia
+
 } catch (Throwable $e) {
   error_log("FATAL ERROR in ajax_Mempresa.php initial setup: " . $e->getMessage() . " on line " . $e->getLine());
   ob_end_clean(); // Limpiar el búfer antes de enviar la respuesta de error
@@ -248,8 +249,10 @@ switch ($action) {
     break;
 
   case 'render_interesados_list_html':
+    error_log("DEBUG: Action 'render_interesados_list_html' called."); // DEBUG
     $idOferta = $_GET['idOferta'] ?? '';
     if (empty($idOferta)) {
+      error_log("ERROR: ID de oferta no proporcionada para render_interesados_list_html."); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => false, 'message' => 'ID de oferta no proporcionada.']);
       break;
@@ -257,12 +260,14 @@ switch ($action) {
     // Verificar que la oferta pertenece a la empresa logueada
     $oferta = $ofertaObj->obtenerPorId($idOferta);
     if (!$oferta || $oferta['empresa_idEmpresa'] != $idEmpresa) {
+      error_log("ERROR: Intento de acceder a interesados de oferta no propia. Oferta ID: " . $idOferta . ", Empresa ID Sesion: " . $idEmpresa); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => false, 'message' => 'No tienes permiso para ver los interesados de esta oferta.']);
       break;
     }
 
     $estudiantes_interesados = $ofertaObj->obtenerEstudiantesInteresados($idOferta);
+    error_log("DEBUG: Estudiantes interesados obtenidos para oferta " . $idOferta . ": " . print_r($estudiantes_interesados, true)); // DEBUG
 
     $html_list = '';
     if (!empty($estudiantes_interesados)) {
@@ -278,13 +283,16 @@ switch ($action) {
     } else {
       $html_list = '<li class="list-group-item text-center text-muted py-3">No hay estudiantes interesados en esta oferta.</li>';
     }
+    error_log("DEBUG: HTML generado para interesados: " . $html_list); // DEBUG
     ob_end_clean();
     echo json_encode(['success' => true, 'html' => $html_list]);
     break;
 
   case 'render_perfil_estudiante_html':
+    error_log("DEBUG: Action 'render_perfil_estudiante_html' called."); // DEBUG
     $idEstudiante = $_GET['id'] ?? '';
     if (empty($idEstudiante)) {
+      error_log("ERROR: ID de estudiante no proporcionada para render_perfil_estudiante_html."); // DEBUG
       ob_end_clean();
       echo json_encode(['success' => false, 'message' => 'ID de estudiante no proporcionada.']);
       break;
@@ -292,6 +300,7 @@ switch ($action) {
 
     // Obtener el perfil del estudiante
     $estudiante_data = $estudianteObj->obtenerPorIdParaEmpresa($idEstudiante);
+    error_log("DEBUG: Datos de estudiante obtenidos para ID " . $idEstudiante . ": " . print_r($estudiante_data, true)); // DEBUG
 
     if ($estudiante_data) {
       $html_content = '
@@ -352,6 +361,61 @@ switch ($action) {
     } else {
       ob_end_clean(); // Limpiar el búfer antes de enviar la respuesta JSON
       echo json_encode(['success' => false, 'message' => 'Perfil de estudiante no encontrado.']);
+    }
+    break;
+
+  case 'obtener_referencias_empresa_perfil': // NUEVA ACCIÓN
+    error_log("DEBUG: Action 'obtener_referencias_empresa_perfil' called."); // DEBUG
+    $idEmpresaReferencias = $_GET['idEmpresa'] ?? '';
+    if (empty($idEmpresaReferencias)) {
+      error_log("ERROR: ID de empresa no proporcionada para obtener referencias."); // DEBUG
+      ob_end_clean();
+      echo json_encode(['success' => false, 'message' => 'ID de empresa no proporcionada para obtener referencias.']);
+      break;
+    }
+
+    try {
+      // Filtrar referencias donde la empresa logueada es la RECEPTORA de la referencia.
+      // Asumimos que tipo_referencia_id_tipo_referencia = 1 es 'estudiante_a_empresa'.
+      // Se usa un límite alto para obtener todas las referencias activas de la empresa.
+      $referencias = $referenciaObj->obtenerTodas($idEmpresaReferencias, null, 1, 999, 0, 1); // Obtener referencias de tipo 1 (estudiante a empresa)
+      error_log("DEBUG: Referencias obtenidas para empresa " . $idEmpresaReferencias . ": " . print_r($referencias, true)); // DEBUG
+
+      $html_referencias = '';
+      if (!empty($referencias)) {
+        foreach ($referencias as $ref) {
+          $puntuacion_html = '';
+          if ($ref['puntuacion'] !== null) {
+            $puntuacion_html = '<span class="badge bg-warning text-dark me-2"><i class="fas fa-star"></i> ' . htmlspecialchars(number_format($ref['puntuacion'], 1)) . '</span>';
+          }
+
+          $estudiante_nombre_completo = htmlspecialchars(($ref['estudiante_nombre'] ?? 'N/A') . ' ' . ($ref['estudiante_apellidos'] ?? ''));
+
+          $html_referencias .= '
+          <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+              <h6 class="card-title d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-user-graduate me-2 text-success"></i>' . $estudiante_nombre_completo . '</span>
+                <div>
+                  ' . $puntuacion_html . '
+                </div>
+              </h6>
+              <p class="card-text text-muted">' . htmlspecialchars($ref['comentario']) . '</p>
+              <p class="card-text"><small class="text-muted">Fecha: ' . date('d/m/Y', strtotime($ref['fecha_creacion'])) . '</small></p>
+            </div>
+          </div>';
+        }
+      } else {
+        $html_referencias = '<p class="text-muted text-center py-3">No has recibido referencias de estudiantes aún.</p>';
+      }
+
+      error_log("DEBUG: HTML generado para referencias de empresa: " . $html_referencias); // DEBUG
+      ob_end_clean();
+      echo json_encode(['success' => true, 'html' => $html_referencias]);
+    } catch (Exception $e) {
+      error_log("ERROR (ajax_Mempresa - obtener_referencias_empresa_perfil): " . $e->getMessage() . " en línea " . $e->getLine());
+      ob_end_clean();
+      echo json_encode(['success' => false, 'message' => 'Error al cargar las referencias de la empresa: ' . $e->getMessage()]);
     }
     break;
 

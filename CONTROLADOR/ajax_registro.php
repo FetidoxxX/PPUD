@@ -88,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     case 'estudiante':
       $estudiante = new Estudiante(); // Instanciar la clase para usar sus métodos
       $idEstudiante = $_POST['idEstudiante'] ?? '';
-      $nombre = $_POST['nombre'] ?? ''; // CAMBIO: 'nombres' a 'nombre'
+      $nombre = $_POST['nombre'] ?? '';
       $apellidos = $_POST['apellidos'] ?? '';
       $fechaNac = $_POST['fechaNac'] ?? '';
       $carrera_id_carrera = $_POST['carrera_id_carrera'] ?? '';
@@ -103,10 +103,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
       if (empty($nombre)) {
         $errors['nombre'] = 'El nombre es obligatorio.';
-      } // CAMBIO: 'nombres' a 'nombre'
-      else if (!validarSoloLetras($nombre)) {
+      } else if (!validarSoloLetras($nombre)) {
         $errors['nombre'] = 'El nombre solo puede contener letras y espacios.';
-      } // CAMBIO: 'nombres' a 'nombre'
+      }
       if (empty($apellidos)) {
         $errors['apellidos'] = 'Los apellidos son obligatorios.';
       } else if (!validarSoloLetras($apellidos)) {
@@ -233,6 +232,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Prepara los datos que se pasarán a la función `registrar`
     $datos_registro = $_POST;
+
+    // --- INICIO DE LA CORRECCIÓN ---
+    if ($rol === 'empresa') {
+      // Mapear 'nombre_empresa' del formulario a 'nombre' esperado por class_empresa.php
+      $datos_registro['nombre'] = $datos_registro['nombre_empresa'] ?? '';
+      unset($datos_registro['nombre_empresa']); // Eliminar el campo original si ya no es necesario
+
+      // Mapear 'sector_empresarial' del formulario a 'sector_id_sector' esperado por class_empresa.php
+      $datos_registro['sector_id_sector'] = $datos_registro['sector_empresarial'] ?? '';
+      unset($datos_registro['sector_empresarial']); // Eliminar el campo original
+    }
+    // --- FIN DE LA CORRECCIÓN ---
 
     switch ($rol) {
       case 'estudiante':

@@ -151,16 +151,17 @@ class Oferta
     }
     $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
 
-    $estado_activo_id = $this->getIdEstadoPorNombre('activo');
-    $estado_vencida_id = $this->getIdEstadoPorNombre('vencida');
+    $estado_activo_oferta_id = $this->getIdEstadoPorNombre('activo');
+    $estado_vencida_oferta_id = $this->getIdEstadoPorNombre('vencida');
+    $estado_activo_empresa_id = $this->getIdEstadoPorNombre('activo'); // Asumiendo que 'activo' para empresa es el mismo ID
 
     // Actualizar el estado de las ofertas vencidas antes de la consulta principal
-    if ($estado_vencida_id !== false && $estado_activo_id !== false) {
+    if ($estado_vencida_oferta_id !== false && $estado_activo_oferta_id !== false) {
       $fecha_actual = date('Y-m-d');
       $sql_update_expired = "UPDATE oferta 
-                               SET estado_id_estado = $estado_vencida_id 
+                               SET estado_id_estado = $estado_vencida_oferta_id 
                                WHERE fecha_vencimiento < '$fecha_actual' 
-                               AND estado_id_estado = $estado_activo_id";
+                               AND estado_id_estado = $estado_activo_oferta_id";
       if ($this->conexion) {
         $update_res = mysqli_query($this->conexion, $sql_update_expired);
         if (!$update_res) {
@@ -173,14 +174,15 @@ class Oferta
       error_log("ADVERTENCIA: No se pudieron obtener los IDs de estado 'activo' o 'vencida' para actualizar ofertas.");
     }
 
-    // Si el estado activo no se encontró, no tiene sentido continuar
-    if ($estado_activo_id === false) {
-      error_log("ERROR: No se pudo obtener el ID del estado 'activo'. No se pueden cargar ofertas activas.");
+    // Si el estado activo de la oferta o empresa no se encontró, no tiene sentido continuar
+    if ($estado_activo_oferta_id === false || $estado_activo_empresa_id === false) {
+      error_log("ERROR: No se pudo obtener el ID del estado 'activo' para ofertas o empresas. No se pueden cargar ofertas activas.");
       return [];
     }
 
 
-    $where = "WHERE o.estado_id_estado = $estado_activo_id";
+    $where = "WHERE o.estado_id_estado = $estado_activo_oferta_id 
+              AND e.estado_id_estado = $estado_activo_empresa_id"; // Filtrar por ofertas activas Y empresas activas
 
     if (!empty($busqueda)) {
       $where .= " AND (o.titulo LIKE '%$busqueda%' 
@@ -200,7 +202,7 @@ class Oferta
                 LEFT JOIN modalidad m ON o.modalidad_id_modalidad = m.id_modalidad
                 LEFT JOIN tipo_oferta toferta ON o.tipo_oferta_id_tipo_oferta = toferta.id_tipo_oferta
                 LEFT JOIN area_conocimiento ac ON o.area_conocimiento_id_area = ac.id_area
-                LEFT JOIN empresa e ON o.empresa_idEmpresa = e.idEmpresa
+                JOIN empresa e ON o.empresa_idEmpresa = e.idEmpresa -- Usar JOIN para asegurar que la empresa exista y esté activa
                 LEFT JOIN estado est ON o.estado_id_estado = est.id_estado
                 $where
                 ORDER BY o.fecha_creacion DESC
@@ -232,13 +234,16 @@ class Oferta
     }
     $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
 
-    $estado_activo_id = $this->getIdEstadoPorNombre('activo');
-    if ($estado_activo_id === false) {
-      error_log("ERROR: No se pudo obtener el ID del estado 'activo'. No se pueden contar ofertas activas.");
+    $estado_activo_oferta_id = $this->getIdEstadoPorNombre('activo');
+    $estado_activo_empresa_id = $this->getIdEstadoPorNombre('activo');
+
+    if ($estado_activo_oferta_id === false || $estado_activo_empresa_id === false) {
+      error_log("ERROR: No se pudo obtener el ID del estado 'activo' para ofertas o empresas. No se pueden contar ofertas activas.");
       return 0;
     }
 
-    $where = "WHERE o.estado_id_estado = $estado_activo_id";
+    $where = "WHERE o.estado_id_estado = $estado_activo_oferta_id 
+              AND e.estado_id_estado = $estado_activo_empresa_id"; // Filtrar por ofertas activas Y empresas activas
 
     if (!empty($busqueda)) {
       $where .= " AND (o.titulo LIKE '%$busqueda%' 
@@ -249,7 +254,7 @@ class Oferta
 
     $sql = "SELECT COUNT(*) as total 
                 FROM oferta o
-                LEFT JOIN empresa e ON o.empresa_idEmpresa = e.idEmpresa
+                JOIN empresa e ON o.empresa_idEmpresa = e.idEmpresa -- Usar JOIN para asegurar que la empresa exista y esté activa
                 LEFT JOIN area_conocimiento ac ON o.area_conocimiento_id_area = ac.id_area
                 $where";
     $resultado = mysqli_query($this->conexion, $sql);
@@ -680,8 +685,9 @@ class Oferta
     }
     $idOferta = (int) mysqli_real_escape_string($this->conexion, $idOferta);
     $sql = "SELECT COUNT(*) AS total_interesados
-              FROM interes_estudiante_oferta
-              WHERE oferta_idOferta = '$idOferta'";
+              FROM interes_estudiante_oferta ieo
+              JOIN estudiante e ON ieo.estudiante_idEstudiante = e.idEstudiante
+              WHERE ieo.oferta_idOferta = '$idOferta' AND e.estado_id_estado = 1"; // Filtrar por estado activo (ID 1)
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB (contarInteresadosPorOferta): " . mysqli_error($this->conexion) . " SQL: " . $sql);
@@ -692,7 +698,7 @@ class Oferta
   }
 
   /**
-   * Obtiene un listado de estudiantes que han mostrado interés en una oferta específica.
+   * Obtiene un listado de estudiantes que han mostrado interés en una oferta específica y están activos.
    *
    * @param int $idOferta El ID de la oferta.
    * @return array Un array de objetos de estudiantes interesados (idEstudiante, nombre, apellidos, carrera_nombre, fecha_interes).
@@ -718,7 +724,7 @@ class Oferta
               LEFT JOIN
                   carrera c ON e.carrera_id_carrera = c.id_carrera
               WHERE
-                  ieo.oferta_idOferta = '$idOferta'
+                  ieo.oferta_idOferta = '$idOferta' AND e.estado_id_estado = 1
               ORDER BY
                   ieo.fecha_interes DESC";
     $resultado = mysqli_query($this->conexion, $sql);

@@ -197,7 +197,6 @@ class Empresa
 
     $idEmpresa = mysqli_real_escape_string($this->conexion, $idEmpresa);
 
-    // Consulta mejorada con mejor manejo de JOINs
     $sql = "SELECT e.*,
                    COALESCE(td.nombre, 'No especificado') AS tipo_documento_nombre,
                    COALESCE(c.nombre, 'No especificado') AS ciudad_nombre,
@@ -263,7 +262,8 @@ class Empresa
   }
 
   /**
-   * Obtiene una lista paginada y filtrada de todas las empresas.
+   * Obtiene una lista paginada y filtrada de todas las empresas (activas e inactivos).
+   * Este método ahora se encarga de listar todas las empresas para el administrador.
    * @param string $busqueda Término de búsqueda.
    * @param int $limite Número máximo de resultados a devolver.
    * @param int $offset Número de resultados a omitir.
@@ -277,7 +277,7 @@ class Empresa
     }
     $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
 
-    $where = "";
+    $where = ""; // Se eliminó el filtro de estado para que el admin vea todos
     if (!empty($busqueda)) {
       $where = "WHERE (e.nombre LIKE '%$busqueda%'
                 OR e.correo LIKE '%$busqueda%'
@@ -286,9 +286,10 @@ class Empresa
                 OR e.n_doc LIKE '%$busqueda%')";
     }
 
-    $sql = "SELECT e.*, td.nombre as tipo_documento_nombre
+    $sql = "SELECT e.*, td.nombre as tipo_documento_nombre, est.nombre AS estado_nombre
             FROM empresa e
             LEFT JOIN tipo_documento td ON e.tipo_documento_id_tipo = td.id_tipo
+            LEFT JOIN estado est ON e.estado_id_estado = est.id_estado
             $where
             ORDER BY e.nombre
             LIMIT $limite OFFSET $offset";
@@ -308,7 +309,7 @@ class Empresa
   }
 
   /**
-   * Cuenta el total de empresas, opcionalmente filtradas por un término de búsqueda.
+   * Cuenta el total de empresas (activas e inactivos), opcionalmente filtradas por un término de búsqueda.
    * @param string $busqueda Término de búsqueda.
    * @return int Número total de empresas.
    */
@@ -320,7 +321,7 @@ class Empresa
     }
     $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
 
-    $where = "";
+    $where = ""; // Se eliminó el filtro de estado para que el admin vea todos
     if (!empty($busqueda)) {
       $where = "WHERE (nombre LIKE '%$busqueda%'
                 OR correo LIKE '%$busqueda%'
@@ -360,7 +361,7 @@ class Empresa
         'telefono',
         'direccion',
         'n_doc',
-        'tipo_documento_id_tipo', // Se usará este en vez de 'tipo_documento'
+        'tipo_documento_id_tipo',
         'ciudad_id_ciudad',
         'descripcion',
         'sector_id_sector',
@@ -370,24 +371,20 @@ class Empresa
         'contacto_nombres',
         'contacto_apellidos',
         'contacto_cargo',
-        'estado_id_estado'
+        'estado_id_estado' // Ahora se permite actualizar el estado
       ];
 
       foreach ($campos_permitidos as $campo) {
-        // Usar array_key_exists para manejar campos que se envían como NULL explícitamente
         if (array_key_exists($campo, $datos)) {
           $valor = $datos[$campo];
 
-          // Validar formato de email si se está actualizando el correo
           if ($campo === 'correo' && !empty($valor) && !filter_var($valor, FILTER_VALIDATE_EMAIL)) {
             throw new Exception("El formato del correo electrónico no es válido.");
           }
 
-          // Manejar campos que deben ser enteros o NULL si están vacíos
           if (in_array($campo, ['tipo_documento_id_tipo', 'ciudad_id_ciudad', 'sector_id_sector', 'numero_empleados', 'ano_fundacion', 'estado_id_estado'])) {
             $updates[] = "$campo = " . (empty($valor) && $valor !== 0 ? 'NULL' : (int) $valor);
           } else {
-            // Escapar y manejar cadenas vacías como NULL para campos opcionales
             $updates[] = "$campo = " . (empty($valor) ? 'NULL' : "'" . mysqli_real_escape_string($this->conexion, $valor) . "'");
           }
         }
@@ -413,12 +410,16 @@ class Empresa
     }
   }
 
-
+  /**
+   * "Elimina" una empresa cambiando su estado a inactivo.
+   * @param string $idEmpresa ID de la empresa a "eliminar".
+   * @return array Resultado de la operación (éxito/error, mensaje).
+   */
   public function eliminar($idEmpresa)
   {
     try {
       if (!$this->conexion) {
-        throw new Exception("Conexión a la base de datos no establecida al eliminar empresa.");
+        throw new Exception("Conexión a la base de datos no establecida al 'eliminar' empresa.");
       }
       $idEmpresa = mysqli_real_escape_string($this->conexion, $idEmpresa);
 
@@ -426,17 +427,19 @@ class Empresa
         throw new Exception("La empresa no existe.");
       }
 
-      $sql = "DELETE FROM empresa WHERE idEmpresa='$idEmpresa'";
+      // Asumiendo que el ID 2 en tu tabla 'estado' significa 'Inactivo'
+      $estado_inactivo_id = 2;
+      $sql = "UPDATE empresa SET estado_id_estado = $estado_inactivo_id WHERE idEmpresa = '$idEmpresa'";
 
       if (mysqli_query($this->conexion, $sql)) {
-        return ['success' => true, 'message' => 'Empresa eliminada correctamente.'];
+        return ['success' => true, 'message' => 'Empresa marcada como inactiva correctamente.'];
       } else {
-        error_log("ERROR DB (eliminar empresa): " . mysqli_error($this->conexion) . " SQL: " . $sql);
-        throw new Exception("Error al eliminar: " . mysqli_error($this->conexion));
+        error_log("ERROR DB ('eliminar' empresa - cambiar estado): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+        throw new Exception("Error al cambiar el estado de la empresa a inactiva: " . mysqli_error($this->conexion));
       }
 
     } catch (Exception $e) {
-      error_log("ERROR (eliminar empresa): " . $e->getMessage() . " en línea " . $e->getLine());
+      error_log("ERROR ('eliminar' empresa): " . $e->getMessage() . " en línea " . $e->getLine());
       return ['success' => false, 'message' => $e->getMessage()];
     }
   }
@@ -500,7 +503,6 @@ class Empresa
 
   public function obtenerEstados()
   {
-    // Este método podría estar en una clase utilitaria o de "maestros", pero por ahora se mantiene aquí.
     if (!$this->conexion) {
       error_log("ERROR: Conexión a la base de datos no establecida en obtenerEstados.");
       return [];
@@ -516,5 +518,30 @@ class Empresa
       $estados[] = $fila;
     }
     return $estados;
+  }
+
+  /**
+   * Obtiene el ID de un estado a partir de su nombre.
+   * @param string $nombreEstado El nombre del estado (ej. 'activo', 'inactivo').
+   * @return int|false El ID del estado o false si no se encuentra.
+   */
+  public function getIdEstadoPorNombre($nombreEstado)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en getIdEstadoPorNombre.");
+      return false;
+    }
+    $nombreEstado = mysqli_real_escape_string($this->conexion, $nombreEstado);
+    $sql = "SELECT id_estado FROM estado WHERE nombre = '$nombreEstado'";
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB: Fallo en getIdEstadoPorNombre: " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return false;
+    }
+    if ($fila = mysqli_fetch_assoc($resultado)) {
+      return (int) $fila['id_estado'];
+    }
+    error_log("ADVERTENCIA: Estado con nombre '$nombreEstado' no encontrado en la tabla 'estado'.");
+    return false;
   }
 }

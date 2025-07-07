@@ -56,6 +56,9 @@ function initializeGestionOfertas(
 
   // Escuchar el evento de cierre del modal para limpiar el formulario
   $('#ofertaModal').on('hidden.bs.modal', function () {
+    console.log(
+      'DEBUG: ofertaModal oculto. Reseteando formulario y restaurando foco.'
+    );
     resetForm();
     // Restaurar el foco al elemento que abrió este modal, si existe
     if (lastFocusedElement) {
@@ -78,6 +81,10 @@ function initializeGestionOfertas(
   // Capturar el elemento que abre el modal de oferta
   $('[data-bs-target="#ofertaModal"]').on('click', function () {
     lastFocusedElement = this;
+    console.log(
+      'DEBUG: Elemento que abre ofertaModal capturado:',
+      lastFocusedElement
+    );
   });
 }
 
@@ -155,6 +162,10 @@ function cargarOfertas(append = false) {
     currentPage = 0; // Reinicia la página actual si es una nueva búsqueda o carga inicial
   }
 
+  console.log(
+    `DEBUG: Cargando ofertas. Búsqueda: "${busqueda}", Límite: ${itemsPerPage}, Offset: ${offset}, Append: ${append}`
+  );
+
   $.ajax({
     url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'GET',
@@ -166,6 +177,7 @@ function cargarOfertas(append = false) {
     },
     dataType: 'json',
     success: function (response) {
+      console.log('DEBUG: Respuesta de obtener_ofertas_empresa:', response);
       if (response.success) {
         totalOffers = response.total; // Actualiza el total de ofertas
         renderOfertasAsCards(response.data);
@@ -176,7 +188,7 @@ function cargarOfertas(append = false) {
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al cargar ofertas:', error);
+      console.error('ERROR: Error al cargar ofertas:', { xhr, status, error });
       Swal.fire(
         'Error de conexión',
         'No se pudieron cargar las ofertas. Intente de nuevo.',
@@ -353,6 +365,12 @@ function resetForm() {
 function viewOffer(idOferta) {
   // Guardar el elemento que actualmente tiene el foco antes de abrir un nuevo modal
   lastFocusedElement = document.activeElement;
+  console.log(
+    'DEBUG: viewOffer llamado para idOferta:',
+    idOferta,
+    'Elemento que activó:',
+    lastFocusedElement
+  );
 
   $.ajax({
     url: '../CONTROLADOR/ajax_Mempresa.php',
@@ -363,6 +381,10 @@ function viewOffer(idOferta) {
     },
     dataType: 'json',
     success: function (response) {
+      console.log(
+        'DEBUG: Respuesta de obtener_oferta_por_id (viewOffer):',
+        response
+      );
       if (response.success && response.data) {
         const oferta = response.data;
         $('#ofertaModalLabel').text('Ver Oferta'); // Cambiar título del modal
@@ -397,12 +419,17 @@ function viewOffer(idOferta) {
         $('#ofertaForm button[type="submit"]').hide(); // Ocultar el botón de guardar
 
         $('#ofertaModal').modal('show');
+        console.log('DEBUG: ofertaModal mostrado en modo ver.');
       } else {
         Swal.fire('Error', response.message, 'error');
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al obtener oferta para ver:', error);
+      console.error('ERROR: Error al obtener oferta para ver:', {
+        xhr,
+        status,
+        error,
+      });
       Swal.fire(
         'Error de conexión',
         'No se pudo cargar la oferta para ver. Intente de nuevo.',
@@ -420,6 +447,12 @@ function viewOffer(idOferta) {
 function editarOferta(idOferta) {
   // Guardar el elemento que actualmente tiene el foco antes de abrir un nuevo modal
   lastFocusedElement = document.activeElement;
+  console.log(
+    'DEBUG: editarOferta llamado para idOferta:',
+    idOferta,
+    'Elemento que activó:',
+    lastFocusedElement
+  );
 
   $.ajax({
     url: '../CONTROLADOR/ajax_Mempresa.php',
@@ -430,6 +463,10 @@ function editarOferta(idOferta) {
     },
     dataType: 'json',
     success: function (response) {
+      console.log(
+        'DEBUG: Respuesta de obtener_oferta_por_id (editarOferta):',
+        response
+      );
       if (response.success && response.data) {
         const oferta = response.data;
 
@@ -477,12 +514,17 @@ function editarOferta(idOferta) {
         selectCarrerasCheckboxes(oferta.carreras_asociadas); // Seleccionar carreras asociadas
 
         $('#ofertaModal').modal('show');
+        console.log('DEBUG: ofertaModal mostrado en modo edición.');
       } else {
         Swal.fire('Error', response.message, 'error');
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al obtener oferta para edición:', error);
+      console.error('ERROR: Error al obtener oferta para edición:', {
+        xhr,
+        status,
+        error,
+      });
       Swal.fire(
         'Error de conexión',
         'No se pudo cargar la oferta para edición. Intente de nuevo.',
@@ -591,6 +633,17 @@ function guardarOferta() {
     formData.append('carreras_dirigidas', '[]'); // Enviar un array vacío si no hay carreras seleccionadas
   }
 
+  Swal.fire({
+    title:
+      action === 'crear_oferta'
+        ? 'Creando oferta...'
+        : 'Actualizando oferta...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
+
   $.ajax({
     url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'POST',
@@ -599,6 +652,8 @@ function guardarOferta() {
     contentType: false, // Necesario para FormData
     dataType: 'json',
     success: function (response) {
+      Swal.close();
+      console.log('DEBUG: Respuesta de guardarOferta:', response);
       if (response.success) {
         Swal.fire('Éxito', response.message, 'success');
         $('#ofertaModal').modal('hide');
@@ -611,7 +666,8 @@ function guardarOferta() {
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al guardar oferta:', error);
+      Swal.close();
+      console.error('ERROR: Error al guardar oferta:', { xhr, status, error });
       Swal.fire(
         'Error de conexión',
         'No se pudo guardar la oferta. Intente de nuevo.',
@@ -626,6 +682,10 @@ function guardarOferta() {
  * @param {number} idOferta - ID de la oferta a desactivar.
  */
 function confirmarDesactivarOferta(idOferta) {
+  console.log(
+    'DEBUG: confirmDesactivarOferta llamado para idOferta:',
+    idOferta
+  );
   Swal.fire({
     title: '¿Estás seguro?',
     text: '¡La oferta se desactivará y dejará de ser visible, pero no se eliminará permanentemente!',
@@ -647,6 +707,15 @@ function confirmarDesactivarOferta(idOferta) {
  * @param {number} idOferta - ID de la oferta a desactivar.
  */
 function desactivarOferta(idOferta) {
+  console.log('DEBUG: desactivarOferta llamado para idOferta:', idOferta);
+  Swal.fire({
+    title: 'Desactivando oferta...',
+    allowOutsideClick: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
+
   $.ajax({
     url: '../CONTROLADOR/ajax_Mempresa.php',
     type: 'POST',
@@ -656,6 +725,8 @@ function desactivarOferta(idOferta) {
     },
     dataType: 'json',
     success: function (response) {
+      Swal.close();
+      console.log('DEBUG: Respuesta de desactivarOferta:', response);
       if (response.success) {
         Swal.fire('Desactivada!', response.message, 'success');
         // Recargar todas las ofertas desde el principio después de desactivar
@@ -667,7 +738,12 @@ function desactivarOferta(idOferta) {
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al desactivar oferta:', error);
+      Swal.close();
+      console.error('ERROR: Error al desactivar oferta:', {
+        xhr,
+        status,
+        error,
+      });
       Swal.fire(
         'Error de conexión',
         'No se pudo desactivar la oferta. Intente de nuevo.',
@@ -705,20 +781,33 @@ function mostrarPerfilEmpresa() {
  * @param {HTMLElement} triggeringElement - El elemento que activó este modal.
  */
 function viewInterestedStudents(idOferta, triggeringElement) {
+  console.log(
+    'DEBUG: viewInterestedStudents called for idOferta:',
+    idOferta,
+    'Triggering Element:',
+    triggeringElement
+  );
   // Guardar el elemento que activó este modal para devolver el foco al cerrarlo
   lastFocusedElement = triggeringElement;
 
-  // Cerrar el modal de oferta si está abierto para evitar superposición
-  const ofertaModal = bootstrap.Modal.getInstance(
-    document.getElementById('ofertaModal')
-  );
-  if (ofertaModal) {
+  const ofertaModalElement = document.getElementById('ofertaModal');
+  const ofertaModal = bootstrap.Modal.getInstance(ofertaModalElement);
+
+  if (ofertaModal && ofertaModal._isShown) {
+    // Verifica si el modal de oferta está realmente visible
+    console.log('DEBUG: ofertaModal está visible, ocultándolo.');
     ofertaModal.hide();
     // Añadir un listener one-time para asegurar que el foco se maneje después de que el modal se oculte completamente
-    $('#ofertaModal').one('hidden.bs.modal', function () {
+    $(ofertaModalElement).one('hidden.bs.modal', function () {
+      console.log(
+        'DEBUG: ofertaModal oculto, llamando a showInterestedStudentsModal.'
+      );
       showInterestedStudentsModal(idOferta);
     });
   } else {
+    console.log(
+      'DEBUG: ofertaModal no está visible o no existe instancia, llamando directamente a showInterestedStudentsModal.'
+    );
     showInterestedStudentsModal(idOferta);
   }
 }
@@ -728,6 +817,10 @@ function viewInterestedStudents(idOferta, triggeringElement) {
  * @param {number} idOferta - El ID de la oferta.
  */
 function showInterestedStudentsModal(idOferta) {
+  console.log(
+    'DEBUG: showInterestedStudentsModal called for idOferta:',
+    idOferta
+  );
   const interesadosList = $('#interesadosList');
   interesadosList.html(
     '<div class="text-center py-4 text-muted"><i class="fas fa-spinner fa-spin me-2"></i>Cargando interesados...</div>'
@@ -743,15 +836,53 @@ function showInterestedStudentsModal(idOferta) {
     },
     dataType: 'json',
     success: function (response) {
+      console.log(
+        'DEBUG: Response from render_interesados_list_html:',
+        response
+      );
       if (response.success && response.html) {
         interesadosList.html(response.html);
         const interesadosModalElement =
           document.getElementById('interesadosModal');
-        new bootstrap.Modal(interesadosModalElement).show();
+        console.log(
+          'DEBUG: Elemento del modal de interesados encontrado:',
+          interesadosModalElement
+        );
+        if (interesadosModalElement) {
+          let interestedModalInstance = bootstrap.Modal.getInstance(
+            interesadosModalElement
+          );
+          if (!interestedModalInstance) {
+            // Si no existe una instancia, crearla. Esto debería ocurrir solo una vez por carga de página para este modal.
+            interestedModalInstance = new bootstrap.Modal(
+              interesadosModalElement
+            );
+            console.log('DEBUG: Nueva instancia de interesadosModal creada.');
+          } else {
+            console.log(
+              'DEBUG: Instancia existente de interesadosModal reutilizada.'
+            );
+          }
 
-        // Al mostrar el modal, asegúrate de que el foco esté dentro de él.
-        // Por ejemplo, en el botón de cerrar.
-        $('#interesadosModal .btn-close').focus();
+          // Siempre mostrar el modal. Bootstrap maneja el estado interno.
+          interestedModalInstance.show();
+
+          // Al mostrar el modal, asegúrate de que el foco esté dentro de él.
+          // Por ejemplo, en el botón de cerrar.
+          $('#interesadosModal .btn-close').focus();
+          console.log(
+            'DEBUG: Modal de interesados mostrado y foco establecido.'
+          );
+        } else {
+          console.error(
+            'ERROR: El elemento del modal de interesados (interesadosModal) no se encontró en el DOM. Asegúrate de que modal_estudiantes_interesados.php esté incluido correctamente y el ID sea el correcto.'
+          );
+          Swal.fire(
+            'Error',
+            'No se pudo encontrar el modal de interesados. Por favor, recargue la página.',
+            'error'
+          );
+        }
       } else {
         interesadosList.html(
           '<li class="list-group-item text-center text-danger">Error al cargar el listado: ' +
@@ -762,7 +893,11 @@ function showInterestedStudentsModal(idOferta) {
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al obtener estudiantes interesados:', error);
+      console.error('ERROR: Error al obtener estudiantes interesados:', {
+        xhr,
+        status,
+        error,
+      });
       interesadosList.html(
         '<li class="list-group-item text-center text-danger">Error de conexión al cargar interesados.</li>'
       );
@@ -776,6 +911,7 @@ function showInterestedStudentsModal(idOferta) {
 
   // Manejar el foco al cerrar el modal de interesados
   $('#interesadosModal').one('hidden.bs.modal', function () {
+    console.log('DEBUG: interesadosModal oculto, restaurando foco.');
     if (lastFocusedElement) {
       lastFocusedElement.focus();
       lastFocusedElement = null;
@@ -790,6 +926,12 @@ function showInterestedStudentsModal(idOferta) {
  * @param {HTMLElement} triggeringElement - El elemento que activó este modal.
  */
 function viewStudentProfileForCompany(idEstudiante, triggeringElement) {
+  console.log(
+    'DEBUG: viewStudentProfileForCompany called for idEstudiante:',
+    idEstudiante,
+    'Triggering Element:',
+    triggeringElement
+  );
   // Guardar el elemento que activó este modal para devolver el foco al cerrarlo
   lastFocusedElement = triggeringElement;
 
@@ -798,12 +940,19 @@ function viewStudentProfileForCompany(idEstudiante, triggeringElement) {
     document.getElementById('interesadosModal')
   );
   if (interesadosModal) {
+    console.log('DEBUG: interesadosModal está abierto, ocultándolo.');
     interesadosModal.hide();
     // Añadir un listener one-time para asegurar que el foco se maneje después de que el modal se oculte completamente
     $('#interesadosModal').one('hidden.bs.modal', function () {
+      console.log(
+        'DEBUG: interesadosModal oculto, llamando a showStudentProfileModal.'
+      );
       showStudentProfileModal(idEstudiante);
     });
   } else {
+    console.log(
+      'DEBUG: interesadosModal no está abierto, llamando directamente a showStudentProfileModal.'
+    );
     showStudentProfileModal(idEstudiante);
   }
 }
@@ -813,6 +962,8 @@ function viewStudentProfileForCompany(idEstudiante, triggeringElement) {
  * @param {string} idEstudiante - El ID del estudiante.
  */
 function showStudentProfileModal(idEstudiante) {
+  console.log('DEBUG: showStudentProfileModal called for ID:', idEstudiante);
+
   const perfilEstudianteContent = $('#perfilEstudianteContent');
   const referenciasListContainer = $('#referenciasListContainer');
   perfilEstudianteContent.html(
@@ -821,6 +972,10 @@ function showStudentProfileModal(idEstudiante) {
   referenciasListContainer.html(
     '<div class="text-center py-3 text-muted">Cargando referencias...</div>'
   );
+
+  // CRÍTICO: Establece el ID del estudiante en el atributo data-student-id del modal principal.
+  // Esto permite que funciones como loadAndDisplayReferences accedan al ID del estudiante.
+  $('#perfilEstudianteModal').data('student-id', idEstudiante);
 
   $.ajax({
     url: '../CONTROLADOR/ajax_Mempresa.php', // Se sigue usando ./CONTROLADOR/ajax_Mempresa.php para obtener el HTML completo del perfil
@@ -831,12 +986,19 @@ function showStudentProfileModal(idEstudiante) {
     },
     dataType: 'json',
     success: function (response) {
+      console.log(
+        'DEBUG: Response from render_perfil_estudiante_html:',
+        response
+      );
       if (response.success && response.html) {
         const studentData = response.data;
         if (studentData) {
-          $('#btnCrearReferenciaEstudiante').attr(
-            'onclick',
-            `openCreateReferenceModal('${idEstudiante}', '${studentData.nombre} ${studentData.apellidos}', this)`
+          // Actualiza el título del modal con el nombre del estudiante
+          $('#perfilEstudianteModalLabel').text(
+            'Perfil del Estudiante - ' +
+              studentData.nombre +
+              ' ' +
+              studentData.apellidos
           );
         } else {
           const studentNameMatch = response.html.match(
@@ -845,23 +1007,48 @@ function showStudentProfileModal(idEstudiante) {
           const studentName = studentNameMatch
             ? studentNameMatch[1].trim()
             : 'Estudiante Desconocido';
-          $('#btnCrearReferenciaEstudiante').attr(
-            'onclick',
-            `openCreateReferenceModal('${idEstudiante}', '${studentName}', this)`
+          $('#perfilEstudianteModalLabel').text(
+            'Perfil del Estudiante - ' + studentName
           );
         }
 
         perfilEstudianteContent.html(response.html);
-        loadAndDisplayReferences(idEstudiante);
+        // CRÍTICO: Cargar y mostrar las referencias para este estudiante.
+        // Se llama a esta función *después* de establecer el data-student-id en el modal.
+        // Asegúrate de pasar el nombre completo si es posible para el botón de crear referencia.
+        loadAndDisplayReferences(
+          idEstudiante,
+          studentData
+            ? studentData.nombre + ' ' + studentData.apellidos
+            : undefined
+        );
 
         const perfilEstudianteModalElement = document.getElementById(
           'perfilEstudianteModal'
         );
-        new bootstrap.Modal(perfilEstudianteModalElement).show();
+        console.log(
+          'DEBUG: Elemento del modal de perfil de estudiante encontrado:',
+          perfilEstudianteModalElement
+        );
+        if (perfilEstudianteModalElement) {
+          new bootstrap.Modal(perfilEstudianteModalElement).show();
 
-        // Al mostrar el modal, asegúrate de que el foco esté dentro de él.
-        // Por ejemplo, en el botón de cerrar.
-        $('#perfilEstudianteModal .btn-close').focus();
+          // Al mostrar el modal, asegúrate de que el foco esté dentro de él.
+          // Por ejemplo, en el botón de cerrar.
+          $('#perfilEstudianteModal .btn-close').focus();
+          console.log(
+            'DEBUG: Modal de perfil de estudiante mostrado y foco establecido.'
+          );
+        } else {
+          console.error(
+            'ERROR: El elemento del modal de perfil de estudiante (perfilEstudianteModal) no se encontró en el DOM.'
+          );
+          Swal.fire(
+            'Error',
+            'No se pudo encontrar el modal del perfil del estudiante. Por favor, recargue la página.',
+            'error'
+          );
+        }
       } else {
         perfilEstudianteContent.html(
           '<div class="text-center py-5 text-danger">Error al cargar el perfil: ' +
@@ -872,7 +1059,11 @@ function showStudentProfileModal(idEstudiante) {
       }
     },
     error: function (xhr, status, error) {
-      console.error('Error al obtener perfil del estudiante:', error);
+      console.error('ERROR: Error al obtener perfil del estudiante:', {
+        xhr,
+        status,
+        error,
+      });
       perfilEstudianteContent.html(
         '<div class="text-center py-5 text-danger">Error de conexión al cargar el perfil del estudiante.</div>'
       );
@@ -886,6 +1077,7 @@ function showStudentProfileModal(idEstudiante) {
 
   // Manejar el foco al cerrar el modal de perfil de estudiante
   $('#perfilEstudianteModal').one('hidden.bs.modal', function () {
+    console.log('DEBUG: perfilEstudianteModal oculto, restaurando foco.');
     if (lastFocusedElement) {
       lastFocusedElement.focus();
       lastFocusedElement = null;

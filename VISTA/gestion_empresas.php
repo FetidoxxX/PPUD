@@ -50,6 +50,7 @@ include_once '../MODELO/class_empresa.php';
 // Crear conexión y instancia de empresa
 
 $empresa = new Empresa();
+$estados = $empresa->obtenerEstados(); // Obtener todos los estados
 
 // Solo obtener tipos de documento para el modal de edición
 $tipos_documento = $empresa->obtenerTiposDocumento();
@@ -80,7 +81,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link" href="pruebaAdmin.php">Inicio</a>
+            <a class="nav-link " href="pruebaAdmin.php">Inicio</a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="gestion_estudiantes.php">Gestión Estudiantes</a>
@@ -94,7 +95,15 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
           <li class="nav-item">
             <a class="nav-link" href="gestion_referencias.php">Gestión Referencias</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_admin.php">Gestión Administradores</a>
+          </li>
+          <!-- Nuevo módulo: Gestión Varios -->
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_varios.php">Gestión Varios</a>
+          </li>
         </ul>
+
 
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
@@ -183,6 +192,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
                 <th>Teléfono</th>
                 <th>Tipo Documento</th>
                 <th>Documento</th>
+                <th>Estado</th> <!-- Nueva columna para el estado -->
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -264,6 +274,18 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
                 <label class="form-label fw-bold">Dirección</label>
                 <textarea class="form-control" id="editDireccion" rows="3" required></textarea>
               </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">Estado</label>
+                <select class="form-select" id="editEstado" required>
+                  <?php foreach ($estados as $estado): ?>
+                    <option value="<?php echo $estado['id_estado']; ?>">
+                      <?php echo htmlspecialchars($estado['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -382,6 +404,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
               document.getElementById('editTelefono').value = emp.telefono;
               document.getElementById('editTipoDoc').value = emp.tipo_documento_id_tipo;
               document.getElementById('editDireccion').value = emp.direccion;
+              document.getElementById('editEstado').value = emp.estado_id_estado; // Cargar el estado
 
               new bootstrap.Modal(document.getElementById('modalEditar')).show();
             } else {
@@ -405,6 +428,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
         formData.append('telefono', document.getElementById('editTelefono').value);
         formData.append('tipo_documento', document.getElementById('editTipoDoc').value);
         formData.append('direccion', document.getElementById('editDireccion').value);
+        formData.append('estado_id_estado', document.getElementById('editEstado').value); // Enviar el estado
 
         fetch('../CONTROLADOR/ajax_empresa.php', {
           method: 'POST',
@@ -425,16 +449,16 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
           });
       });
 
-      // Eliminar empresa
+      // Eliminar empresa (cambiar a inactivo)
       function eliminarEmpresa(id) {
         Swal.fire({
           title: '¿Está seguro?',
-          text: 'Esta acción no se puede deshacer',
+          text: 'Esta acción desactivará la empresa, pero su información se mantendrá.',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#d33',
           cancelButtonColor: '#3085d6',
-          confirmButtonText: 'Sí, eliminar',
+          confirmButtonText: 'Sí, desactivar',
           cancelButtonText: 'Cancelar'
         }).then((result) => {
           if (result.isConfirmed) {
@@ -442,7 +466,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
             formData.append('action', 'eliminar');
             formData.append('id', id);
 
-            fetch('./CONTROLADOR/ajax_empresa.php', {
+            fetch('../CONTROLADOR/ajax_empresa.php', { // Corrected path here
               method: 'POST',
               body: formData
             })
@@ -456,7 +480,7 @@ $tipos_documento = $empresa->obtenerTiposDocumento();
                 }
               })
               .catch(error => {
-                mostrarError('Error al eliminar empresa');
+                mostrarError('Error al desactivar empresa');
               });
           }
         });

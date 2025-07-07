@@ -63,6 +63,49 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   ";
   exit();
 }
+
+// INICIO DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa
+$empresaObj = new Empresa();
+
+if (isset($_SESSION['usuario_id'])) {
+  $empresa_id = $_SESSION['usuario_id'];
+  $empresa_data = $empresaObj->obtenerPorId($empresa_id);
+  $inactivo_id = $empresaObj->getIdEstadoPorNombre('inactivo'); // Obtener el ID del estado 'inactivo'
+
+  if ($empresa_data && $inactivo_id !== false && $empresa_data['estado_id_estado'] == $inactivo_id) {
+    session_destroy();
+    ?>
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+      <meta charset='utf-8'>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
+    </head>
+
+    <body>
+      <script type='text/javascript'>
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Su cuenta de empresa ha sido desactivada. Por favor, contacte al administrador.'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location = '../index.php';
+          }
+        });
+      </script>
+    </body>
+
+    </html>
+    <?php
+    exit();
+  }
+}
+// FIN DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+
 ?>
 
 <!DOCTYPE html>
@@ -75,7 +118,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <link rel='stylesheet' type='text/css' media='screen' href='../bootstrap/css/bootstrap.min.css'>
   <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
-  <!-- Font Awesome for icons -->
+  <!-- Font Awesome for icons (still useful for other parts, but emojis will be used for main cards) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     /* Style for card hover effect */
@@ -112,6 +155,9 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
           </li>
           <li class="nav-item">
             <a class="nav-link" href="gestion_estudiantes_empresa.php">Gestionar Estudiantes</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " href="perfil_empresa.php">Mi Perfil</a>
           </li>
         </ul>
 
@@ -166,13 +212,13 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
       <div class="col-lg-4 col-md-6">
         <div class="card h-100 shadow-lg border-0 rounded-4 card-hover-shadow">
           <div class="card-body text-center p-4">
-            <div class="display-1 text-success mb-3"><i class="fas fa-bullhorn"></i></div> <!-- Icono de megáfono -->
+            <!-- Icono de megáfono, ahora un emoji de maletín -->
+            <div class="display-1 mb-3">💼</div>
             <h5 class="card-title fw-bold">Gestionar Ofertas</h5>
             <p class="card-text text-muted">Crea, edita, visualiza y desactiva tus ofertas de prácticas y pasantías.</p>
           </div>
           <div class="card-footer bg-transparent border-0 text-center pb-4">
-            <a href="gestion_oferta_empresa.php" class="btn btn-success btn-lg w-100 rounded-pill">
-              <!-- Changed to btn-success -->
+            <a href="gestion_oferta_empresa.php" class="btn btn-primary btn-lg w-100 rounded-pill">
               <i class="fas fa-arrow-right me-2"></i> Ir a Ofertas
             </a>
           </div>
@@ -183,7 +229,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
       <div class="col-lg-4 col-md-6">
         <div class="card h-100 shadow-lg border-0 rounded-4 card-hover-shadow">
           <div class="card-body text-center p-4">
-            <div class="display-1 text-info mb-3"><i class="fas fa-users"></i></div> <!-- Icono de grupo de usuarios -->
+            <!-- Icono de grupo de usuarios, ahora un emoji de estudiante -->
+            <div class="display-1 mb-3">🧑‍🎓</div>
             <h5 class="card-title fw-bold">Gestionar Estudiantes</h5>
             <p class="card-text text-muted">Revisa las postulaciones de estudiantes, gestiona sus estados y datos.</p>
           </div>
@@ -199,8 +246,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
       <div class="col-lg-4 col-md-6">
         <div class="card h-100 shadow-lg border-0 rounded-4 card-hover-shadow">
           <div class="card-body text-center p-4">
-            <div class="display-1 text-warning mb-3"><i class="fas fa-user-cog"></i></div>
-            <!-- Icono de usuario con engranaje -->
+            <!-- Icono de usuario con engranaje, ahora un emoji de edificio -->
+            <div class="display-1 mb-3">🏢</div>
             <h5 class="card-title fw-bold">Mi Perfil</h5>
             <p class="card-text text-muted">Actualiza la información de tu empresa y datos de contacto.</p>
           </div>

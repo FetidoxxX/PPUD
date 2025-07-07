@@ -11,8 +11,8 @@ if (isset($_SESSION['timeout'])) {
     <html>
     <head>
       <meta charset='utf-8'>
-      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
-      <script src='../sw/dist/sweetalert2.min.js'></script>
+      <link rel='stylesheet' href='../SW/dist/sweetalert2.min.css'>
+      <script src='../SW/dist/sweetalert2.min.js'></script>
     </head>
     <body>
       <script type='text/javascript'>
@@ -42,8 +42,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <html>
   <head>
     <meta charset='utf-8'>
-    <link rel='stylesheet' href='./sw/dist/sweetalert2.min.css'>
-    <script src='./sw/dist/sweetalert2.min.js'></script>
+    <link rel='stylesheet' href='./SW/dist/sweetalert2.min.css'>
+    <script src='./SW/dist/sweetalert2.min.js'></script>
   </head>
   <body>
     <script type='text/javascript'>
@@ -71,8 +71,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Perfil de Estudiante - PPUD</title>
-  <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
-  <link rel="stylesheet" href="../sw/dist/sweetalert2.min.css">
+  <link rel="stylesheet" href="../BOOTSTRAP/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../SW/dist/sweetalert2.min.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -131,7 +131,8 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
   <div class="container mt-4">
     <div class="row justify-content-center">
       <div class="col-md-10">
-        <div class="card shadow">
+        <div class="card shadow mb-4">
+          <!-- Añadido mb-4 para espacio entre tarjetas -->
           <div class="card-header bg-primary text-white">
             <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Datos Personales y Académicos</h5>
           </div>
@@ -139,9 +140,12 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
             <form id="studentProfileForm">
               <input type="hidden" id="idEstudiante" name="idEstudiante"
                 value="<?php echo htmlspecialchars($_SESSION['usuario_id'] ?? ''); ?>">
+              <!-- Input hidden para mantener el path actual de la hoja de vida -->
+              <input type="hidden" id="hoja_vida_path_current" name="hoja_vida_path_current">
 
               <!-- Campos de visualización (Modo Lectura) -->
               <div id="viewMode">
+                <h6 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Información Personal</h6>
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <strong>Nombre:</strong> <span id="viewNombre"></span>
@@ -152,10 +156,10 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <strong>Correo:</strong> <span id="viewCorreo"></span>
+                    <strong>Tipo Documento:</strong> <span id="viewTipoDocNombre"></span>
                   </div>
                   <div class="col-md-6">
-                    <strong>Teléfono:</strong> <span id="viewTelefono"></span>
+                    <strong>Número Documento:</strong> <span id="viewNDoc"></span>
                   </div>
                 </div>
                 <div class="row mb-3">
@@ -163,23 +167,31 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                     <strong>Fecha de Nacimiento:</strong> <span id="viewFechaNac"></span>
                   </div>
                   <div class="col-md-6">
-                    <strong>Tipo Documento:</strong> <span id="viewTipoDocNombre"></span>
-                  </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-md-6">
-                    <strong>Número Documento:</strong> <span id="viewNDoc"></span>
-                  </div>
-                  <div class="col-md-6">
-                    <strong>Dirección:</strong> <span id="viewDireccion"></span>
-                  </div>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-md-6">
                     <strong>Ciudad:</strong> <span id="viewCiudadNombre"></span>
                   </div>
+                </div>
+                <div class="mb-4">
+                  <strong>Dirección:</strong> <span id="viewDireccion"></span>
+                </div>
+
+                <h6 class="text-primary mb-3"><i class="fas fa-at me-2"></i>Información de Contacto</h6>
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <strong>Correo:</strong> <span id="viewCorreo"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Teléfono:</strong> <span id="viewTelefono"></span>
+                  </div>
+                </div>
+                <hr class="my-4">
+
+                <h6 class="text-primary mb-3"><i class="fas fa-graduation-cap me-2"></i>Información Académica</h6>
+                <div class="row mb-3">
                   <div class="col-md-6">
                     <strong>Código Estudiante:</strong> <span id="viewCodigoEstudiante"></span>
+                  </div>
+                  <div class="col-md-6">
+                    <strong>Carrera Principal:</strong> <span id="viewCarreraPrincipal"></span>
                   </div>
                 </div>
                 <div class="row mb-3">
@@ -190,6 +202,15 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                     <strong>Promedio Académico:</strong> <span id="viewPromedioAcademico"></span>
                   </div>
                 </div>
+                <div class="mb-4">
+                  <strong>Carreras de Interés:</strong>
+                  <ul id="viewCarrerasInteresList" class="list-group list-group-flush mt-2">
+                    <!-- Las carreras de interés se cargarán aquí -->
+                  </ul>
+                </div>
+                <hr class="my-4">
+
+                <h6 class="text-primary mb-3"><i class="fas fa-lightbulb me-2"></i>Habilidades e Intereses</h6>
                 <div class="mb-3">
                   <strong>Habilidades:</strong> <span id="viewHabilidades"></span>
                 </div>
@@ -205,14 +226,12 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                 <div class="mb-3">
                   <strong>Objetivos Profesionales:</strong> <span id="viewObjetivosProfesionales"></span>
                 </div>
-                <div class="mb-3">
-                  <strong>Carrera Principal:</strong> <span id="viewCarreraPrincipal"></span>
-                </div>
-                <div class="mb-3">
-                  <strong>Carreras de Interés:</strong>
-                  <ul id="viewCarrerasInteresList" class="list-group list-group-flush">
-                    <!-- Las carreras de interés se cargarán aquí -->
-                  </ul>
+                <hr class="my-4">
+
+                <h6 class="text-primary mb-3"><i class="fas fa-file-pdf me-2"></i>Hoja de Vida (PDF)</h6>
+                <div class="mb-3" id="viewHojaVida">
+                  <!-- El enlace a la hoja de vida se cargará aquí por JS -->
+                  No cargada
                 </div>
               </div>
 
@@ -315,11 +334,20 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
                     <!-- Checkboxes de carreras se cargarán con JavaScript -->
                   </div>
                 </div>
+
+                <!-- Sección para cargar Hoja de Vida (PDF) -->
+                <div class="mb-3">
+                  <label for="hoja_vida_pdf" class="form-label">Subir Hoja de Vida (PDF, máx. 5MB)</label>
+                  <input class="form-control" type="file" id="hoja_vida_pdf" name="hoja_vida_pdf" accept=".pdf">
+                  <div id="currentHojaVidaContainer" class="mt-2" style="display:none;">
+                    <small class="text-muted">Hoja de Vida actual: <span id="currentHojaVidaLink"></span></small>
+                  </div>
+                </div>
               </div>
 
               <!-- Botones de acción -->
               <div class="d-flex justify-content-end mt-4">
-                <button type="button" class="btn btn-primary me-2" id="editProfileBtn">
+                <button type="button" class="btn btn-success me-2" id="editProfileBtn">
                   <i class="fas fa-edit me-2"></i>Editar Perfil
                 </button>
                 <button type="submit" class="btn btn-success me-2" id="saveProfileBtn" style="display:none;">
@@ -333,32 +361,56 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
           </div>
         </div>
 
-        <!-- Sección de Cambio de Contraseña -->
-        <div class="card shadow mt-4">
-          <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Cambiar Contraseña</h5>
+        <!-- Sección de Referencias del Estudiante -->
+        <div class="card shadow mb-4">
+          <!-- Añadido mb-4 para espacio entre tarjetas -->
+          <div class="card-header bg-primary text-white">
+            <!-- Color unificado a bg-primary -->
+            <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Referencias Recibidas</h5>
           </div>
           <div class="card-body">
-            <form id="changePasswordForm">
-              <div class="mb-3">
-                <label for="current_password" class="form-label">Contraseña Actual</label>
-                <input type="password" class="form-control" id="current_password" name="current_password" required>
-              </div>
-              <div class="mb-3">
-                <label for="new_password" class="form-label">Nueva Contraseña</label>
-                <input type="password" class="form-control" id="new_password" name="new_password" required>
-              </div>
-              <div class="mb-3">
-                <label for="confirm_new_password" class="form-label">Confirmar Nueva Contraseña</label>
-                <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password"
-                  required>
-              </div>
-              <div class="d-flex justify-content-end">
-                <button type="submit" class="btn btn-warning">
-                  <i class="fas fa-key me-2"></i>Guardar Nueva Contraseña
-                </button>
-              </div>
-            </form>
+            <div id="referenciasEstudianteList" class="list-group">
+              <!-- Las referencias se cargarán aquí por JavaScript -->
+              <p class="text-muted text-center">Cargando referencias...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección de Cambio de Contraseña -->
+        <div class="card shadow mb-4">
+          <!-- Añadido mb-4 para espacio entre tarjetas -->
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <!-- Color unificado y flex para botón -->
+            <h5 class="mb-0"><i class="fas fa-lock me-2"></i>Cambiar Contraseña</h5>
+            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="collapse"
+              data-bs-target="#collapsePassword" aria-expanded="false" aria-controls="collapsePassword">
+              <i class="fas fa-chevron-down"></i> <!-- Icono para indicar colapsable -->
+            </button>
+          </div>
+          <div class="collapse" id="collapsePassword">
+            <!-- Contenido colapsable -->
+            <div class="card-body">
+              <form id="changePasswordForm">
+                <div class="mb-3">
+                  <label for="current_password" class="form-label">Contraseña Actual</label>
+                  <input type="password" class="form-control" id="current_password" name="current_password" required>
+                </div>
+                <div class="mb-3">
+                  <label for="new_password" class="form-label">Nueva Contraseña</label>
+                  <input type="password" class="form-control" id="new_password" name="new_password" required>
+                </div>
+                <div class="mb-3">
+                  <label for="confirm_new_password" class="form-label">Confirmar Nueva Contraseña</label>
+                  <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password"
+                    required>
+                </div>
+                <div class="d-flex justify-content-end">
+                  <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-key me-2"></i>Guardar Nueva Contraseña
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </div>
@@ -378,10 +430,10 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
     </div>
   </footer>
 
-  <script src="../js/jquery-3.6.1.min.js"></script>
-  <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
-  <script src="../sw/dist/sweetalert2.min.js"></script>
-  <script src="../js/perfilE.js"></script> <!-- Script JS para la lógica del perfil -->
+  <script src="../JS/jquery-3.6.1.min.js"></script>
+  <script src="../BOOTSTRAP/js/bootstrap.bundle.min.js"></script>
+  <script src="../SW/dist/sweetalert2.min.js"></script>
+  <script src="../JS/perfilE.js"></script> <!-- Script JS para la lógica del perfil -->
 </body>
 
 </html>

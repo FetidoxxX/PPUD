@@ -44,11 +44,12 @@ if (!$_SESSION['usuario']) {
 
 // Incluir archivos necesarios
 include_once '../MODELO/class_estudiante.php';
-include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa para obtener tipos de documento
+include_once '../MODELO/class_empresa.php'; // Incluir la clase Empresa para obtener tipos de documento y estados
 
 // Crear instancias de las clases
 $estudiante = new Estudiante();
-$empresaObj = new Empresa(); // Instancia de Empresa
+$empresaObj = new Empresa(); // Instancia de Empresa para obtener estados (ya que Estudiante no tiene este método)
+$estados = $empresaObj->obtenerEstados(); // Obtener todos los estados
 
 // Solo obtener tipos de documento para el modal de edición
 $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de Empresa
@@ -79,7 +80,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link" href="pruebaAdmin.php">Inicio</a>
+            <a class="nav-link " href="pruebaAdmin.php">Inicio</a>
           </li>
           <li class="nav-item">
             <a class="nav-link active" href="gestion_estudiantes.php">Gestión Estudiantes</a>
@@ -93,7 +94,15 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
           <li class="nav-item">
             <a class="nav-link" href="gestion_referencias.php">Gestión Referencias</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_admin.php">Gestión Administradores</a>
+          </li>
+          <!-- Nuevo módulo: Gestión Varios -->
+          <li class="nav-item">
+            <a class="nav-link" href="gestion_varios.php">Gestión Varios</a>
+          </li>
         </ul>
+
 
         <ul class="navbar-nav">
           <li class="nav-item dropdown">
@@ -182,6 +191,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
                 <th>Teléfono</th>
                 <th>Documento</th>
                 <th>Edad</th>
+                <th>Estado</th> <!-- Nueva columna para el estado -->
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -278,6 +288,18 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
                 <label class="form-label fw-bold">Dirección</label>
                 <textarea class="form-control" id="editDireccion" rows="3" required></textarea>
               </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">Estado</label>
+                <select class="form-select" id="editEstado" required>
+                  <?php foreach ($estados as $estado): ?>
+                    <option value="<?php echo $estado['id_estado']; ?>">
+                      <?php echo htmlspecialchars($estado['nombre']); ?>
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -399,6 +421,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
               document.getElementById('editFechaNac').value = est.fechaNac;
               document.getElementById('editTipoDoc').value = est.tipo_documento_id_tipo;
               document.getElementById('editDireccion').value = est.direccion;
+              document.getElementById('editEstado').value = est.estado_id_estado; // Cargar el estado
 
               new bootstrap.Modal(document.getElementById('modalEditar')).show();
             } else {
@@ -424,6 +447,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
         formData.append('fechaNac', document.getElementById('editFechaNac').value);
         formData.append('tipo_documento', document.getElementById('editTipoDoc').value);
         formData.append('direccion', document.getElementById('editDireccion').value);
+        formData.append('estado_id_estado', document.getElementById('editEstado').value); // Enviar el estado
 
         fetch('../CONTROLADOR/ajax_estudiante.php', {
           method: 'POST',
@@ -444,16 +468,16 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
           });
       });
 
-      // Eliminar estudiante
+      // Eliminar estudiante (cambiar a inactivo)
       function eliminarEstudiante(id) {
         Swal.fire({
           title: '¿Está seguro?',
-          text: 'Esta acción no se puede deshacer',
+          text: 'Esta acción desactivará al estudiante, pero su información se mantendrá.',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#d33',
           cancelButtonColor: '#3085d6',
-          confirmButtonText: 'Sí, eliminar',
+          confirmButtonText: 'Sí, desactivar',
           cancelButtonText: 'Cancelar'
         }).then((result) => {
           if (result.isConfirmed) {
@@ -475,7 +499,7 @@ $tipos_documento = $empresaObj->obtenerTiposDocumento(); // Usar la instancia de
                 }
               })
               .catch(error => {
-                mostrarError('Error al eliminar estudiante');
+                mostrarError('Error al desactivar estudiante');
               });
           }
         });

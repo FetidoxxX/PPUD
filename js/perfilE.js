@@ -4,6 +4,7 @@
  * Este archivo contiene las funciones JavaScript para gestionar el perfil del estudiante,
  * incluyendo la carga, visualización, edición y actualización de sus datos personales,
  * académicos y carreras de interés, así como el cambio de contraseña.
+ * También incluye la lógica para mostrar las referencias recibidas por el estudiante.
  */
 
 // Variables globales para almacenar los datos estáticos de los selectores
@@ -154,6 +155,37 @@ function loadStudentProfile() {
         );
         $('#viewCarreraPrincipal').text(estudiante.carrera_nombre || 'N/A');
 
+        // Mostrar Hoja de Vida
+        const hojaVidaPath = estudiante.hoja_vida_path;
+        const viewHojaVidaElement = $('#viewHojaVida');
+        const currentHojaVidaContainer = $('#currentHojaVidaContainer');
+        const currentHojaVidaLink = $('#currentHojaVidaLink');
+
+        if (hojaVidaPath) {
+          viewHojaVidaElement.html(
+            `<a href="${hojaVidaPath}" target="_blank" class="btn btn-primary"><i class="fas fa-file-pdf me-2"></i>Ver Hoja de Vida</a>`
+          );
+          currentHojaVidaLink.html(
+            `<a href="${hojaVidaPath}" target="_blank"><i class="fas fa-file-pdf me-2"></i>${hojaVidaPath
+              .split('/')
+              .pop()}</a>`
+          );
+          currentHojaVidaContainer.show();
+        } else {
+          viewHojaVidaElement.text('No cargada');
+          currentHojaVidaContainer.hide();
+          currentHojaVidaLink.empty();
+        }
+        // Almacenar el path actual en un input hidden para el envío del formulario
+        // Asegúrate de que este input hidden exista en tu HTML si lo usas para re-enviar el path
+        if ($('#hoja_vida_path_current').length === 0) {
+          // Si no existe, lo creamos dinámicamente (o se añade manualmente en perfil_estudiante.php)
+          $('#studentProfileForm').append(
+            '<input type="hidden" id="hoja_vida_path_current" name="hoja_vida_path_current">'
+          );
+        }
+        $('#hoja_vida_path_current').val(hojaVidaPath || '');
+
         // Renderizar carreras de interés en modo visualización
         const carrerasInteresUl = $('#viewCarrerasInteresList');
         carrerasInteresUl.empty();
@@ -254,6 +286,65 @@ function loadStudentProfile() {
 }
 
 /**
+ * Carga las referencias recibidas por el estudiante desde el servidor
+ * y las muestra en la sección correspondiente del perfil.
+ * @param {string} studentId - El ID del estudiante cuyas referencias se cargarán.
+ */
+function loadStudentReferences(studentId) {
+  const referenciasListContainer = $('#referenciasEstudianteList');
+  referenciasListContainer.html(
+    '<p class="text-muted text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i>Cargando referencias...</p>'
+  ); // Mensaje de carga
+
+  console.log(
+    'DEBUG (perfilE.js - loadStudentReferences): Realizando AJAX para referencias para ID:',
+    studentId
+  ); // Nuevo log
+
+  $.ajax({
+    url: '../CONTROLADOR/ajax_perfilE.php', // Usamos ajax_perfilE.php para obtener las referencias del estudiante
+    type: 'GET',
+    data: {
+      action: 'obtener_referencias_estudiante_perfil',
+      idEstudiante: studentId,
+    },
+    dataType: 'json',
+    success: function (response) {
+      console.log(
+        'DEBUG (perfilE.js - loadStudentReferences success): Respuesta completa:',
+        response
+      ); // Nuevo log
+      if (response.success && response.html) {
+        referenciasListContainer.html(response.html);
+      } else {
+        console.log(
+          'DEBUG (perfilE.js - loadStudentReferences success): No hay referencias o la respuesta no es exitosa.',
+          response
+        ); // Nuevo log
+        referenciasListContainer.html(
+          '<p class="text-muted text-center py-3">No has recibido referencias aún.</p>'
+        );
+        // Opcional: Swal.fire('Error', response.message, 'error');
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error(
+        'DEBUG (perfilE.js - loadStudentReferences error): Error al cargar referencias del estudiante (AJAX):',
+        { xhr, status, error }
+      ); // Nuevo log
+      referenciasListContainer.html(
+        '<p class="text-danger text-center py-3">Error de conexión al cargar tus referencias.</p>'
+      );
+      Swal.fire(
+        'Error de conexión',
+        'No se pudieron cargar tus referencias. Intente de nuevo.',
+        'error'
+      );
+    },
+  });
+}
+
+/**
  * Carga los datos maestros (tipos de documento, ciudades, carreras) desde el servidor.
  */
 function loadMasterData() {
@@ -313,6 +404,12 @@ function loadMasterData() {
 
       // Una vez que todos los datos maestros estén cargados, cargar el perfil del estudiante
       loadStudentProfile();
+
+      // NUEVO: Cargar las referencias del estudiante después de que el perfil y los datos maestros estén listos
+      const studentId = $('#idEstudiante').val();
+      if (studentId) {
+        loadStudentReferences(studentId);
+      }
     })
     .fail(function (xhr, status, error) {
       console.error('Error al cargar datos maestros:', { xhr, status, error });
@@ -369,6 +466,8 @@ $('#studentProfileForm').submit(function (event) {
       if (response.success) {
         Swal.fire('¡Éxito!', response.message, 'success').then(() => {
           loadStudentProfile(); // Recargar el perfil para mostrar los datos actualizados
+          loadStudentReferences($('#idEstudiante').val()); // Recargar también las referencias
+          $('#hoja_vida_pdf').val(''); // Limpiar el campo de archivo de la hoja de vida
         });
       } else {
         Swal.fire('Error', response.message, 'error');
@@ -405,6 +504,21 @@ $('#changePasswordForm').submit(function (event) {
   const formData = new FormData(this);
   formData.append('action', 'cambiar_contrasena');
   formData.append('idEstudiante', $('#idEstudiante').val()); // Asegurar que el ID se envía explícitamente
+
+  // Obtener los valores de los campos de contraseña
+  const currentPassword = $('#current_password').val();
+  const newPassword = $('#new_password').val();
+  const confirmNewPassword = $('#confirm_new_password').val(); // Correcto: 'confirm_new_password'
+
+  // Validar que las nuevas contraseñas coincidan en el cliente
+  if (newPassword !== confirmNewPassword) {
+    Swal.fire(
+      'Error',
+      'La nueva contraseña y su confirmación no coinciden.',
+      'error'
+    );
+    return; // Detener el envío si no coinciden
+  }
 
   $.ajax({
     url: '../CONTROLADOR/ajax_perfilE.php',

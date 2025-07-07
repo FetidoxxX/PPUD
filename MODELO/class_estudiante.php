@@ -73,6 +73,7 @@ class Estudiante
       $disponibilidad_id_disponibilidad = isset($datos['disponibilidad_id_disponibilidad']) && $datos['disponibilidad_id_disponibilidad'] !== '' ? (int) $datos['disponibilidad_id_disponibilidad'] : NULL;
       // estado_id_estado es por defecto activo
       $estado_id_estado = 1;
+      $hoja_vida_path = isset($datos['hoja_vida_path']) && $datos['hoja_vida_path'] !== '' ? mysqli_real_escape_string($this->conexion, $datos['hoja_vida_path']) : NULL;
 
 
       // Verificar si ya existe el ID o el correo o el número de documento
@@ -91,7 +92,7 @@ class Estudiante
                 idEstudiante, contrasena, nombre, correo, telefono, apellidos, fechaNac, direccion, n_doc,
                 tipo_documento_id_tipo, ciudad_id_ciudad, codigo_estudiante, carrera_id_carrera, semestre,
                 promedio_academico, habilidades, experiencia_laboral, certificaciones, idiomas, objetivos_profesionales,
-                disponibilidad_id_disponibilidad, estado_id_estado, fecha_creacion, fecha_actualizacion
+                disponibilidad_id_disponibilidad, estado_id_estado, fecha_creacion, fecha_actualizacion, hoja_vida_path
               ) VALUES (
                 '$idEstudiante', '$contrasena', '$nombre', '$correo', '$telefono', '$apellidos', '$fechaNac', '$direccion', '$n_doc',
                 " . ($tipo_documento_id_tipo ? "$tipo_documento_id_tipo" : "NULL") . ",
@@ -107,7 +108,8 @@ class Estudiante
                 " . ($objetivos_profesionales ? "'$objetivos_profesionales'" : "NULL") . ",
                 " . ($disponibilidad_id_disponibilidad ? "$disponibilidad_id_disponibilidad" : "NULL") . ",
                 " . ($estado_id_estado ? "$estado_id_estado" : "NULL") . ",
-                NOW(), NOW()
+                NOW(), NOW(),
+                " . ($hoja_vida_path ? "'$hoja_vida_path'" : "NULL") . "
               )";
 
       if (mysqli_query($this->conexion, $sql)) {
@@ -204,11 +206,13 @@ class Estudiante
     $sql = "SELECT e.*,
                    td.nombre AS tipo_documento_nombre,
                    c.nombre AS ciudad_nombre,
-                   ca.nombre AS carrera_nombre
+                   ca.nombre AS carrera_nombre,
+                   est.nombre AS estado_nombre
             FROM estudiante e
             LEFT JOIN tipo_documento td ON e.tipo_documento_id_tipo = td.id_tipo
             LEFT JOIN ciudad c ON e.ciudad_id_ciudad = c.id_ciudad
             LEFT JOIN carrera ca ON e.carrera_id_carrera = ca.id_carrera
+            LEFT JOIN estado est ON e.estado_id_estado = est.id_estado
             WHERE e.idEstudiante = '$idEstudiante'";
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
@@ -219,7 +223,8 @@ class Estudiante
   }
 
   /**
-   * Obtiene todos los estudiantes, opcionalmente filtrados por un término de búsqueda.
+   * Obtiene todos los estudiantes (activos e inactivos), opcionalmente filtrados por un término de búsqueda.
+   * Este método ahora se encarga de listar todos los estudiantes para el administrador.
    * @param string $busqueda Término de búsqueda (nombre, apellidos, correo, documento, ID).
    * @return array Lista de estudiantes.
    */
@@ -233,10 +238,12 @@ class Estudiante
 
     $sql = "SELECT e.*,
                    td.nombre AS tipo_documento_nombre,
-                   c.nombre AS ciudad_nombre
+                   c.nombre AS ciudad_nombre,
+                   est.nombre AS estado_nombre
             FROM estudiante e
             LEFT JOIN tipo_documento td ON e.tipo_documento_id_tipo = td.id_tipo
-            LEFT JOIN ciudad c ON e.ciudad_id_ciudad = c.id_ciudad";
+            LEFT JOIN ciudad c ON e.ciudad_id_ciudad = c.id_ciudad
+            LEFT JOIN estado est ON e.estado_id_estado = est.id_estado"; // Se eliminó el filtro de estado para que el admin vea todos
 
     if (!empty($busqueda)) {
       $sql .= " WHERE e.nombre LIKE '%$busqueda%'
@@ -324,12 +331,11 @@ class Estudiante
         'ciudad_id_ciudad',
         'carrera_id_carrera',
         'disponibilidad_id_disponibilidad',
-        'estado_id_estado'
+        'estado_id_estado', // Ahora se permite actualizar el estado
+        'hoja_vida_path'
       ];
 
       foreach ($campos_permitidos as $campo) {
-        // Asegurarse de que el campo exista en $datos y no sea vacío para evitar NULLs incorrectos o errores
-        // Se permite que algunos campos sean opcionales (NULL en DB)
         if (array_key_exists($campo, $datos)) {
           $valor = $datos[$campo];
 
@@ -342,13 +348,11 @@ class Estudiante
           } elseif ($campo === 'promedio_academico') {
             $updates[] = "$campo = " . (empty($valor) && $valor !== 0.0 && $valor !== '0' ? 'NULL' : (float) $valor);
           } else {
-            // Para campos de texto, si es vacío, se guarda como NULL, si tiene valor, se escapa
             $updates[] = "$campo = " . (empty($valor) ? 'NULL' : "'" . mysqli_real_escape_string($this->conexion, $valor) . "'");
           }
         }
       }
 
-      // Añadir la fecha_actualizacion automáticamente
       $updates[] = "fecha_actualizacion = NOW()";
 
 
@@ -364,8 +368,6 @@ class Estudiante
         }
       }
 
-      // Actualizar carreras de interés solo si se proporcionan (puede ser un array vacío)
-      // Se modificó la condición para aceptar un array vacío para borrar todas las relaciones
       if (is_array($carreras_interes_ids)) {
         $this->actualizarCarrerasDeInteres($idEstudiante, $carreras_interes_ids);
       }
@@ -427,25 +429,155 @@ class Estudiante
       return [];
     }
     $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
-    $sql = "SELECT iec.carrera_id_carrera, c.nombre FROM interes_estudiante_carrera iec JOIN carrera c ON iec.carrera_id_carrera = c.id_carrera WHERE estudiante_idEstudiante = '$idEstudiante'";
+    $sql = "SELECT iec.carrera_id_carrera FROM interes_estudiante_carrera iec WHERE estudiante_idEstudiante = '$idEstudiante'";
     $resultado = mysqli_query($this->conexion, $sql);
     if (!$resultado) {
       error_log("ERROR DB (obtenerCarrerasDeInteres): " . mysqli_error($this->conexion) . " SQL: " . $sql);
       return [];
     }
-    $carreras = [];
+    $carreras_ids = [];
     while ($fila = mysqli_fetch_assoc($resultado)) {
-      $carreras[] = $fila; // Devolvemos el objeto con ID y nombre
+      $carreras_ids[] = (int) $fila['carrera_id_carrera'];
     }
-    return $carreras;
+    return $carreras_ids;
   }
 
+  /**
+   * Obtiene todos los estudiantes activos, opcionalmente filtrados por un término de búsqueda,
+   * con paginación. Este método es para la vista de la empresa.
+   * @param string $busqueda Término de búsqueda (nombre, apellidos, correo, documento, ID).
+   * @param int $limit Número máximo de resultados a devolver.
+   * @param int $offset Desplazamiento desde el inicio de los resultados.
+   * @return array Lista de estudiantes activos.
+   */
+  public function obtenerTodosActivos($busqueda = '', $limit = 10, $offset = 0)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerTodosActivos (Estudiante).");
+      return [];
+    }
+    $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
 
+    $sql = "SELECT e.*,
+                   td.nombre AS tipo_documento_nombre,
+                   c.nombre AS ciudad_nombre,
+                   ca.nombre AS carrera_nombre,
+                   est.nombre AS estado_nombre
+            FROM estudiante e
+            LEFT JOIN tipo_documento td ON e.tipo_documento_id_tipo = td.id_tipo
+            LEFT JOIN ciudad c ON e.ciudad_id_ciudad = c.id_ciudad
+            LEFT JOIN carrera ca ON e.carrera_id_carrera = ca.id_carrera
+            LEFT JOIN estado est ON e.estado_id_estado = est.id_estado
+            WHERE e.estado_id_estado = 1"; // Filtrar por estado activo (ID 1)
+
+    if (!empty($busqueda)) {
+      $sql .= " AND (e.nombre LIKE '%$busqueda%' OR
+                    e.apellidos LIKE '%$busqueda%' OR
+                    e.correo LIKE '%$busqueda%' OR
+                    e.n_doc LIKE '%$busqueda%' OR
+                    e.idEstudiante LIKE '%$busqueda%' OR
+                    ca.nombre LIKE '%$busqueda%')"; // Se añade búsqueda por carrera también
+    }
+
+    $sql .= " ORDER BY e.nombre ASC, e.apellidos ASC";
+    $sql .= " LIMIT " . (int) $limit . " OFFSET " . (int) $offset;
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerTodosActivos estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+
+    $estudiantes = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $estudiantes[] = $fila;
+    }
+    return $estudiantes;
+  }
+
+  /**
+   * Cuenta el número total de estudiantes activos, opcionalmente filtrados por un término de búsqueda.
+   * Este método es para la paginación en la vista de la empresa.
+   * @param string $busqueda Término de búsqueda.
+   * @return int El número total de estudiantes activos.
+   */
+  public function contarEstudiantesActivos($busqueda = '')
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en contarEstudiantesActivos (Estudiante).");
+      return 0;
+    }
+    $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
+
+    $sql = "SELECT COUNT(*) AS total
+            FROM estudiante e
+            LEFT JOIN carrera ca ON e.carrera_id_carrera = ca.id_carrera
+            WHERE e.estado_id_estado = 1"; // Filtrar por estado activo (ID 1)
+
+    if (!empty($busqueda)) {
+      $sql .= " AND (e.nombre LIKE '%$busqueda%' OR
+                    e.apellidos LIKE '%$busqueda%' OR
+                    e.correo LIKE '%$busqueda%' OR
+                    e.n_doc LIKE '%$busqueda%' OR
+                    e.idEstudiante LIKE '%$busqueda%' OR
+                    ca.nombre LIKE '%$busqueda%')"; // Se añade búsqueda por carrera también
+    }
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (contarEstudiantesActivos estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return 0;
+    }
+    $fila = mysqli_fetch_assoc($resultado);
+    return (int) $fila['total'];
+  }
+
+  /**
+   * Cuenta el número total de estudiantes (activos e inactivos), opcionalmente filtrados por un término de búsqueda.
+   * Este método es para la paginación en la vista del administrador.
+   * @param string $busqueda Término de búsqueda.
+   * @return int El número total de estudiantes.
+   */
+  public function contarEstudiantes($busqueda = '')
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en contarEstudiantes (Estudiante).");
+      return 0;
+    }
+    $busqueda = mysqli_real_escape_string($this->conexion, $busqueda);
+
+    $sql = "SELECT COUNT(*) AS total
+            FROM estudiante e
+            LEFT JOIN carrera ca ON e.carrera_id_carrera = ca.id_carrera";
+
+    if (!empty($busqueda)) {
+      $sql .= " WHERE e.nombre LIKE '%$busqueda%' OR
+                    e.apellidos LIKE '%$busqueda%' OR
+                    e.correo LIKE '%$busqueda%' OR
+                    e.n_doc LIKE '%$busqueda%' OR
+                    e.idEstudiante LIKE '%$busqueda%' OR
+                    ca.nombre LIKE '%$busqueda%'";
+    }
+
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (contarEstudiantes estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return 0;
+    }
+    $fila = mysqli_fetch_assoc($resultado);
+    return (int) $fila['total'];
+  }
+
+  /**
+   * "Elimina" un estudiante cambiando su estado a inactivo.
+   * @param string $idEstudiante ID del estudiante a "eliminar".
+   * @return array Resultado de la operación (éxito/error, mensaje).
+   */
   public function eliminar($idEstudiante)
   {
     try {
       if (!$this->conexion) {
-        throw new Exception("Conexión a la base de datos no establecida al eliminar estudiante.");
+        throw new Exception("Conexión a la base de datos no establecida al 'eliminar' estudiante.");
       }
       $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
 
@@ -454,17 +586,19 @@ class Estudiante
         throw new Exception("El estudiante no existe.");
       }
 
-      $sql = "DELETE FROM estudiante WHERE idEstudiante='$idEstudiante'";
+      // Asumiendo que el ID 2 en tu tabla 'estado' significa 'Inactivo'
+      $estado_inactivo_id = 2;
+      $sql = "UPDATE estudiante SET estado_id_estado = $estado_inactivo_id, fecha_actualizacion = NOW() WHERE idEstudiante = '$idEstudiante'";
 
       if (mysqli_query($this->conexion, $sql)) {
-        return ['success' => true, 'message' => 'Estudiante eliminado correctamente.'];
+        return ['success' => true, 'message' => 'Estudiante marcado como inactivo correctamente.'];
       } else {
-        error_log("ERROR DB (eliminar estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
-        throw new Exception("Error al eliminar: " . mysqli_error($this->conexion));
+        error_log("ERROR DB ('eliminar' estudiante - cambiar estado): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+        throw new Exception("Error al cambiar el estado del estudiante a inactivo: " . mysqli_error($this->conexion));
       }
 
     } catch (Exception $e) {
-      error_log("ERROR (eliminar estudiante): " . $e->getMessage() . " en línea " . $e->getLine());
+      error_log("ERROR ('eliminar' estudiante): " . $e->getMessage() . " en línea " . $e->getLine());
       return ['success' => false, 'message' => $e->getMessage()];
     }
   }
@@ -551,26 +685,45 @@ class Estudiante
     return $fila['count'] > 0;
   }
 
+  /**
+   * Cambia la contraseña de un estudiante.
+   * @param string $idEstudiante ID del estudiante.
+   * @param string $contrasenaActual Contraseña actual del estudiante.
+   * @param string $contrasenaNueva Nueva contraseña del estudiante.
+   * @return array Resultado de la operación (éxito/error, mensaje).
+   */
   public function cambiarContrasena($idEstudiante, $contrasenaActual, $contrasenaNueva)
   {
     try {
       if (!$this->conexion) {
         throw new Exception("Conexión a la base de datos no establecida para cambiar contraseña.");
       }
+
+      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+      $contrasenaActual = mysqli_real_escape_string($this->conexion, $contrasenaActual);
+      $contrasenaNueva = mysqli_real_escape_string($this->conexion, $contrasenaNueva);
+
       // Verificar contraseña actual
-      if (!$this->validarCredenciales($idEstudiante, $contrasenaActual)) {
+      $sql_check_password = "SELECT contrasena FROM estudiante WHERE idEstudiante='$idEstudiante'";
+      $resultado_check = mysqli_query($this->conexion, $sql_check_password);
+
+      if (!$resultado_check) {
+        error_log("ERROR DB (cambiarContrasena - check): " . mysqli_error($this->conexion) . " SQL: " . $sql_check_password);
+        throw new Exception("Error al verificar la contraseña actual.");
+      }
+
+      $fila = mysqli_fetch_assoc($resultado_check);
+      if (!$fila || $fila['contrasena'] !== $contrasenaActual) {
         throw new Exception("La contraseña actual es incorrecta.");
       }
 
-      $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
-      $contrasenaNueva = mysqli_real_escape_string($this->conexion, $contrasenaNueva);
+      // Actualizar contraseña
+      $sql_update = "UPDATE estudiante SET contrasena='$contrasenaNueva', fecha_actualizacion=NOW() WHERE idEstudiante='$idEstudiante'";
 
-      $sql = "UPDATE estudiante SET contrasena='$contrasenaNueva' WHERE idEstudiante='$idEstudiante'";
-
-      if (mysqli_query($this->conexion, $sql)) {
+      if (mysqli_query($this->conexion, $sql_update)) {
         return ['success' => true, 'message' => 'Contraseña actualizada correctamente.'];
       } else {
-        error_log("ERROR DB (cambiarContrasena estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+        error_log("ERROR DB (cambiarContrasena estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql_update);
         throw new Exception("Error al actualizar contraseña: " . mysqli_error($this->conexion));
       }
 
@@ -615,7 +768,8 @@ class Estudiante
                   e.idiomas,
                   e.objetivos_profesionales,
                   dh.nombre AS disponibilidad_nombre,
-                  est.nombre AS estado_nombre
+                  est.nombre AS estado_nombre,
+                  e.hoja_vida_path
               FROM
                   estudiante e
               LEFT JOIN
@@ -637,18 +791,85 @@ class Estudiante
     }
     $estudiante = mysqli_fetch_assoc($resultado);
 
-    // Si se encontró el estudiante, obtener sus carreras de interés
     if ($estudiante) {
-      $carreras_interes = $this->obtenerCarrerasDeInteres($idEstudiante);
-      // Extraer solo los nombres para el listado en el perfil.
-      $estudiante['carreras_interes_nombres'] = array_column($carreras_interes, 'nombre');
+      $carreras_interes_ids = $this->obtenerCarrerasDeInteres($idEstudiante);
+      $estudiante['carreras_interes_ids'] = $carreras_interes_ids;
 
-      // Obtener las referencias asociadas a este estudiante, incluyendo solo las de tipo 'empresa_a_estudiante'
       $referenciaObj = new Referencia();
-      // 'empresa_a_estudiante' es el nombre del tipo de referencia que se desea incluir
       $estudiante['referencias'] = $referenciaObj->obtenerTodas(null, $idEstudiante, 2);
     }
 
     return $estudiante;
+  }
+
+  /**
+   * Obtiene la ruta de la hoja de vida de un estudiante.
+   * @param string $idEstudiante ID del estudiante.
+   * @return string|null La ruta de la hoja de vida o null si no existe.
+   */
+  public function obtenerHojaVidaPath($idEstudiante)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerHojaVidaPath.");
+      return null;
+    }
+    $idEstudiante = mysqli_real_escape_string($this->conexion, $idEstudiante);
+    $sql = "SELECT hoja_vida_path FROM estudiante WHERE idEstudiante = '$idEstudiante'";
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB (obtenerHojaVidaPath): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return null;
+    }
+    $fila = mysqli_fetch_assoc($resultado);
+    return $fila ? $fila['hoja_vida_path'] : null;
+  }
+
+  /**
+   * Obtiene todos los estados posibles para un estudiante.
+   * Este método se reutiliza de la clase Empresa, pero se incluye aquí para claridad.
+   * @return array Lista de estados.
+   */
+  public function obtenerEstados()
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en obtenerEstados (Estudiante).");
+      return [];
+    }
+    $sql = "SELECT * FROM estado ORDER BY nombre";
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB: Fallo en obtenerEstados (Estudiante): " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return [];
+    }
+    $estados = [];
+    while ($fila = mysqli_fetch_assoc($resultado)) {
+      $estados[] = $fila;
+    }
+    return $estados;
+  }
+
+  /**
+   * Obtiene el ID de un estado a partir de su nombre.
+   * @param string $nombreEstado El nombre del estado (ej. 'activo', 'inactivo').
+   * @return int|false El ID del estado o false si no se encuentra.
+   */
+  public function getIdEstadoPorNombre($nombreEstado)
+  {
+    if (!$this->conexion) {
+      error_log("ERROR: Conexión a la base de datos no establecida en getIdEstadoPorNombre.");
+      return false;
+    }
+    $nombreEstado = mysqli_real_escape_string($this->conexion, $nombreEstado);
+    $sql = "SELECT id_estado FROM estado WHERE nombre = '$nombreEstado'";
+    $resultado = mysqli_query($this->conexion, $sql);
+    if (!$resultado) {
+      error_log("ERROR DB: Fallo en getIdEstadoPorNombre: " . mysqli_error($this->conexion) . " SQL: " . $sql);
+      return false;
+    }
+    if ($fila = mysqli_fetch_assoc($resultado)) {
+      return (int) $fila['id_estado'];
+    }
+    error_log("ADVERTENCIA: Estado con nombre '$nombreEstado' no encontrado en la tabla 'estado'.");
+    return false;
   }
 }

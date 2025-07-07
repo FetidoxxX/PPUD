@@ -28,104 +28,242 @@ if (isset($_SESSION['timeout'])) {
 $_SESSION['timeout'] = time();
 
 if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'empresa') {
-  error_log("DEBUG AUTH FAIL (ajax_referenciasE): usuario_id is set? " . (isset($_SESSION['usuario_id']) ? 'Yes' : 'No') . " | rol is empresa? " . (($_SESSION['rol'] ?? 'none') === 'empresa' ? 'Yes' : 'No'));
-  echo json_encode(['success' => false, 'message' => 'Acceso denegado. Debe iniciar sesión como Empresa en el Sistema.', 'redirect' => '../index.php']);
+  echo json_encode(['success' => false, 'message' => 'Acceso denegado. No tiene permisos para realizar esta acción.', 'redirect' => '../index.php']);
   exit();
 }
 
-$referenciaObj = new Referencia();
-$estudianteObj = new Estudiante(); // Se necesita para obtener el nombre completo del estudiante
-
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
 $idEmpresa = $_SESSION['usuario_id']; // ID de la empresa logueada
 
-$action = $_POST['action'] ?? $_GET['action'] ?? '';
+$referenciaObj = new Referencia();
 
 switch ($action) {
-  case 'crear_referencia':
-    $errores = [];
-    if (empty($_POST['comentario'])) {
-      $errores[] = 'El comentario de la referencia es obligatorio.';
-    }
-    // Ya no es necesario validar tipo_referencia_id_tipo_referencia desde el POST directamente,
-    // ya que siempre debería ser 2 desde el campo oculto o se puede forzar aquí.
-    // if (empty($_POST['tipo_referencia_id_tipo_referencia'])) {
-    //   $errores[] = 'El tipo de referencia es obligatorio.';
-    // }
-    if (empty($_POST['estudiante_idEstudiante'])) {
-      $errores[] = 'El ID del estudiante es obligatorio.';
-    }
-
-    if (!empty($errores)) {
-      echo json_encode(['success' => false, 'message' => implode(' ', $errores)]);
-      break;
-    }
-
-    // Forzar el tipo de referencia a 2 (empresa_a_estudiante) ya que se crea desde el módulo de empresa.
-    $tipo_referencia_id_tipo_referencia = 2;
-
-    $datos_referencia = [
-      'comentario' => $_POST['comentario'],
-      'puntuacion' => $_POST['puntuacion'] ?? null, // Puede ser null
-      'tipo_referencia_id_tipo_referencia' => $tipo_referencia_id_tipo_referencia,
-      'estudiante_idEstudiante' => $_POST['estudiante_idEstudiante'],
-      'empresa_idEmpresa' => $idEmpresa, // La empresa logueada es quien crea la referencia
-    ];
-
-    $resultado = $referenciaObj->registrar($datos_referencia);
-    echo json_encode($resultado);
-    break;
-
-  case 'obtener_tipos_referencia':
-    $tipos = $referenciaObj->obtenerTiposReferencia();
-    echo json_encode(['success' => true, 'data' => $tipos]);
-    break;
-
-  case 'obtener_estados_referencia': // Opcional, si los estados de referencia se gestionan dinámicamente
-    $estados = $referenciaObj->obtenerEstados();
-    echo json_encode(['success' => true, 'data' => $estados]);
-    break;
-
   case 'obtener_referencias_estudiante':
-    $idEstudiante = $_GET['idEstudiante'] ?? '';
-    if (empty($idEstudiante)) {
-      echo json_encode(['success' => false, 'message' => 'ID de estudiante no proporcionada.']);
-      break;
+    $idEstudiante = $_GET['idEstudiante'] ?? null;
+    if (!$idEstudiante) {
+      echo json_encode(['success' => false, 'message' => 'ID de estudiante no proporcionado.']);
+      exit();
     }
 
-    // Asegurarse de que solo se pidan referencias de tipo 'empresa_a_estudiante' (ID 2)
-    $referencias = $referenciaObj->obtenerTodas(null, $idEstudiante, 2);
+    try {
+      // Obtener referencias de tipo "empresa a estudiante" (asumimos tipo_referencia_id = 2 para este caso)
+      // Y AHORA FILTRANDO POR ESTADO ACTIVO (ID = 1)
+      $referencias = $referenciaObj->obtenerTodas(null, $idEstudiante, 2, 10, 0, 1); // El último parámetro es el ID del estado (1 = Activo)
 
-    $html_referencias = '';
-    if (!empty($referencias)) {
-      foreach ($referencias as $ref) {
-        // Log para depuración, si es necesario
-        error_log("DEBUG: Referencia tipo para display: " . $ref['tipo_referencia_nombre'] . " (ID: " . $ref['tipo_referencia_id_tipo_referencia'] . ") para Estudiante ID: " . $idEstudiante);
+      $html_referencias = '';
+      if (!empty($referencias)) {
+        foreach ($referencias as $ref) {
+          $puntuacion_html = '';
+          if ($ref['puntuacion'] !== null) {
+            $puntuacion_html = '<span class="badge bg-warning text-dark me-2"><i class="fas fa-star"></i> ' . htmlspecialchars(number_format($ref['puntuacion'], 1)) . '</span>';
+          }
 
-        $puntuacion_html = '';
-        if (isset($ref['puntuacion']) && $ref['puntuacion'] !== null) {
-          $puntuacion_html = '<span class="badge bg-warning text-dark me-2"><i class="fas fa-star"></i> ' . htmlspecialchars($ref['puntuacion']) . '</span>';
-        }
-        $html_referencias .= '
+          $boton_editar_html = '';
+          $boton_eliminar_html = '';
+
+          // Lógica para mostrar/ocultar botones de editar/eliminar
+          // Solo si la referencia es de la empresa actual y tiene menos de 24h
+          $fecha_creacion = new DateTime($ref['fecha_creacion']);
+          $fecha_actual = new DateTime();
+          $diferencia = $fecha_actual->getTimestamp() - $fecha_creacion->getTimestamp();
+
+          if ($ref['empresa_idEmpresa'] == $idEmpresa && $diferencia <= 86400) { // 86400 segundos = 24 horas
+            // Se crean formularios para cada botón de acción
+            $boton_editar_html = '
+            <form class="d-inline-block edit-reference-form me-2" data-id-referencia="' . $ref['idReferencia'] . '">
+              <input type="hidden" name="idReferencia" value="' . $ref['idReferencia'] . '">
+              <button type="submit" class="btn btn-sm btn-outline-warning">
+                <i class="fas fa-edit"></i>
+              </button>
+            </form>';
+            $boton_eliminar_html = '
+            <form class="d-inline-block delete-reference-form" data-id-referencia="' . $ref['idReferencia'] . '">
+              <input type="hidden" name="idReferencia" value="' . $ref['idReferencia'] . '">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </form>';
+          }
+
+          $html_referencias .= '
           <div class="card mb-3 shadow-sm">
             <div class="card-body">
               <h6 class="card-title d-flex justify-content-between align-items-center">
-                <!-- Muestra el nombre de la empresa en lugar del tipo de referencia -->
                 <span><i class="fas fa-building me-2"></i>' . htmlspecialchars($ref['empresa_nombre']) . '</span>
-                ' . $puntuacion_html . '
+                <div>
+                  ' . $puntuacion_html . '
+                  ' . $boton_editar_html . '
+                  ' . $boton_eliminar_html . '
+                </div>
               </h6>
               <p class="card-text text-muted">' . htmlspecialchars($ref['comentario']) . '</p>
-              <!-- Muestra solo la fecha de creación -->
               <p class="card-text"><small class="text-muted">Fecha: ' . date('d/m/Y', strtotime($ref['fecha_creacion'])) . '</small></p>
             </div>
           </div>';
+        }
+      } else {
+        $html_referencias = '<p class="text-muted text-center py-3">No hay referencias registradas para este estudiante.</p>';
       }
-    } else {
-      $html_referencias = '<p class="text-muted text-center py-3">No hay referencias registradas para este estudiante.</p>';
+
+      echo json_encode(['success' => true, 'html' => $html_referencias]);
+    } catch (Exception $e) {
+      error_log("ERROR (ajax_referenciasE - obtener_referencias_estudiante): " . $e->getMessage() . " en línea " . $e->getLine());
+      echo json_encode(['success' => false, 'message' => 'Error al cargar las referencias: ' . $e->getMessage()]);
     }
-    echo json_encode(['success' => true, 'html' => $html_referencias]);
+    break;
+
+  case 'crear_referencia':
+    $comentario = $_POST['comentario'] ?? '';
+    $puntuacion = $_POST['puntuacion'] ?? null;
+    $tipo_referencia_id = $_POST['tipo_referencia_id_tipo_referencia'] ?? 2; // Asume 2 para empresa a estudiante
+    $estudiante_id = $_POST['estudiante_idEstudiante'] ?? null;
+
+    if (empty($comentario) || !$estudiante_id) {
+      echo json_encode(['success' => false, 'message' => 'Datos incompletos para crear la referencia.']);
+      exit();
+    }
+
+    $datos_referencia = [
+      'comentario' => $comentario,
+      'puntuacion' => $puntuacion,
+      'tipo_referencia_id_tipo_referencia' => $tipo_referencia_id,
+      'estudiante_idEstudiante' => $estudiante_id,
+      'empresa_idEmpresa' => $idEmpresa,
+    ];
+
+    try {
+      $resultado = $referenciaObj->registrar($datos_referencia);
+      echo json_encode($resultado);
+    } catch (Exception $e) {
+      error_log("ERROR (ajax_referenciasE - crear_referencia): " . $e->getMessage() . " en línea " . $e->getLine());
+      echo json_encode(['success' => false, 'message' => 'Error al crear la referencia: ' . $e->getMessage()]);
+    }
+    break;
+
+  case 'obtener_referencia_por_id':
+    $idReferencia = $_GET['idReferencia'] ?? null;
+
+    if (!$idReferencia) {
+      echo json_encode(['success' => false, 'message' => 'ID de referencia no proporcionado.']);
+      exit();
+    }
+
+    try {
+      $referencia = $referenciaObj->obtenerPorId($idReferencia); // Se obtiene sin filtro de estado para verificar permisos
+
+      if ($referencia) {
+        // Verificar que la referencia pertenece a la empresa logueada y si está dentro de las 24 horas
+        $fecha_creacion = new DateTime($referencia['fecha_creacion']);
+        $fecha_actual = new DateTime();
+        $diferencia = $fecha_actual->getTimestamp() - $fecha_creacion->getTimestamp();
+
+        if ($referencia['empresa_idEmpresa'] == $idEmpresa && $diferencia <= 86400) {
+          echo json_encode(['success' => true, 'data' => $referencia]);
+        } else {
+          echo json_encode(['success' => false, 'message' => 'No tienes permiso para editar esta referencia o el tiempo de edición ha expirado.']);
+        }
+      } else {
+        echo json_encode(['success' => false, 'message' => 'Referencia no encontrada.']);
+      }
+    } catch (Exception $e) {
+      error_log("ERROR (ajax_referenciasE - obtener_referencia_por_id): " . $e->getMessage() . " en línea " . $e->getLine());
+      echo json_encode(['success' => false, 'message' => 'Error al obtener la referencia: ' . $e->getMessage()]);
+    }
+    break;
+
+  case 'editar_referencia':
+    $idReferencia = $_POST['idReferencia'] ?? null;
+    $comentario = $_POST['comentario'] ?? '';
+    $puntuacion = $_POST['puntuacion'] ?? null;
+    $tipo_referencia_id = $_POST['tipo_referencia_id_tipo_referencia'] ?? 2; // Asume 2 para empresa a estudiante
+
+    if (!$idReferencia || empty($comentario)) {
+      echo json_encode(['success' => false, 'message' => 'Datos incompletos para actualizar la referencia.']);
+      exit();
+    }
+
+    try {
+      // Primero, verificar que la referencia pertenece a la empresa logueada y si está dentro de las 24 horas
+      $referenciaExistente = $referenciaObj->obtenerPorId($idReferencia);
+
+      if (!$referenciaExistente) {
+        echo json_encode(['success' => false, 'message' => 'Referencia no encontrada.']);
+        exit();
+      }
+
+      // Además, verifica que la referencia esté activa para poder editarla.
+      // Asumiendo que el ID para 'Activo' es 1
+      if ($referenciaExistente['estado_id_estado'] != 1) {
+        echo json_encode(['success' => false, 'message' => 'Esta referencia no puede ser editada porque no está activa.']);
+        exit();
+      }
+
+      $fecha_creacion = new DateTime($referenciaExistente['fecha_creacion']);
+      $fecha_actual = new DateTime();
+      $diferencia = $fecha_actual->getTimestamp() - $fecha_creacion->getTimestamp();
+
+      if ($referenciaExistente['empresa_idEmpresa'] != $idEmpresa || $diferencia > 86400) {
+        echo json_encode(['success' => false, 'message' => 'No tienes permiso para editar esta referencia o el tiempo de edición ha expirado.']);
+        exit();
+      }
+
+      $datos_actualizar = [
+        'comentario' => $comentario,
+        'puntuacion' => $puntuacion,
+        'tipo_referencia_id_tipo_referencia' => $tipo_referencia_id,
+      ];
+
+      $resultado = $referenciaObj->actualizar($idReferencia, $datos_actualizar);
+      echo json_encode($resultado);
+    } catch (Exception $e) {
+      error_log("ERROR (ajax_referenciasE - editar_referencia): " . $e->getMessage() . " en línea " . $e->getLine());
+      echo json_encode(['success' => false, 'message' => 'Error al actualizar la referencia: ' . $e->getMessage()]);
+    }
+    break;
+
+  case 'eliminar_referencia':
+    $idReferencia = $_POST['idReferencia'] ?? null;
+
+    if (!$idReferencia) {
+      echo json_encode(['success' => false, 'message' => 'ID de referencia no proporcionado para eliminar.']);
+      exit();
+    }
+
+    try {
+      // Primero, verificar que la referencia pertenece a la empresa logueada y si está dentro de las 24 horas
+      $referenciaExistente = $referenciaObj->obtenerPorId($idReferencia); // Se obtiene sin filtro de estado
+
+      if (!$referenciaExistente) {
+        echo json_encode(['success' => false, 'message' => 'Referencia no encontrada.']);
+        exit();
+      }
+
+      // Además, verifica que la referencia esté activa para poder eliminarla.
+      if ($referenciaExistente['estado_id_estado'] != 1) {
+        echo json_encode(['success' => false, 'message' => 'Esta referencia ya ha sido eliminada o no está activa.']);
+        exit();
+      }
+
+      $fecha_creacion = new DateTime($referenciaExistente['fecha_creacion']);
+      $fecha_actual = new DateTime();
+      $diferencia = $fecha_actual->getTimestamp() - $fecha_creacion->getTimestamp();
+
+      if ($referenciaExistente['empresa_idEmpresa'] != $idEmpresa || $diferencia > 86400) {
+        echo json_encode(['success' => false, 'message' => 'No tienes permiso para eliminar esta referencia o el tiempo de edición/eliminación ha expirado.']);
+        exit();
+      }
+
+      $resultado = $referenciaObj->eliminar($idReferencia); // Llama al método que ahora la desactiva
+      echo json_encode($resultado);
+    } catch (Exception $e) {
+      error_log("ERROR (ajax_referenciasE - eliminar_referencia): " . $e->getMessage() . " en línea " . $e->getLine());
+      echo json_encode(['success' => false, 'message' => 'Error al eliminar la referencia: ' . $e->getMessage()]);
+    }
     break;
 
   default:
     echo json_encode(['success' => false, 'message' => 'Acción no válida.']);
     break;
 }
+
+?>

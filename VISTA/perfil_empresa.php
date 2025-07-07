@@ -89,72 +89,72 @@ $estados = $empresaObj->obtenerEstados();
   <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    .profile-section {
-      margin-bottom: 2rem;
-    }
+  .profile-section {
+    margin-bottom: 2rem;
+  }
 
-    .profile-card {
-      border-radius: 1rem;
-      overflow: hidden;
-    }
+  .profile-card {
+    border-radius: 1rem;
+    overflow: hidden;
+  }
 
-    .profile-header {
-      background-color: #28a745;
-      /* Verde de éxito de Bootstrap */
-      color: white;
-      padding: 1.5rem;
-      border-top-left-radius: 1rem;
-      border-top-right-radius: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
+  .profile-header {
+    background-color: #28a745;
+    /* Verde de éxito de Bootstrap */
+    color: white;
+    padding: 1.5rem;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
 
-    .profile-header i {
-      font-size: 2.5rem;
-    }
+  .profile-header i {
+    font-size: 2.5rem;
+  }
 
-    .info-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
+  .info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
 
-    .info-item i {
-      color: #6c757d;
-      /* Gris de texto secundario */
-      margin-right: 0.75rem;
-      width: 1.25rem;
-      /* Ancho fijo para alinear iconos */
-      text-align: center;
-    }
+  .info-item i {
+    color: #6c757d;
+    /* Gris de texto secundario */
+    margin-right: 0.75rem;
+    width: 1.25rem;
+    /* Ancho fijo para alinear iconos */
+    text-align: center;
+  }
 
-    .info-label {
-      font-weight: bold;
-      color: #343a40;
-      /* Gris oscuro para las etiquetas */
-      flex-shrink: 0;
-      /* Evita que la etiqueta se encoja */
-      min-width: 120px;
-      /* Ancho mínimo para las etiquetas */
-    }
+  .info-label {
+    font-weight: bold;
+    color: #343a40;
+    /* Gris oscuro para las etiquetas */
+    flex-shrink: 0;
+    /* Evita que la etiqueta se encoja */
+    min-width: 120px;
+    /* Ancho mínimo para las etiquetas */
+  }
 
-    .info-value {
-      color: #495057;
-      /* Gris un poco más claro para los valores */
-      flex-grow: 1;
-      /* Permite que el valor ocupe el espacio restante */
-    }
+  .info-value {
+    color: #495057;
+    /* Gris un poco más claro para los valores */
+    flex-grow: 1;
+    /* Permite que el valor ocupe el espacio restante */
+  }
 
-    /* Estilo para los campos de formulario cuando están en modo de solo lectura */
-    .form-control[readonly],
-    .form-select[disabled],
-    .form-control-plaintext {
-      background-color: #e9ecef;
-      /* Un gris claro para indicar no editable */
-      opacity: 1;
-      /* Asegura que no sea transparente */
-    }
+  /* Estilo para los campos de formulario cuando están en modo de solo lectura */
+  .form-control[readonly],
+  .form-select[disabled],
+  .form-control-plaintext {
+    background-color: #e9ecef;
+    /* Un gris claro para indicar no editable */
+    opacity: 1;
+    /* Asegura que no sea transparente */
+  }
   </style>
 </head>
 
@@ -490,6 +490,22 @@ $estados = $empresaObj->obtenerEstados();
             </form>
           </div>
         </div>
+
+        <!-- Sección de Referencias Recibidas por la Empresa -->
+        <div class="card shadow-lg border-0 profile-card mt-5">
+          <div class="profile-header bg-success">
+            <!-- Cambiado a bg-success para concordar con el tema del perfil -->
+            <i class="fas fa-comments"></i>
+            <h4 class="mb-0">Referencias de Estudiantes</h4>
+          </div>
+          <div class="card-body p-4">
+            <div id="referenciasEmpresaListContainer">
+              <!-- Las referencias de los estudiantes se cargarán aquí por JS -->
+              <p class="text-muted text-center py-3">Cargando referencias...</p>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -520,33 +536,34 @@ $estados = $empresaObj->obtenerEstados();
   <script src="../sw/dist/sweetalert2.min.js"></script>
   <script src="../js/funcionesEmpresaPerfil.js"></script>
   <script>
-    // Variables PHP pasadas al JavaScript
-    const tiposDocumentoData = <?php echo json_encode($tipos_documento); ?>;
-    const ciudadesData = <?php echo json_encode($ciudades); ?>;
-    const sectoresData = <?php echo json_encode($sectores); ?>;
-    const estadosData = <?php echo json_encode($estados); ?>;
+  // Variables PHP pasadas al JavaScript
+  const tiposDocumentoData = <?php echo json_encode($tipos_documento); ?>;
+  const ciudadesData = <?php echo json_encode($ciudades); ?>;
+  const sectoresData = <?php echo json_encode($sectores); ?>;
+  const estadosData = <?php echo json_encode($estados); ?>;
 
-    $(document).ready(function () {
-      // Inicializar las opciones de los selectores al cargar la página
-      renderSelectOptions(tiposDocumentoData, 'tipo_documento_id_tipo', 'id_tipo', 'nombre');
-      renderSelectOptions(ciudadesData, 'ciudad_id_ciudad', 'id_ciudad', 'nombre');
-      renderSelectOptions(sectoresData, 'sector_id_sector', 'id_sector', 'nombre');
-      renderSelectOptions(estadosData, 'estado_id_estado', 'id_estado', 'nombre');
+  $(document).ready(function() {
+    // Inicializar las opciones de los selectores al cargar la página
+    renderSelectOptions(tiposDocumentoData, 'tipo_documento_id_tipo', 'id_tipo', 'nombre');
+    renderSelectOptions(ciudadesData, 'ciudad_id_ciudad', 'id_ciudad', 'nombre');
+    renderSelectOptions(sectoresData, 'sector_id_sector', 'id_sector', 'nombre');
+    renderSelectOptions(estadosData, 'estado_id_estado', 'id_estado', 'nombre');
 
-      loadCompanyProfile(); // Cargar los datos de la empresa al inicio
+    loadCompanyProfile(); // Cargar los datos de la empresa al inicio
+    loadCompanyReferences($('#idEmpresa').val()); // Cargar las referencias de la empresa
 
-      // Manejar el envío del formulario de perfil
-      $('#empresaProfileForm').submit(function (event) {
-        event.preventDefault(); // Evita el envío tradicional del formulario
-        saveCompanyProfile();
-      });
+    // Manejar el envío del formulario de perfil
+    $('#empresaProfileForm').submit(function(event) {
+      event.preventDefault(); // Evita el envío tradicional del formulario
+      saveCompanyProfile();
     });
+  });
 
-    // Función para mostrar el perfil de la empresa en un modal (se mantiene si otras partes de la app lo usan)
-    function mostrarPerfilEmpresaModal() {
-      Swal.fire({
-        title: 'Perfil de Empresa',
-        html: `
+  // Función para mostrar el perfil de la empresa en un modal (se mantiene si otras partes de la app lo usan)
+  function mostrarPerfilEmpresaModal() {
+    Swal.fire({
+      title: 'Perfil de Empresa',
+      html: `
           <div class="text-start">
             <div class="mb-2"><strong>Usuario:</strong> <?php echo htmlspecialchars($_SESSION['usuario']); ?></div>
             <div class="mb-2"><strong>ID de Empresa:</strong> <?php echo htmlspecialchars($_SESSION['usuario_id']); ?></div>
@@ -555,11 +572,11 @@ $estados = $empresaObj->obtenerEstados();
             <div class="mb-2"><strong>Estado:</strong> <span class="badge bg-success">Activo</span></div>
           </div>
         `,
-        icon: 'info',
-        confirmButtonText: 'Cerrar',
-        confirmButtonColor: '#0d6efd'
-      });
-    }
+      icon: 'info',
+      confirmButtonText: 'Cerrar',
+      confirmButtonColor: '#0d6efd'
+    });
+  }
   </script>
 </body>
 

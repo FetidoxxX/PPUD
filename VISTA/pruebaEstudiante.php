@@ -50,7 +50,7 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['rol'] !== 'estudiante') {
       Swal.fire({
         icon: 'error',
         title: '¡ERROR!',
-        text: 'Acceso denegado. Debe iniciar sesión como Estudiante en el Sistema.'
+        text: 'Debe iniciar sesión como Estudiante en el Sistema.'
       }).then((result) => {
         if (result.isConfirmed) {
           window.location = '../index.php';
@@ -69,84 +69,87 @@ require_once '../MODELO/class_empresa.php'; // Para obtener el perfil de la empr
 require_once '../MODELO/class_estudiante.php'; // Necesario para manejar el interés del estudiante
 
 // Crear instancias de las clases. Cada clase ahora maneja su propia conexión internamente.
-$ofertaObj = new Oferta();
-$empresaObj = new Empresa();
-$estudianteObj = new Estudiante(); // Instancia para manejar intereses
-?>
+$ofertaObj = null;
+$empresaObj = null;
+$estudianteObj = null;
+$referenciaObj = null; // Se mantiene, aunque su uso principal está en funcionesReferenciasEstudiante.js
 
+try {
+  $ofertaObj = new Oferta();
+  $empresaObj = new Empresa();
+  $estudianteObj = new Estudiante();
+  // No es necesario instanciar Referencia aquí si solo se usa en ajax_referencias_estudiante.php
+  // $referenciaObj = new Referencia();
+} catch (Throwable $e) {
+  error_log("ERROR (pruebaEstudiante): Fallo al cargar datos estáticos: " . $e->getMessage() . " en línea " . $e->getLine());
+  // Puedes mostrar un SweetAlert de error aquí si quieres que el usuario vea el problema inmediatamente
+}
+
+// INICIO DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+if (isset($_SESSION['usuario_id'])) {
+  $estudiante_id = $_SESSION['usuario_id'];
+  $estudiante_data = $estudianteObj->obtenerPorId($estudiante_id);
+  $inactivo_id = $estudianteObj->getIdEstadoPorNombre('inactivo'); // Obtener el ID del estado 'inactivo'
+
+  if ($estudiante_data && $inactivo_id !== false && $estudiante_data['estado_id_estado'] == $inactivo_id) {
+    session_destroy();
+    ?>
+    <!DOCTYPE html>
+    <html>
+
+    <head>
+      <meta charset='utf-8'>
+      <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
+      <script src='../sw/dist/sweetalert2.min.js'></script>
+    </head>
+
+    <body>
+      <script type='text/javascript'>
+        Swal.fire({
+          icon: 'error',
+          title: 'Acceso Denegado',
+          text: 'Su cuenta de estudiante ha sido desactivada. Por favor, contacte al administrador.'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location = '../index.php';
+          }
+        });
+      </script>
+    </body>
+
+    </html>
+    <?php
+    exit();
+  }
+}
+// FIN DE LA NUEVA VALIDACIÓN DE ESTADO DE USUARIO
+
+?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
   <meta charset='utf-8'>
   <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-  <title>Módulo Estudiante - PPUD</title>
+  <title>Portal de Prácticas y Pasantías UD</title>
   <meta name='viewport' content='width=device-width, initial-scale=1'>
   <link rel='stylesheet' type='text/css' media='screen' href='../bootstrap/css/bootstrap.min.css'>
   <link rel='stylesheet' href='../sw/dist/sweetalert2.min.css'>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Estilos adicionales si son necesarios, siguiendo la estética de los otros módulos */
     .card-offer {
-      border-radius: 0.75rem;
       transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-      overflow: hidden;
     }
 
     .card-offer:hover {
       transform: translateY(-5px);
-      box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-    }
-
-    .card-offer .card-header {
-      background-color: #f8f9fa;
-      /* Light background for header */
-      border-bottom: 1px solid #e9ecef;
-      padding: 0.75rem 1.25rem;
-      font-weight: bold;
-    }
-
-    .card-offer .card-title {
-      color: #0d6efd;
-      /* Primary color for title */
-    }
-
-    .card-offer .card-subtitle {
-      color: #6c757d;
-      /* Secondary color for subtitle */
-    }
-
-    .card-offer .list-unstyled li {
-      margin-bottom: 0.25rem;
-    }
-
-    .card-offer .list-unstyled i {
-      color: #0dcaf0;
-      /* Info color for icons */
-      width: 1.25rem;
-      /* Fixed width for icon alignment */
-      text-align: center;
-    }
-
-    .btn-interes {
-      background-color: #28a745;
-      /* Success color */
-      color: white;
-      border: none;
-      transition: background-color 0.2s;
-    }
-
-    .btn-interes:hover {
-      background-color: #218838;
-      /* Darker success on hover */
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
     }
 
     .company-link {
-      cursor: pointer;
       color: #0d6efd;
-      /* Primary color for links */
+      /* Bootstrap primary color */
       text-decoration: none;
-      font-weight: bold;
     }
 
     .company-link:hover {
@@ -155,7 +158,8 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
   </style>
 </head>
 
-<body>
+<body class="bg-light">
+  <!-- Navigation Bar -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold" href="pruebaEstudiante.php">Módulo Estudiante</a>
@@ -167,7 +171,10 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
-            <a class="nav-link active" href="pruebaEstudiante.php">Inicio</a>
+            <a class="nav-link active" aria-current="page" href="pruebaEstudiante.php">Ofertas</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="perfil_estudiante.php">Mi Perfil</a>
           </li>
         </ul>
 
@@ -194,139 +201,136 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
     </div>
   </nav>
 
+  <!-- Jumbotron -->
   <div class="bg-primary text-white py-5 mb-4">
     <div class="container">
       <div class="row">
         <div class="col-lg-8 mx-auto text-center">
-          <h1 class="display-4 fw-bold">Bienvenido al Módulo de Estudiantes</h1>
-          <p class="lead">Explora oportunidades de prácticas y pasantías.</p>
-          <p class="mb-0">Conectado como: <span
-              class="badge bg-light text-dark fs-6"><?php echo htmlspecialchars($_SESSION['usuario']); ?></span></p>
+          <h1 class="display-4 fw-bold">Bienvenido al Portal de Prácticas</h1>
+          <p class="lead">Encuentra tu oportunidad ideal.</p>
+          <div class="input-group input-group-lg mt-4">
+            <input type="text" class="form-control rounded-pill pe-5" id="busquedaOfertas"
+              placeholder="Buscar ofertas...">
+            <span class="input-group-text bg-transparent border-0 position-absolute end-0"
+              style="z-index: 10; cursor: pointer;" id="searchIcon">
+              <i class="fas fa-search text-primary"></i>
+            </span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="container">
-    <div class="row mb-4 align-items-center">
-      <div class="col-md-6">
-        <h2 class="mb-0 text-primary">Ofertas de Prácticas y Pasantías</h2>
-      </div>
-      <div class="col-md-6 d-flex justify-content-end">
-        <div class="input-group" style="max-width: 350px;">
-          <input type="text" id="busquedaOfertas" class="form-control rounded-start-pill"
-            placeholder="Buscar ofertas por título, empresa o área...">
-          <button class="btn btn-outline-primary rounded-end-pill" type="button" onclick="cargarOfertas()">
-            <i class="fas fa-search me-1"></i> Buscar
-          </button>
-        </div>
-      </div>
+    <h2 class="mb-4 text-primary"><i class="fas fa-briefcase me-2"></i>Ofertas Disponibles</h2>
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="ofertasContainer">
+      <!-- Las ofertas se cargarán aquí -->
     </div>
 
-    <div class="row">
-      <div class="col-12">
-        <div id="ofertasContainer" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        </div>
-        <div class="d-flex justify-content-center mt-4">
-          <button id="loadMoreBtn" class="btn btn-outline-primary" onclick="loadMoreOffers()">Cargar más
-            ofertas</button>
-        </div>
-      </div>
+    <div class="d-flex justify-content-center mt-4">
+      <button class="btn btn-primary btn-lg" id="loadMoreBtn">Cargar más ofertas</button>
     </div>
   </div>
 
+  <!-- Modal de Detalle de Oferta -->
   <div class="modal fade" id="detalleOfertaModal" tabindex="-1" aria-labelledby="detalleOfertaModalLabel"
     aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <!-- MODIFICADO: Cambiado de modal-xl a modal-lg -->
       <div class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title" id="detalleOfertaModalLabel">Detalle de la Oferta</h5>
+          <h5 class="modal-title" id="detalleOfertaModalLabel">Detalles de la Oferta</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
           <h4 id="modal_titulo" class="text-primary mb-3"></h4>
-          <p class="text-muted mb-4">Publicado por: <a href="#" id="modal_empresa_nombre" class="company-link"></a></p>
+          <h6 class="text-muted mb-3">Publicado por: <a href="#" id="modal_empresa_nombre" class="company-link"></a>
+          </h6>
 
-          <div class="mb-3">
-            <strong>Descripción:</strong>
-            <p id="modal_descripcion"></p>
-          </div>
-          <div class="mb-3">
-            <strong>Requisitos:</strong>
-            <p id="modal_requisitos"></p>
-          </div>
-          <div class="mb-3">
-            <strong>Beneficios:</strong>
-            <p id="modal_beneficios"></p>
-          </div>
+          <hr class="my-4">
 
           <div class="row">
             <div class="col-md-6">
+              <h5 class="text-primary mb-3"><i class="fas fa-info-circle me-2"></i>Información General</h5>
               <ul class="list-unstyled">
-                <li><strong><i class="fas fa-handshake me-2 text-info"></i>Modalidad:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-handshake me-2 text-info"></i>Modalidad:</strong> <span
                     id="modal_modalidad"></span></li>
-                <li><strong><i class="fas fa-tag me-2 text-info"></i>Tipo de Oferta:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-tag me-2 text-info"></i>Tipo de Oferta:</strong> <span
                     id="modal_tipo_oferta"></span></li>
-                <li><strong><i class="fas fa-graduation-cap me-2 text-info"></i>Área de Conocimiento:</strong> <span
-                    id="modal_area_conocimiento"></span></li>
-                <li><strong><i class="fas fa-hourglass-half me-2 text-info"></i>Duración:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-graduation-cap me-2 text-info"></i>Área de
+                    Conocimiento:</strong> <span id="modal_area_conocimiento"></span></li>
+                <li class="mb-2"><strong><i class="fas fa-hourglass-half me-2 text-info"></i>Duración:</strong> <span
                     id="modal_duracion_meses"></span> meses</li>
-                <li><strong><i class="fas fa-calendar-alt me-2 text-info"></i>Vencimiento:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-calendar-alt me-2 text-info"></i>Vencimiento:</strong> <span
                     id="modal_fecha_vencimiento"></span></li>
               </ul>
             </div>
             <div class="col-md-6">
+              <h5 class="text-primary mb-3"><i class="fas fa-list-alt me-2"></i>Detalles Adicionales</h5>
               <ul class="list-unstyled">
-                <li><strong><i class="fas fa-clock me-2 text-info"></i>Horario:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-clock me-2 text-info"></i>Horario:</strong> <span
                     id="modal_horario"></span></li>
-                <li><strong><i class="fas fa-dollar-sign me-2 text-info"></i>Remuneración:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-dollar-sign me-2 text-info"></i>Remuneración:</strong> <span
                     id="modal_remuneracion"></span></li>
-                <li><strong><i class="fas fa-list-ol me-2 text-info"></i>Semestre Mínimo:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-list-ol me-2 text-info"></i>Semestre Mínimo:</strong> <span
                     id="modal_semestre_minimo"></span></li>
-                <li><strong><i class="fas fa-percent me-2 text-info"></i>Promedio Mínimo:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-percent me-2 text-info"></i>Promedio Mínimo:</strong> <span
                     id="modal_promedio_minimo"></span></li>
-                <li><strong><i class="fas fa-users me-2 text-info"></i>Cupos Disponibles:</strong> <span
+                <li class="mb-2"><strong><i class="fas fa-users me-2 text-info"></i>Cupos Disponibles:</strong> <span
                     id="modal_cupos_disponibles"></span></li>
               </ul>
             </div>
           </div>
 
-          <div class="mb-3">
-            <strong>Habilidades Requeridas:</strong>
-            <p id="modal_habilidades_requeridas"></p>
+          <hr class="my-4">
+
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Descripción de la Oferta</h5>
+              <p id="modal_descripcion" class="mb-4"></p>
+            </div>
+            <div class="col-md-6">
+              <h5 class="text-primary mb-3"><i class="fas fa-clipboard-list me-2"></i>Requisitos</h5>
+              <p id="modal_requisitos" class="mb-4"></p>
+            </div>
           </div>
-          <div class="mb-3">
-            <strong>Carreras Dirigidas:</strong>
-            <p id="modal_carreras_dirigidas"></p>
+
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="text-primary mb-3"><i class="fas fa-gift me-2"></i>Beneficios</h5>
+              <p id="modal_beneficios" class="mb-4"></p>
+            </div>
+            <div class="col-md-6">
+              <h5 class="text-primary mb-3"><i class="fas fa-code-branch me-2"></i>Carreras Dirigidas</h5>
+              <p id="modal_carreras_dirigidas" class="mb-4"></p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-12">
+              <h5 class="text-primary mb-3"><i class="fas fa-lightbulb me-2"></i>Habilidades Requeridas</h5>
+              <p id="modal_habilidades_requeridas" class="mb-4"></p>
+            </div>
           </div>
 
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="button" class="btn btn-success" id="btnInteres" onclick="mostrarInteres()">
-            <i class="fas fa-star me-2"></i>Demostrar Interés
+          <button type="button" class="btn btn-success" id="btnInteres" data-oferta-id="" data-interes-mostrado="false"
+            onclick="toggleInteres(this)">
+            <i class="far fa-star me-2"></i>Me Interesa
           </button>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="modal fade" id="detalleEmpresaModal" tabindex="-1" aria-labelledby="detalleEmpresaModalLabel"
-    aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header bg-success text-white">
-          <h5 class="modal-title" id="detalleEmpresaModalLabel">Perfil de la Empresa</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-        </div>
-        <div class="modal-body" id="contenidoDetalleEmpresa">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Nuevo Modal para Perfil de Empresa (para estudiantes) - Incluido primero -->
+  <?php include 'modal_perfil_empresa_estudiante.php'; ?>
+
+  <!-- Modal para Crear/Editar Referencia (Específico de este módulo) - Incluido después para mayor z-index -->
+  <?php include 'modal_referencia_estudiante_empresa.php'; ?>
 
 
   <footer class="bg-dark text-white text-center py-4 mt-5">
@@ -348,10 +352,28 @@ $estudianteObj = new Estudiante(); // Instancia para manejar intereses
   <script src="../bootstrap/js/bootstrap.bundle.min.js"></script>
   <script src="../sw/dist/sweetalert2.min.js"></script>
   <script src="../js/funcionesOfertasE.js"></script>
-  <script src="../js/perfilE.js"></script>
+  <!-- Incluye el JS específico para las funciones de referencia de estudiante a empresa -->
+  <script src="../js/funcionesReferenciasEstudiante.js"></script>
   <script>
+    // Variable global para el ID del estudiante, accesible por JavaScript
+    const ESTUDIANTE_ID_MODULO = '<?php echo htmlspecialchars($_SESSION['usuario_id']); ?>';
+
     $(document).ready(function () {
-      cargarOfertas(); // Cargar ofertas al inicio
+      cargarOfertas(); // Cargar ofertas al iniciar la página
+
+      $('#searchIcon').on('click', function () {
+        cargarOfertas(false);
+      });
+
+      $('#busquedaOfertas').on('keypress', function (e) {
+        if (e.which === 13) {
+          cargarOfertas(false);
+        }
+      });
+
+      $('#loadMoreBtn').on('click', function () {
+        loadMoreOffers();
+      });
     });
   </script>
 </body>
